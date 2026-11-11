@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meta</title>
+<link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css">
+<link rel="stylesheet" href="./css/metas.css">
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+</head>
+<body>
+<div id="carregando" class="carregando">Carregando…</div>
+<form id="form" class="form oculto" novalidate>
+  <div id="blocoAuth" class="aviso coluna gap8 oculto">
+    <span>Para criar o cartão da meta, o Power-Up precisa de permissão para criar cartões neste quadro. A autorização vale 30 dias neste navegador; depois, é só autorizar de novo.</span>
+    <div><button type="button" class="btn btn-primario" id="autorizar">Autorizar</button></div>
+  </div>
+  <div id="blocoSemChave" class="aviso oculto">A chave da API ainda não foi configurada, então não dá para criar cartões por aqui. Crie o cartão na lista Metas e use o botão Transformar em meta dentro dele.</div>
+  <div id="erro" class="erro oculto" role="alert"></div>
+
+  <label class="campo" id="campoTitulo">Título
+    <input id="titulo" type="text" placeholder="Ex.: Faturamento no mês" maxlength="120">
+  </label>
+
+  <div class="grade2">
+    <label class="campo">Responsável
+      <select id="dono"></select>
+    </label>
+    <label class="campo">Importância
+      <select id="imp"><option value="1">Normal</option><option value="2">Alta</option><option value="3">Muito alta</option></select>
+      <span class="ajuda">Metas mais importantes contam mais no progresso geral da pessoa.</span>
+    </label>
+  </div>
+
+  <div class="grade3">
+    <label class="campo">Período
+      <select id="periodo"><option value="mes">Mensal</option><option value="tri">Trimestral</option><option value="sem">Semestral</option><option value="livre">Datas livres</option></select>
+    </label>
+    <label class="campo">Início
+      <input id="ini" type="date">
+    </label>
+    <label class="campo">Fim
+      <input id="fim" type="date">
+    </label>
+  </div>
+
+  <div class="coluna gap4">
+    <span class="peq forte sub" id="tipoL">Tipo</span>
+    <div class="seg" role="group" aria-labelledby="tipoL">
+      <button type="button" data-tipo="q" aria-pressed="true">Quantitativa</button>
+      <button type="button" data-tipo="e" aria-pressed="false">Etapas</button>
+      <button type="button" data-tipo="a" aria-pressed="false">Avaliação</button>
+    </div>
+    <span class="ajuda" id="tipoAjuda"></span>
+  </div>
+
+  <div id="blocoQ" class="caixa coluna gap12">
+    <div class="coluna gap4">
+      <span class="peq forte sub" id="fmtL">Formato do valor</span>
+      <div class="chips" role="group" aria-labelledby="fmtL">
+        <button type="button" data-fmt="r" aria-pressed="true">Dinheiro (R$)</button>
+        <button type="button" data-fmt="n" aria-pressed="false">Número</button>
+        <button type="button" data-fmt="p" aria-pressed="false">Percentual</button>
+      </div>
+    </div>
+    <div class="grade3">
+      <label class="campo">Valor inicial
+        <span class="campo-prefixo"><span class="pre"></span><input id="vIni" type="text" inputmode="decimal" value="0"><span class="suf"></span></span>
+      </label>
+      <label class="campo">Alvo
+        <span class="campo-prefixo"><span class="pre"></span><input id="alvo" type="text" inputmode="decimal"><span class="suf"></span></span>
+      </label>
+      <label class="campo" id="campoUnidade">Unidade
+        <input id="unit" type="text" placeholder="Ex.: clientes" maxlength="30">
+      </label>
+    </div>
+    <div class="grade3">
+      <label class="campo">Sentido
+        <select id="dir"><option value="up">Quanto maior, melhor</option><option value="down">Quanto menor, melhor</option></select>
+      </label>
+      <label class="campo">Como registrar
+        <select id="reg"><option value="acc">Total acumulado</option><option value="add">Somar a cada registro</option></select>
+      </label>
+      <label class="campo">Ritmo esperado por
+        <select id="ritmo"><option value="uteis">Dias úteis</option><option value="corridos">Dias corridos</option></select>
+      </label>
+    </div>
+  </div>
+
+  <div id="blocoE" class="caixa coluna gap8 oculto">
+    <span class="peq forte sub">Etapas</span>
+    <div id="etapas" class="coluna gap8"></div>
+    <div><button type="button" class="btn" id="maisEtapa">Adicionar etapa</button></div>
+    <span class="ajuda" id="etapasAjuda">As etapas viram a checklist do cartão. Depois de criada a meta, edite as etapas direto na checklist.</span>
+  </div>
+
+  <div id="blocoA" class="caixa oculto">
+    <label class="campo">Como a meta será avaliada
+      <textarea id="crit" maxlength="400" placeholder="Ex.: enviar orçamento em até 4 horas úteis na maior parte dos pedidos do mês"></textarea>
+    </label>
+  </div>
+
+  <div class="grade2">
+    <label class="campo" id="campoLembrete">Lembrete de atualização
+      <select id="lembrete"><option value="seg">Toda segunda-feira</option><option value="dia">Todo dia útil</option><option value="15">A cada 15 dias</option><option value="nao">Sem lembrete</option></select>
+      <span class="ajuda">Quando a atualização vence, o cartão ganha o selo Atualizar progresso.</span>
+    </label>
+    <label class="campo">Quem pode atualizar o progresso
+      <select id="quem"><option value="resp">Responsável e admins</option><option value="admin">Só admins</option></select>
+    </label>
+  </div>
+
+  <label class="campo">O que conta para a meta (opcional)
+    <textarea id="oque" maxlength="400" placeholder="Ex.: pedidos faturados no mês, sem frete"></textarea>
+  </label>
+
+  <div class="form-rodape">
+    <span class="peq sub" id="rodapeInfo">A meta vira um cartão na lista Metas, com a pessoa responsável como membro.</span>
+    <div class="linha" style="flex:none">
+      <button type="button" class="btn btn-texto" id="cancelar">Cancelar</button>
+      <button type="submit" class="btn btn-primario" id="salvar">Criar meta</button>
+    </div>
+  </div>
+</form>
+<script src="./js/config.js"></script>
+<script src="./js/core.js"></script>
+<script src="./js/nova-meta.js"></script>
+</body>
+</html>
