@@ -4,7 +4,7 @@
 // O que é secreto é o token de cada pessoa, que o Trello guarda no navegador dela
 // e que nunca deve ser colado neste arquivo.
 window.METAS_CONFIG = {
-  appKey: 'COLE_AQUI_A_CHAVE_DA_API',
+  appKey: 'c63c136ad0b038e6f291d5f75991dc40',
   appName: 'Metas',
 
   // Nomes exatos das listas no quadro
