@@ -309,12 +309,12 @@
           if (ant && nome.endsWith(' · ' + ant)) nome = nome.slice(0, -(ant.length + 3));
           return M.rest(t, 'POST', '/cards/' + o.cardId + '/idMembers', { value: meta.dono.id }).then(function () { return M.rest(t, 'PUT', '/cards/' + o.cardId, {name:nome + ' · ' + meta.dono.fullName}); }).then(function () { return sincronizarDatas(o.cardId, meta); }).catch(function () { meta.avisoSync = true; });
         }).then(function () {
-          if (o.aoSalvo) o.aoSalvo({ cardId: o.cardId, meta: meta, criado: false, aviso: meta.avisoSync ? 'Meta salva. Confira o responsável e as datas no cartão; a sincronização não foi concluída.' : '' });
+          if (o.aoSalvo) o.aoSalvo({ cardId: o.cardId, meta: meta, criado: false, aviso: meta.avisoSync ? 'Meta salva | Responsável e datas não sincronizados no cartão.' : '' });
         });
       }
       p.catch(function (e) {
         if (e.code === 'AUTH') S.auth = false;
-        geral((S.novo ? 'O cartão já foi criado. Tente novamente para concluir sem duplicá-lo. ' : '') + M.erroUsuario(e));
+        geral((S.novo ? 'Cartão criado | Tente novamente para concluir sem duplicá-lo | ' : '') + M.erroUsuario(e));
         S.ocupado = false;
         if(!S.novo) el.querySelectorAll('input,select,textarea').forEach(function(x){x.disabled=false;});
         btn.disabled = false; btn.textContent = rotulo;

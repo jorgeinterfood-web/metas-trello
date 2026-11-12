@@ -208,18 +208,18 @@
   // ---------- Situação ----------
   var SIT = {
     ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
-    risk: { label: 'Abaixo do ritmo', cls: 'risk', badge: 'yellow' },
+    risk: { label: 'Atrasado', cls: 'risk', badge: 'yellow' },
     late: { label: 'Prazo encerrado', cls: 'late', badge: 'red' },
-    hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
+    hit: { label: 'Atingido', cls: 'hit', badge: 'blue' },
     noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
     andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
     abaixo: { label: 'Fora do objetivo', cls: 'risk', badge: 'yellow' },
     wait: { label: 'A avaliar', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
-    nao: { label: 'Não atingida', cls: 'late', badge: 'red' },
+    nao: { label: 'Não atingido', cls: 'late', badge: 'red' },
     parcial: { label: 'Parcial', cls: 'risk', badge: 'yellow' },
-    atingida: { label: 'Atingida', cls: 'hit', badge: 'blue' },
-    superada: { label: 'Superada', cls: 'hit', badge: 'blue' }
+    atingida: { label: 'Atingido', cls: 'hit', badge: 'blue' },
+    superada: { label: 'Superado', cls: 'hit', badge: 'blue' }
   };
   var IMP = { 1: 'Normal', 2: 'Alta', 3: 'Muito alta' };
   var TIPO = { q: 'Valor', e: 'Etapas', a: 'Avaliação' };
@@ -332,11 +332,11 @@
       r.parada = dias >= CFG.diasSemAtualizacao;
     }
     r.info = SIT[r.sit];
-    r.rotulo = r.sit === 'future' ? 'Começa em ' + dataBR(meta.ini) : r.info.label;
+    r.rotulo = r.sit === 'future' ? 'A iniciar' : r.info.label;
     if (!total && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem dias úteis';
-    if (r.sit === 'late' && meta.encerrada) r.rotulo = 'Encerrada sem atingir';
+    if (r.sit === 'late' && meta.encerrada) r.rotulo = 'Encerrado sem atingir';
     if (meta.tipo === 'q' && meta.fmt === 'p' && r.sit === 'hit') r.rotulo = 'No objetivo';
-    if (r.sit === 'ok' && (meta.tipo === 'e' ? r.difEtapas > 0 : arred(meta, r.dif) > 0)) r.rotulo = 'Adiantada';
+    if (r.sit === 'ok' && (meta.tipo === 'e' ? r.difEtapas > 0 : arred(meta, r.dif) > 0)) r.rotulo = 'Adiantado';
     if (meta.tipo === 'e' && !r.etapas && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem etapas';
     return r;
   }
@@ -360,18 +360,19 @@
     return numBR(v, casasDe(meta)) + (meta.fmt === 'p' ? (v === 1 ? ' ponto percentual' : ' pontos percentuais') : (v === 1 ? ' ponto' : ' pontos'));
   }
   function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < 0 ? 'dif-menos' : 'dif-neutro'); }
+  function separar(partes) {
+    return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(' | ');
+  }
+  function situacaoDia(d) { return d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento'); }
   function textoBadge(meta, r) {
     if (!r.temBarra) return r.rotulo;
-    if (meta.tipo === 'e') return r.rotulo + ' · ' + r.feitas + ' de ' + r.etapas;
-    if (r.semRitmo) return r.rotulo + ' · ' + fmtValor(meta, r.atual);
-    return r.rotulo + ' · ' + numBR(r.pct, 1) + '%';
+    var valor = meta.tipo === 'e' ? r.feitas + ' de ' + r.etapas : (r.semRitmo ? fmtValor(meta,r.atual) : numBR(r.pct,1) + '%');
+    return separar([r.rotulo, valor]);
   }
   function textoMetaDia(meta, r) {
     var d = r.diaria;
     if (!d) return '';
-    if (d.superou) return 'Objetivo de hoje superado';
-    if (d.atingiu) return 'Objetivo de hoje atingido';
-    return 'Hoje: ' + faltam(meta, d.falta).toLowerCase() + ' ' + fmtValor(meta, d.falta);
+    return separar(['Dia: ' + situacaoDia(d), d.atingiu ? '' : faltam(meta,d.falta) + ' ' + fmtValor(meta,d.falta)]);
   }
   function temMetaDia(meta, r) {
     return !!r.diaria;
@@ -442,7 +443,7 @@
         if ((atual && atual.rev || '') !== (meta.rev || '')) throw falha('Esta meta mudou em outra tela. Atualize os dados antes de salvar.', 'CONFLICT');
         var novo = JSON.parse(JSON.stringify(meta));
         novo.v = 1; novo.rev = Date.now().toString(36) + Math.random().toString(36).slice(2,10);
-        if (JSON.stringify(novo).length > LIMITE) throw falha('Histórico cheio. Use Exportar e resumir histórico para continuar.', 'HISTORY');
+        if (JSON.stringify(novo).length > LIMITE) throw falha('Esta meta atingiu o limite de armazenamento. Crie outra meta para continuar sem apagar os registros existentes.', 'HISTORY');
         return t.set(escopo, 'shared', CHAVE, novo).then(function () {
           return t.get(escopo, 'shared', CHAVE).then(function (checagem) {
             if (!checagem || checagem.rev !== novo.rev) throw falha('Outra gravação ocorreu ao mesmo tempo. Atualize e confira o histórico.', 'CONFLICT');
@@ -562,7 +563,7 @@
   window.Metas = {
     CFG: CFG, unidade: unidade, pluralUnidade: pluralUnidade, erroUsuario: erroUsuario, validarValor: validarValor, periodoAberto: periodoAberto, singular: singular, faltam: faltam, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
     formatarCentavos: formatarCentavos, mascararDinheiro: mascararDinheiro, mascararValor: mascararValor,
-    dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
+    separar: separar, situacaoDia: situacaoDia, dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
     numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,

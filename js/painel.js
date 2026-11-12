@@ -16,8 +16,8 @@
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
   var ICO = { esq: icone('<path d="M15 6l-6 6 6 6"/>'), dir: icone('<path d="M9 6l6 6-6 6"/>'), mais: icone('<path d="M12 5v14M5 12h14"/>') };
-  var CHIPS = [['ok','No ritmo'],['ahead','Adiantadas'],['risk','Abaixo do ritmo'],['abaixo','Fora do objetivo'],['late','Não atingidas'],['hit','Atingidas'],['future','A iniciar'],['wait','A avaliar'],['parcial','Parciais'],['andamento','Sem etapas']];
-  function grupo(it) { var v=it.r.sit; if(v==='ok' && it.r.rotulo==='Adiantada') return 'ahead'; return {noalvo:'hit',atingida:'hit',superada:'hit',nao:'late'}[v] || v; }
+  var CHIPS = [['ok','No ritmo'],['ahead','Adiantado'],['risk','Atrasado'],['abaixo','Fora do objetivo'],['late','Não atingido'],['hit','Atingido'],['future','A iniciar'],['wait','A avaliar'],['parcial','Parcial'],['andamento','Sem etapas']];
+  function grupo(it) { var v=it.r.sit; if(v==='ok' && it.r.rotulo==='Adiantado') return 'ahead'; return {noalvo:'hit',atingida:'hit',superada:'hit',nao:'late'}[v] || v; }
 
   function carregar() {
     app.innerHTML = '<div class="carregando">Carregando metas…</div>';
@@ -92,12 +92,12 @@
   }
   function atencao(it) {
     var m = it.meta, r = it.r, motivos = [], peso = 0;
-    if (r.sit === 'late' || r.sit === 'nao') { motivos.push(m.tipo === 'a' ? 'Avaliada como não atingida' : (m.encerrada ? 'Encerrada sem atingir' : 'Prazo encerrado sem atingir')); peso = 4; }
-    else if (r.sit === 'risk' || r.sit === 'abaixo' || r.sit === 'parcial') { var d = M.textoDiff(m, r); motivos.push(d ? d.charAt(0).toUpperCase() + d.slice(1) : (r.sit === 'parcial' ? 'Resultado parcial' : 'Abaixo do ritmo')); peso = 3; }
+    if (r.sit === 'late' || r.sit === 'nao') { motivos.push(m.tipo === 'a' ? 'Avaliada como não atingida' : (m.encerrada ? 'Encerrado sem atingir' : 'Prazo encerrado sem atingir')); peso = 4; }
+    else if (r.sit === 'risk' || r.sit === 'abaixo' || r.sit === 'parcial') { var d = M.textoDiff(m, r); motivos.push(d ? d.charAt(0).toUpperCase() + d.slice(1) : (r.sit === 'parcial' ? 'Resultado parcial' : 'Atrasado')); peso = 3; }
     if (m.tipo === 'a' && r.sit === 'wait' && r.depois) { motivos.push('Avaliação pendente desde ' + M.dataBR(m.fim)); peso = Math.max(peso, 2); }
     if (r.parada) { motivos.push('Sem atualização há ' + r.diasSemAtualizar + ' dias'); peso = Math.max(peso, 1); }
     if (!motivos.length) return null;
-    return { it: it, texto: motivos.join(' · '), peso: peso };
+    return { it: it, texto: M.separar(motivos), peso: peso };
   }
 
   // ---------- topo ----------

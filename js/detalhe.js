@@ -82,13 +82,13 @@
 
   // o: { t, escopo, meta, card, ctx, aoSalvar, ajustar, abrirCartao }
   M.detalhe = function (el, o) {
-    var st = { msg: null, ocupado: false, reg: null, obs: false, rascunho: '', nota: '', todos: false, resumir: false, confirmar: false, alterarAval: false };
+    var st = { msg: null, ocupado: false, obs: false, rascunho: '', nota: '', todos: false, confirmar: false, alterarAval: false };
     var meta = o.meta;
     var D = {};
 
     function ehTaxa() { return meta.tipo === 'q' && meta.fmt === 'p'; }
     function podeSomar() { return meta.tipo === 'q' && !ehTaxa() && meta.dir !== 'down'; }
-    function reg() { return podeSomar() ? (st.reg || 'add') : 'tot'; }
+    function reg() { return podeSomar() ? 'add' : 'tot'; }
     function ajustar() { if (o.ajustar) o.ajustar(); }
     function podeAtualizar() {
       if (!M.periodoAberto(meta) || meta.tipo !== 'q') return false;
@@ -116,82 +116,85 @@
         if (r.sit === 'hit') return ['Todas as etapas foram concluídas.'];
         var pendentes = r.etapas - r.feitas;
         if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + ' com ' + pendentes + (pendentes === 1 ? ' etapa pendente.' : ' etapas pendentes.')];
-        return ['Esperado até ontem: ' + r.etapasEsperadas + ' de ' + r.etapas + (r.etapas === 1 ? ' etapa. ' : ' etapas. ') + M.textoDiff(m, r) + '.'];
+        return ['Esperado até ontem: ' + r.etapasEsperadas + ' de ' + r.etapas + (r.etapas === 1 ? ' etapa | ' : ' etapas | ') + M.textoDiff(m, r) + '.'];
       }
       if (ehTaxa()) {
         var limite = m.dir === 'down' ? 'no máximo ' : 'pelo menos ';
-        var texto = 'Objetivo: ' + limite + f(m.alvo) + '.';
-        if (r.faltaPontos > 0) texto += (M.arred(m, r.faltaPontos) === 1 ? ' Falta 1 ponto percentual' : ' Faltam ' + M.numBR(r.faltaPontos, M.casasDe(m)) + ' pontos percentuais') + ' para alcançá-lo.';
-        if (r.sit === 'late') texto += m.encerrada ? ' A meta foi encerrada sem alcançar o objetivo.' : ' O prazo terminou em ' + data(m.fim) + '.';
+        var texto = 'Objetivo: ' + limite + f(m.alvo);
+        if (r.faltaPontos > 0) texto += (M.arred(m, r.faltaPontos) === 1 ? ' | Falta 1 ponto percentual' : ' | Faltam ' + M.numBR(r.faltaPontos, M.casasDe(m)) + ' pontos percentuais') + ' para alcançá-lo.';
+        if (r.sit === 'late') texto += m.encerrada ? ' | Encerrado sem atingir.' : ' | Prazo encerrado em ' + data(m.fim) + '.';
         return [texto];
       }
       if (r.sit === 'hit') {
         var extra = m.dir === 'down' ? m.alvo - r.atual : r.atual - m.alvo;
         return [extra > 0 ? 'Objetivo superado em ' + f(extra) + '.' : ''];
       }
-      if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + '. ' + M.faltam(m, r.falta, true) + ' ' + f(r.falta) + ' para o objetivo.'];
-      return ['Esperado até ontem: ' + f(M.arred(m, r.valorEsperado)) + '. ' + (M.textoDiff(m, r).charAt(0).toUpperCase() + M.textoDiff(m, r).slice(1)) + '.',
-        M.faltam(m, r.falta) + ' ' + f(r.falta) + ' para o objetivo do período, até ' + data(m.fim) + '.'];
+      if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + ' | ' + M.faltam(m, r.falta, true) + ' ' + f(r.falta) + ' para o objetivo.'];
+      return [M.separar(['Esperado até ontem: ' + f(M.arred(m, r.valorEsperado)), M.textoDiff(m, r)]) + '.',
+        M.faltam(m, r.falta) + ' ' + f(r.falta) + ' para o objetivo final.'];
+    }
+
+    function feedback(itens) {
+      itens = itens.filter(Boolean);
+      if (itens.length > 1) return '<ul class="det-feedback">' + itens.map(function(txt){return '<li>' + esc(txt) + '</li>';}).join('') + '</ul>';
+      return itens.length ? '<p class="det-frase">' + esc(itens[0]) + '</p>' : '';
     }
 
     function resumo() {
       var m = meta, r = D.r, principal, pct = '', titulo;
       if (m.tipo === 'q') {
         titulo = ehTaxa() ? 'Percentual atual' : 'Progresso da meta';
-        principal = '<span class="grande num">' + esc(f(r.atual)) + '</span><span class="sub">' + (m.dir === 'down' || ehTaxa() ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
+        principal = '<span class="forte num">' + esc(f(r.atual)) + '</span><span class="sub">' + (m.dir === 'down' || ehTaxa() ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
         if (!ehTaxa()) pct = '<span class="forte num det-pct">' + M.numBR(r.pct, 1) + '%</span>';
       } else if (m.tipo === 'e') {
         titulo = 'Etapas concluídas';
-        principal = '<span class="grande num">' + r.feitas + ' de ' + r.etapas + '</span><span class="sub">' + (r.etapas === 1 ? 'etapa' : 'etapas') + '</span>';
+        principal = '<span class="forte num">' + r.feitas + ' de ' + r.etapas + '</span><span class="sub">' + (r.etapas === 1 ? 'etapa' : 'etapas') + '</span>';
         pct = '<span class="forte num det-pct">' + M.numBR(r.pct, 1) + '%</span>';
       } else {
         titulo = 'Avaliação da meta';
         principal = '<span class="forte">' + (m.aval ? 'Resultado da avaliação' : 'Avaliação em ' + data(m.fim)) + '</span>';
       }
-      var linhas = frases().filter(Boolean).map(function (txt) { return '<p class="det-frase">' + esc(txt) + '</p>'; }).join('');
-      if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) linhas += '<p class="det-frase sub">O progresso mede o percurso entre o valor inicial de ' + esc(f(m.vIni)) + ' e o objetivo.</p>';
-      if (r.parada) linhas += '<p class="det-frase parada">Sem atualização há ' + r.diasSemAtualizar + ' dias.</p>';
+      var itens = frases().filter(Boolean);
+      if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) itens.push('Valor inicial: ' + f(m.vIni) + ' | O percentual mede o avanço até o objetivo.');
+      if (r.parada) itens.push('Sem atualização há ' + r.diasSemAtualizar + (r.diasSemAtualizar === 1 ? ' dia.' : ' dias.'));
+      var linhas = feedback(itens);
       return '<section class="det-resumo" aria-label="' + titulo + '"><h3 class="det-titulo">' + titulo + '</h3>' +
         '<div class="det-topo"><div class="det-valor">' + principal + '</div>' + M.selo(r) + '</div>' +
-        (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: titulo, texto: ehTaxa() ? f(r.atual) + '; objetivo ' + (m.dir === 'down' ? 'no máximo ' : 'pelo menos ') + f(m.alvo) : undefined }) + pct + '</div>' : '') +
-        (linhas ? '<div class="coluna gap4">' + linhas + '</div>' : '') + '</section>';
+        (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: titulo, texto: ehTaxa() ? f(r.atual) + ' | Objetivo ' + (m.dir === 'down' ? 'no máximo ' : 'pelo menos ') + f(m.alvo) : undefined }) + pct + '</div>' : '') +
+        linhas + '</section>';
     }
 
     function objetivoHoje() {
       var m = meta, d = D.r.diaria;
       if (!d) {
         if (m.tipo === 'q' && m.dir !== 'down' && m.fmt !== 'p' && !m.encerrada && !D.r.antes && !D.r.depois && D.r.sit !== 'hit' && m.ritmo !== 'corridos' && !M.diaUtil(M.hoje())) {
-          return '<section class="det-dia"><h3 class="det-titulo">Objetivo de hoje</h3><p class="det-frase sub">Sem objetivo diário hoje. Os registros contam para o total.</p></section>';
+          return '<section class="det-dia"><h3 class="det-titulo">Objetivo do dia</h3><p class="det-frase sub">Sem objetivo diário hoje | Os registros contam para o total.</p></section>';
         }
         return '';
       }
-      var rot = d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento');
+      var rot = M.situacaoDia(d);
       var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
       var status = '<span class="selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + rot + '</span>';
-      var falta = d.atingiu ? (d.superou ? 'Acima do objetivo de hoje: ' + f(d.realizado - d.alvo) + '.' : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo de hoje.';
-      return '<section class="det-dia" aria-label="Objetivo de hoje"><h3 class="det-titulo">Objetivo de hoje</h3>' +
+      var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + (m.fmt === 'r' ? M.numBR(d.realizado-d.alvo,2,2) : f(d.realizado-d.alvo)) + '.' : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
+      return '<section class="det-dia" aria-label="Objetivo do dia"><h3 class="det-titulo">Objetivo do dia</h3>' +
         '<div class="det-topo"><div class="det-valor"><span class="forte num">' + esc(f(d.realizado)) + '</span><span class="sub">de ' + esc(f(d.alvo)) + ' hoje</span></div>' + status + '</div>' +
-        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso de hoje', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' hoje; ' + rot.toLowerCase() }) + '<span class="forte num det-pct">' + M.numBR(d.pct, 1) + '%</span></div>' +
-        (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '<details class="mais"><summary>Como é calculado</summary><p class="ajuda">O saldo no início do dia é dividido pelos dias restantes. O realizado considera os registros e as correções de hoje.</p></details></section>';
+        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia | ' + rot }) + '<span class="forte num det-pct">' + M.numBR(d.pct, 1) + '%</span></div>' +
+        (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '</section>';
     }
 
     function registro() {
       var m = meta;
       if (m.tipo !== 'q' || m.encerrada) return '';
       if (!M.periodoAberto(m)) return '<p class="det-frase sub">Registros disponíveis apenas durante o período da meta.</p>';
-      if (!podeAtualizar()) return '<p class="det-frase sub">' + (m.quem === 'admin' ? 'Só administradores do quadro atualizam o valor desta meta.' : 'Só ' + esc(m.dono ? m.dono.fullName : 'o responsável') + ' e os administradores do quadro atualizam o valor desta meta.') + '</p>';
-      var modo = reg();
-      var rot = modo === 'add' ? 'Adicionar' : (ehTaxa() ? 'Novo valor' : 'Novo total');
-      var pre = m.fmt === 'r' ? 'R$' : '', suf = m.fmt === 'p' ? '%' : (m.fmt === 'n' ? M.unidade(m.unit) : '');
-      var links = [];
-      if (podeSomar()) links.push('<button type="button" class="btn-link" id="trocaReg">' + (modo === 'add' ? 'Corrigir o total' : 'Voltar a somar') + '</button>');
-      if (!st.obs) links.push('<button type="button" class="btn-link" id="maisObs">Adicionar observação</button>');
+      if (!podeAtualizar()) return '<p class="det-frase sub">' + (m.quem === 'admin' ? 'Só administradores podem registrar valores.' : 'Só o responsável e administradores podem registrar valores.') + '</p>';
+      var rot = podeSomar() ? 'Valor do registro' : (ehTaxa() ? 'Percentual atual' : 'Valor atual');
+      var pre = m.fmt === 'r' ? 'R$' : '', suf = m.fmt === 'p' ? '%' : (m.fmt === 'n' ? M.pluralUnidade(m.unit) : '');
       return '<form class="registro" id="fAtualizar" novalidate>' +
-        '<div class="registro-linha"><label for="valor" class="registro-rotulo">' + rot + '</label>' +
-        '<span class="campo-prefixo registro-valor">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" value="' + esc(st.rascunho) + '" type="text" inputmode="decimal" autocomplete="off" placeholder="' + (m.fmt === 'r' ? '0,00' : '0') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span>' +
-        (st.obs ? '<input id="obs" value="' + esc(st.nota) + '" class="campo-solto registro-obs" type="text" maxlength="60" placeholder="Observação, ex.: pedido grande faturado" aria-label="Observação">' : '') +
-        '<button type="submit" class="btn btn-primario"' + (st.ocupado ? ' disabled' : '') + '>Registrar</button></div>' +
-        '<div class="registro-pe">' + (links.length ? '<span class="linha gap12">' + links.join('') + '</span>' : '') + '<span class="ajuda" id="previa" aria-live="polite"></span></div></form>';
+        '<div class="registro-linha"><label class="campo registro-campo" for="valor">' + rot +
+        '<span class="campo-prefixo">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" value="' + esc(st.rascunho) + '" type="text" inputmode="decimal" autocomplete="off" aria-describedby="previa" placeholder="' + (m.fmt === 'r' ? 'Ex.: 1.500,00' : 'Ex.: 10') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span></label>' +
+        '<button type="submit" class="btn btn-primario"' + (st.ocupado ? ' disabled' : '') + '>' + (podeSomar() ? 'Registrar valor' : 'Atualizar valor') + '</button></div>' +
+        '<p class="ajuda registro-previa" id="previa" aria-live="polite"></p>' +
+        (st.obs ? '<label class="campo registro-observacao">Observação (opcional)<input id="obs" value="' + esc(st.nota) + '" type="text" maxlength="60" placeholder="Ex.: pedido faturado"></label>' : '<div><button type="button" class="btn-link" id="maisObs">Incluir observação</button></div>') + '</form>';
     }
 
     function etapas() {
@@ -206,7 +209,7 @@
       if (m.tipo !== 'a') return '';
       var html = '<section class="coluna gap8"><h3 class="det-titulo">Como será avaliada</h3><p class="det-frase">' + esc(m.crit || '') + '</p>';
       if (m.aval) {
-        html += '<p class="det-frase sub">Avaliada por ' + esc(m.aval.por || '') + ' em ' + M.dataBR(m.aval.em) + '.' + (m.aval.obs ? ' ' + esc(m.aval.obs) : '') + '</p>';
+        html += '<p class="det-frase sub">Avaliada por ' + esc(m.aval.por || '') + ' em ' + M.dataBR(m.aval.em) + (m.aval.obs ? ' | ' + esc(m.aval.obs) : '') + '</p>';
       }
       if (o.ctx.admin) {
         var libera = M.addDias(m.fim, -6);
@@ -214,7 +217,7 @@
         else if (!m.aval && M.hoje() < libera) html += '<p class="det-frase sub">O resultado pode ser registrado a partir de ' + data(libera) + '.</p>';
         else {
           html += '<div class="coluna gap8"><label class="campo" style="max-width:480px">Comentário (opcional)<input id="avObs" type="text" maxlength="200" value="' + esc(m.aval && m.aval.obs || '') + '"></label>' +
-            '<div class="linha gap8" style="flex-wrap:wrap">' + [['nao', 'Não atingida'], ['parcial', 'Parcial'], ['atingida', 'Atingida'], ['superada', 'Superada']].map(function (op) {
+            '<div class="linha gap8" style="flex-wrap:wrap">' + [['nao', M.SIT.nao.label], ['parcial', M.SIT.parcial.label], ['atingida', M.SIT.atingida.label], ['superada', M.SIT.superada.label]].map(function (op) {
               return '<button type="button" class="btn' + (m.aval && m.aval.nota === op[0] ? ' btn-marcado' : '') + '" data-nota="' + op[0] + '">' + op[1] + '</button>';
             }).join('') + '</div></div>';
         }
@@ -234,11 +237,11 @@
         var tdif = ehTaxa() ? M.pontos(meta, dif) : f(Math.abs(dif));
         linhas.push('<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
           '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (bom ? 'dif-mais' : 'dif-menos') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
-          '<span class="sub hist-quem">' + esc(e[3] || '') + (e[4] ? ' · ' + esc(e[4]) : '') + '</span></div>');
+          '<span class="sub hist-quem">' + esc(e[3] || '') + (e[4] ? ' | ' + esc(e[4]) : '') + '</span></div>');
       }
       var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
       return '<div class="det-grade"><section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Evolução</h3>' + graf + '</section>' +
-        '<section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Histórico</h3><div class="linha gap8"><button type="button" class="btn-link" id="exportar">Exportar histórico</button>' + (o.ctx.admin ? '<button type="button" class="btn-link" id="resumir">' + (st.resumir ? 'Confirmar resumo' : 'Exportar e resumir histórico') + '</button>' : '') + '</div>' + (meta.histCortado ? '<p class="ajuda">Histórico resumido. Os registros anteriores estão na exportação feita ao resumir.</p>' : '') + hist + '</section></div>';
+        '<section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Histórico</h3>'  + hist + '</section></div>';
     }
 
     function rodape() {
@@ -273,54 +276,43 @@
       st.ocupado = true;
       el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
       return M.salvarMeta(o.t, o.escopo, novo).then(function () {
-        meta = novo; if(aviso === 'Valor registrado.') {st.rascunho = ''; st.nota = ''; st.obs = false; st.reg = null;} st.ocupado = false; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
+        meta = novo; if(aviso === 'Valor registrado.') {st.rascunho = ''; st.nota = ''; st.obs = false; } st.ocupado = false; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
         if (o.aoSalvar) o.aoSalvar(meta);
         var rAtual=M.avaliar(meta,o.card.badges);
-        return M.autorizado(o.t).then(function(ok){if(!ok)return false;return M.rest(o.t,'PUT','/cards/'+o.card.id,{dueComplete:rAtual.sit==='hit'||rAtual.sit==='noalvo'}).then(function(){if(!reabrindo)return true;return M.garantirLista(o.t,M.CFG.listaMetas,'top').then(function(l){return M.rest(o.t,'PUT','/cards/'+o.card.id,{idList:l.id,pos:'top'});}).then(function(){st.msg={texto:'Meta reaberta e cartão movido.'};return true;});});}).catch(function(){return false;}).then(function(ok){if(!ok)st.msg={texto:(aviso || 'Meta salva.')+' Confira a conclusão no cartão; ela não foi sincronizada.'};render();});
+        return M.autorizado(o.t).then(function(ok){if(!ok)return false;return M.rest(o.t,'PUT','/cards/'+o.card.id,{dueComplete:rAtual.sit==='hit'||rAtual.sit==='noalvo'}).then(function(){if(!reabrindo)return true;return M.garantirLista(o.t,M.CFG.listaMetas,'top').then(function(l){return M.rest(o.t,'PUT','/cards/'+o.card.id,{idList:l.id,pos:'top'});}).then(function(){st.msg={texto:'Meta reaberta e cartão movido.'};return true;});});}).catch(function(){return false;}).then(function(ok){if(!ok)st.msg={texto:M.separar([aviso || 'Meta salva', 'Conclusão não sincronizada no cartão'])};render();});
       }).catch(function (e) { st.ocupado = false; st.msg = { erro: true, texto: M.erroUsuario(e) }; render(); });
     }
 
     function ligar() {
       var $ = function (id) { return el.querySelector('#' + id); };
-      if ($('atualizarDados')) $('atualizarDados').onclick = function(){Promise.all([o.t.get(o.escopo,'shared',M.CHAVE),M.contexto(o.t)]).then(function(v){if(!v[0])throw new Error('A meta não está mais disponível.');meta=v[0];o.ctx=v[1];return M.prepararCard(o.t,o.card,meta);}).then(function(){if(o.aoSalvar)o.aoSalvar(meta);st.msg={texto:'Dados atualizados. Confira o valor antes de registrar.'};render();}).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();});};
+      if ($('atualizarDados')) $('atualizarDados').onclick = function(){Promise.all([o.t.get(o.escopo,'shared',M.CHAVE),M.contexto(o.t)]).then(function(v){if(!v[0])throw new Error('A meta não está mais disponível.');meta=v[0];o.ctx=v[1];return M.prepararCard(o.t,o.card,meta);}).then(function(){if(o.aoSalvar)o.aoSalvar(meta);st.msg={texto:'Dados atualizados | Confira o valor antes de registrar.'};render();}).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();});};
       if ($('verHist')) $('verHist').onclick = function () { st.todos = !st.todos; render(); };
-      function exportar() {
-        var a = document.createElement('a'); var url = URL.createObjectURL(new Blob([JSON.stringify({cartao:o.card.id,meta:meta},null,2)],{type:'application/json'}));
-        a.href = url; a.download = 'meta-' + o.card.id + '-' + M.hoje() + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(url); },1000);
-      }
-      if ($('exportar')) $('exportar').onclick = exportar;
-      if ($('resumir')) $('resumir').onclick = function () {
-        if (!st.resumir) { exportar(); st.resumir=true; st.msg={texto:'Salve a exportação. Depois, clique em Confirmar resumo para remover os registros antigos do cartão.'}; render(); return; }
-        st.resumir=false;
-        var n = JSON.parse(JSON.stringify(meta)), h = n.hist || [];
-        if (h.length < 2) return;
-        n.histBase = h[h.length-2][1]; n.hist = h.slice(-1); n.histCortado = (n.histCortado || 0) + h.length - 1;
-        salvar(n, 'Histórico resumido. Guarde a exportação.');
-      };
       if ($('obs')) $('obs').addEventListener('input',function () { st.nota = this.value; });
       var fr = $('fAtualizar');
       if (fr) {
         var campo = $('valor'), previa = $('previa');
-        M.mascararValor(campo, meta.fmt, M.casasDe(meta));
+        M.mascarar(campo, M.casasDe(meta));
+        if (meta.fmt === 'r') campo.addEventListener('blur',function(){var v=M.lerNumero(campo.value);if(Number.isFinite(v)&&v>=0){campo.value=M.numBR(v,2,2);st.rascunho=campo.value;}});
         var atual = M.valorAtual(meta);
-        campo.addEventListener('input', function () {
+        function previaValor() {
           st.rascunho = campo.value;
           campo.removeAttribute('aria-invalid');
           previa.className = 'ajuda';
           var v = M.lerNumero(campo.value);
-          if (isNaN(v)) { previa.textContent = ''; return; }
+          if (!campo.value.trim()) { previa.textContent = 'Total atual: ' + f(atual); return; }
+          try { M.validarValor(v, meta); } catch(e) { previa.textContent=e.message;previa.className='ajuda erro-campo';return; }
           var novo = reg() === 'add' ? atual + v : v;
-          previa.textContent = (reg() === 'add' ? 'Novo total: ' : 'Antes: ' + f(atual) + '. Depois: ') + f(Math.round(novo * 100) / 100) + '.';
-        });
-        if ($('trocaReg')) $('trocaReg').onclick = function () { st.reg = reg() === 'add' ? 'tot' : 'add'; st.msg = null; render(); $('valor').focus(); };
+          previa.textContent = M.separar(['Total atual: ' + f(atual), 'Após o registro: ' + f(M.arred(meta,novo))]);
+        }
+        campo.addEventListener('input', previaValor); previaValor();
         if ($('maisObs')) $('maisObs').onclick = function () { var v = campo.value; st.obs = true; render(); $('valor').value = v; $('obs').focus(); };
         fr.onsubmit = function (ev) {
           ev.preventDefault();
           if (st.ocupado) return;
           var v = M.lerNumero(campo.value);
           var falha = function (txt) { campo.setAttribute('aria-describedby', 'previa'); campo.setAttribute('aria-invalid', 'true'); previa.className = 'ajuda erro-campo'; previa.textContent = txt; campo.focus(); };
-          if (isNaN(v)) { falha(meta.fmt === 'r' ? 'Digite um valor. Os dígitos entram pelos centavos: 50029 vira 500,29.' : 'Digite um valor.'); return; }
-          if (reg() === 'add' && v <= 0) { falha('Digite um valor maior que zero. Para corrigir um registro, use Corrigir o total.'); return; }
+          if (isNaN(v)) { falha('Digite um valor.'); return; }
+          if (reg() === 'add' && v <= 0) { falha('Digite um valor maior que zero.'); return; }
           try { M.validarValor(v, meta); } catch (e) { falha(e.message); return; }
           var novoMeta = JSON.parse(JSON.stringify(meta));
           var novo = reg() === 'add' ? M.valorAtual(novoMeta) + v : v;
@@ -348,7 +340,7 @@
       if ($('reabrir')) $('reabrir').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
         novoMeta.encerrada = false; delete novoMeta.encerradaEm;
-        salvar(novoMeta, 'Meta reaberta. Mova o cartão para ' + M.CFG.listaMetas + '.');
+        salvar(novoMeta, 'Meta reaberta | Mova o cartão para ' + M.CFG.listaMetas + '.');
       };
       if ($('encerrarSim')) $('encerrarSim').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
@@ -358,7 +350,7 @@
           meta = novoMeta;
           if (o.aoSalvar) o.aoSalvar(meta);
           return M.autorizado(o.t).then(function (ok) {
-            if (!ok) return 'Meta encerrada. Mova o cartão para a lista ' + M.CFG.listaEncerradas + '.';
+            if (!ok) return 'Meta encerrada | Mova o cartão para ' + M.CFG.listaEncerradas + '.';
             return M.garantirLista(o.t, M.CFG.listaEncerradas, 'top').then(function (l) {
               return M.rest(o.t, 'PUT', '/cards/' + o.card.id, { idList: l.id, pos: 'top' });
             }).then(function () { return 'Meta encerrada e cartão movido para ' + M.CFG.listaEncerradas + '.'; });
