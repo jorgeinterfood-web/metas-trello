@@ -390,3 +390,27 @@ details.mais summary:hover { text-decoration: underline; }
   #app .det-barra { gap: 12px; }
   .resumo-financeiro { padding: 16px; }
 }
+
+/* v15: período uniforme, subtrações vermelhas e tags mais compactas. */
+:root { --metas-tag-largura: 164px; }
+#app .det-periodo, #app .det-periodo > span {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+#app .hist-negativo { color: var(--late-texto); white-space: nowrap; }
+#app .hist-positivo { color: var(--ok-texto); white-space: nowrap; }
+.det-grade { container-type: inline-size; }
+.det-grade > section + section {
+  border-left: 1px solid var(--borda);
+  padding-left: 20px;
+  align-self: stretch;
+}
+@container (max-width: 751px) {
+  .det-grade > section + section {
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid var(--borda);
+    padding-top: 20px;
+  }
+}

@@ -143,7 +143,7 @@
     function resumo() {
       var m = meta, r = D.r, principal, titulo;
       if (m.tipo === 'q') {
-        titulo = ehTaxa() ? 'Percentual atual' : 'Progresso da meta';
+        titulo = ehTaxa() ? 'Percentual atual' : 'Progresso geral';
         principal = '<span class="forte num">' + esc(f(r.atual)) + '</span> <span class="sub">' + (m.dir === 'down' || ehTaxa() ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
 
       } else if (m.tipo === 'e') {
@@ -232,10 +232,9 @@
       var linhas = [];
       for (var i = h.length - 1; i >= 0 && (st.todos || linhas.length < 8); i--) {
         var e = h[i], ant = i > 0 ? h[i - 1][1] : (meta.histBase !== undefined ? meta.histBase : meta.vIni), dif = e[1] - ant;
-        var bom = meta.dir === 'down' ? dif <= 0 : dif >= 0;
         var tdif = ehTaxa() ? M.pontos(meta, dif) : f(Math.abs(dif));
         linhas.push('<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
-          '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (bom ? 'dif-mais' : 'dif-menos') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
+          '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (dif < 0 ? 'hist-negativo' : 'hist-positivo') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
           '<span class="sub hist-quem">' + esc(e[3] || '') + (e[4] ? '. ' + esc(e[4]) : '') + '</span></div>');
       }
       var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';

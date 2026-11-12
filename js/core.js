@@ -373,9 +373,9 @@
       var ctx=document.createElement('canvas').getContext('2d');
       if (!ctx) return;
       ctx.font=estilo.font || (estilo.fontWeight+' '+estilo.fontSize+' '+estilo.fontFamily);
-      var textos=Object.keys(SIT).map(function(k){return SIT[k].label;}).concat(['Adiantado','Sem dias úteis','Sem etapas','Etapas indisponíveis']);
+      var textos=['No ritmo','Atrasado','Não atingido','Atingido','Pendente','A iniciar','Adiantado','Em andamento','Superado','Sem etapas','Sem dias úteis'];
       var largura=0;
-      textos.forEach(function(txt){largura=Math.max(largura,ctx.measureText(txt+': 000,00%').width);});
+      textos.forEach(function(txt){largura=Math.max(largura,ctx.measureText(txt+': 000,0%').width);});
       Array.prototype.forEach.call(tags,function(tag){largura=Math.max(largura,ctx.measureText(tag.textContent).width);});
       largura=Math.ceil(largura + parseFloat(estilo.paddingLeft || 0) + parseFloat(estilo.paddingRight || 0) + 4);
       document.documentElement.style.setProperty('--metas-tag-largura',largura+'px');
