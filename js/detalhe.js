@@ -117,7 +117,8 @@
         return ['Esperado até ontem: ' + r.etapasEsperadas + (r.etapasEsperadas === 1 ? ' etapa.' : ' etapas.')];
       }
       if (ehTaxa()) {
-        var out = ['Objetivo: ' + (m.dir === 'down' ? 'no máximo ' : 'pelo menos ') + f(m.alvo) + '.'];
+        if (r.atual === m.alvo) return [];
+        var out = ['Objetivo ' + (m.dir === 'down' ? 'máximo: ' : 'mínimo: ') + f(m.alvo) + '.'];
         if (r.faltaPontos > 0) out.push('Restante para o objetivo final: ' + M.pontos(m,r.faltaPontos) + '.');
         return out;
       }
@@ -144,7 +145,8 @@
       var m = meta, r = D.r, principal, titulo;
       if (m.tipo === 'q') {
         titulo = ehTaxa() ? 'Percentual atual' : 'Progresso geral';
-        principal = '<span class="forte num">' + esc(f(r.atual)) + '</span> <span class="sub">' + (m.dir === 'down' || ehTaxa() ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
+        principal = '<span class="forte num">' + esc(f(r.atual)) + '</span>';
+        if (!ehTaxa()) principal += ' <span class="sub">' + (m.dir === 'down' ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
 
       } else if (m.tipo === 'e') {
         titulo = 'Etapas concluídas';
@@ -160,7 +162,7 @@
       var linhas = feedback(itens);
       return '<section class="det-resumo" aria-label="' + titulo + '"><h3 class="det-titulo">' + titulo + '</h3>' +
         '<div class="det-topo"><div class="det-valor">' + principal + '</div>' + (r.temBarra ? '' : M.selo(r)) + '</div>' +
-        (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: titulo, texto: ehTaxa() ? f(r.atual) + '. Objetivo ' + (m.dir === 'down' ? 'no máximo ' : 'pelo menos ') + f(m.alvo) : undefined }) + '<span class="det-status selo sit-' + r.info.cls + '">' + esc(M.textoBadge(m,r)) + '</span></div>' : '') +
+        (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: titulo, texto: ehTaxa() ? f(r.atual) + (r.atual === m.alvo ? '' : '. Objetivo ' + (m.dir === 'down' ? 'máximo: ' : 'mínimo: ') + f(m.alvo)) : undefined }) + '<span class="det-status selo sit-' + r.info.cls + '">' + esc(M.textoBadge(m,r)) + '</span></div>' : '') +
         linhas + '</section>';
     }
 

@@ -312,7 +312,6 @@
       if (meta.tipo === 'q' && meta.fmt === 'p') {
         r.semRitmo = true;
         r.fill = Math.max(0, Math.min(100, cur));
-        r.marcaEm = Math.max(0, Math.min(100, meta.alvo));
         r.faltaPontos = meta.dir === 'down' ? cur - meta.alvo : meta.alvo - cur;
         if (r.antes) r.sit = 'future';
         else if (r.depois || meta.encerrada) r.sit = atingiu ? 'hit' : 'late';
@@ -547,18 +546,13 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  // O marcador é exclusivo de taxas: ali ele indica o percentual-alvo.
-  // Ritmo esperado é explicado em texto, sem um segundo significado na barra.
   function barra(r, opts) {
     opts = opts || {};
-    var pos = r.marcaEm === undefined ? null : r.marcaEm;
-    var titulo = opts.texto || ('Progresso: ' + numBR(r.pct, 1) + '%');
-    if (pos !== null) titulo = opts.texto || ('O traço marca o objetivo de ' + numBR(r.marcaEm) + '%');
-    var valor = pos !== null ? r.fill : Math.max(0, Math.min(100, r.pct));
+    var valor = r.semRitmo ? r.fill : Math.max(0, Math.min(100, r.pct));
+    var titulo = opts.texto || ((r.semRitmo ? 'Percentual atual: ' : 'Progresso: ') + numBR(valor, 1) + '%');
     return '<div class="barra' + (opts.grossa ? ' barra-grossa' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + valor +
       '" aria-valuetext="' + esc(titulo) + '" aria-label="' + esc(opts.label || 'Progresso') + '" title="' + esc(titulo) + '">' +
-      '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div>' +
-      (pos !== null ? '<div class="barra-marca" style="left:' + pos + '%"></div>' : '') + '</div>';
+      '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div></div>';
   }
   function selo(r) { return '<span class="selo sit-' + r.info.cls + '">' + esc(r.rotulo || r.info.label) + '</span>'; }
   function avatar(m, tam) {

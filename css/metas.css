@@ -153,7 +153,6 @@ html[data-color-mode="dark"] #app .seg button[aria-pressed="true"] { background:
 .barra { position: relative; height: 8px; border-radius: 4px; background: var(--trilho); }
 .barra-grossa { height: 10px; border-radius: 5px; }
 .barra-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; }
-.barra-marca { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--texto); }
 .sit-ok.barra-fill { background: var(--ok); } .sit-risk.barra-fill { background: var(--risk); }
 .sit-late.barra-fill { background: var(--late); } .sit-hit.barra-fill { background: var(--hit); }
 .sit-neutral.barra-fill { background: var(--sub); } .sit-azul.barra-fill { background: var(--azul); }
