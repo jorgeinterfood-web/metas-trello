@@ -16,11 +16,13 @@
   function selo(t, montar) {
     return {
       dynamic: function () {
-        return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('badges')]).then(function (res) {
+        return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('id','badges')]).then(function (res) {
           var m = res[0];
           if (!m) return { text: '' };
+          return M.prepararCard(t,res[1],m).then(function(){
           var r = M.avaliar(m, res[1].badges);
-          return montar(m, r) || { text: '' };
+          if(res[1].etapasErro) return {text:'Etapas indisponíveis',color:'light-gray',refresh:300};
+          return montar(m, r) || { text: '' }; });
         });
       }
     };

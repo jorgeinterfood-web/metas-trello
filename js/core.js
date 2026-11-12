@@ -8,7 +8,8 @@
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function parse(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
-  function hoje() { return iso(new Date()); }
+  function hoje() { var partes=new Intl.DateTimeFormat('en-CA',{timeZone:CFG.fusoHorario || 'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()); var d={};partes.forEach(function(p){d[p.type]=p.value;});return d.year+'-'+d.month+'-'+d.day; }
+  function dataCartao(s, fim) { return new Date(s + (fim ? 'T23:59:59.999' : 'T00:00:00.000') + (CFG.deslocamentoUTC || '-03:00')).toISOString(); }
   function addDias(s, n) { var d = parse(s); d.setDate(d.getDate() + n); return iso(d); }
   function diasEntre(a, b) { return Math.round((parse(b) - parse(a)) / 86400000); }
   function dataBR(s) { var p = s.split('-'); return p[2] + '/' + p[1]; }
@@ -66,24 +67,45 @@
     return frac(meta.alvo) || frac(meta.vIni) ? 2 : 0;
   }
   // Singular de uma unidade digitada no plural ("clientes novos" vira "cliente novo")
-  function singularPalavra(p) {
-    if (p.length < 3) return p;
-    var r = [[/ões$/i, 'ão'], [/ães$/i, 'ão'], [/ãos$/i, 'ão'], [/ais$/i, 'al'], [/éis$/i, 'el'], [/eis$/i, 'il'], [/óis$/i, 'ol'], [/uis$/i, 'ul'],
-      [/^meses$/i, 'mês'], [/ns$/i, 'm'], [/([rz])es$/i, '$1'], [/s$/i, '']];
-    for (var i = 0; i < r.length; i++) if (r[i][0].test(p)) return p.replace(r[i][0], r[i][1]);
-    return p;
+  function unidade(txt) {
+    return String(txt || '').trim().split(/\s+/).map(function (p) {
+      var baixo=p.toLocaleLowerCase('pt-BR');
+      if (/^(clientes?|pedidos?|vendas?|visitas?|unidades?|contatos?|páginas?|horas?|dias?|meses?|países?|bônus|lápis|novos?|novas?|ativos?|ativas?)$/.test(baixo)) return baixo;
+      return /^[A-ZÁÉÍÓÚÇ]{2,}s?$/.test(p) ? p : baixo;
+    }).join(' ');
   }
-  function singular(txt) { return String(txt).split(' ').map(singularPalavra).join(' '); }
+  function pluralUnidade(txt) { var mapa={cliente:'clientes',pedido:'pedidos',venda:'vendas',visita:'visitas',unidade:'unidades',contato:'contatos',página:'páginas',hora:'horas',dia:'dias',mês:'meses',país:'países',novo:'novos',nova:'novas',ativo:'ativos',ativa:'ativas'};return unidade(txt).split(' ').map(function(p){return mapa[p] || p;}).join(' '); }
+  function singular(txt) {
+    var mapa = { clientes:'cliente', novos:'novo', novas:'nova', pedidos:'pedido', vendas:'venda', unidades:'unidade', visitas:'visita', contatos:'contato', páginas:'página', horas:'hora', dias:'dia', meses:'mês', países:'país', ações:'ação', propostas:'proposta', entregas:'entrega', projetos:'projeto', ativos:'ativo', ativas:'ativa', úteis:'útil', leads:'lead', bônus:'bônus', lápis:'lápis' };
+    return unidade(txt).split(' ').map(function (p) { return mapa[p] || (/^[A-Z]{2,}s$/.test(p) ? p.slice(0,-1) : p); }).join(' ');
+  }
+  function erroUsuario(e) {
+    if (e && e.usuario) return e.message;
+    var msg = String(e && e.message || '');
+    if (/autoriza|permiss|histórico|limite|unidade|número|meta|cartão|data|valor|objetivo/i.test(msg) && !/not found|PluginData|fetch|JSON|TypeError/i.test(msg)) return msg;
+    if (/fetch|network|offline/i.test(msg)) return 'Sem conexão com o Trello. Tente novamente.';
+    return 'Não foi possível concluir a operação. Atualize os dados e tente novamente.';
+  }
+  function falha(txt, code) { var e = new Error(txt); e.usuario = true; e.code = code; return e; }
+  function validarValor(v, meta) {
+    if (!Number.isFinite(v) || Math.abs(v) > 1e12) throw falha('Digite um valor válido de até 1 trilhão.');
+    if (v < 0) throw falha('O valor não pode ser negativo.');
+    if (meta && meta.fmt === 'p' && v > 100) throw falha('Use um percentual entre 0 e 100.');
+    if (meta && Math.abs(v - arred(meta, v)) > 0.000001) throw falha('Use até ' + casasDe(meta) + ' casas decimais.');
+    return v;
+  }
+  function periodoAberto(meta, ref) { var d = ref || hoje(); return !meta.encerrada && d >= meta.ini && d <= meta.fim; }
+
   function ehUm(meta, v) { return Math.abs(arred(meta, v)) === 1; }
   // "Falta 1 cliente" e "Faltam 2 clientes"; dinheiro fica sempre no plural
   function faltam(meta, v, passado) {
-    var um = meta.fmt !== 'r' && ehUm(meta, v);
+    var um = ehUm(meta, v);
     return passado ? (um ? 'Faltou' : 'Faltaram') : (um ? 'Falta' : 'Faltam');
   }
   function fmtValor(meta, v) {
     if (meta.fmt === 'r') return 'R$ ' + numBR(v, 2, 2);
     if (meta.fmt === 'p') return numBR(v, casasDe(meta)) + '%';
-    return numBR(v, casasDe(meta)) + (meta.unit ? ' ' + (ehUm(meta, v) ? singular(meta.unit) : meta.unit) : '');
+    return numBR(v, casasDe(meta)) + (meta.unit ? ' ' + (ehUm(meta, v) ? unidade(meta.unitSingular || singular(meta.unit)) : pluralUnidade(meta.unit)) : '');
   }
   // Rótulo curto para o eixo do gráfico
   function rotuloEixo(meta, v) {
@@ -114,6 +136,7 @@
 
   // Máscara de digitação: pontos de milhar automáticos, vírgula para os decimais, sem letras
   function formatarDigitado(txt, casas) {
+    if (/-/.test(String(txt)) || (casas === 0 && /[,\.]\d{1,2}$/.test(String(txt)))) return String(txt);
     var s = String(txt).replace(/[^0-9,]/g, '');
     var i = s.indexOf(','), inteiro, dec = null;
     if (i >= 0 && casas > 0) {
@@ -144,7 +167,7 @@
       var cb = ev.clipboardData || window.clipboardData;
       if (!cb) return;
       var n = lerNumero(cb.getData('text'));
-      if (isNaN(n)) return;
+      if (!Number.isFinite(n) || n < 0 || Math.abs(n * Math.pow(10, quantas()) - Math.round(n * Math.pow(10, quantas()))) > 0.000001) { ev.preventDefault(); input.value = cb.getData('text'); return; }
       ev.preventDefault();
       input.value = formatarDigitado(numBR(n, quantas()), quantas());
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -152,6 +175,7 @@
   }
   // Dinheiro no estilo de banco: os dígitos entram pelos centavos (50029 vira 500,29)
   function formatarCentavos(txt) {
+    if (/-/.test(String(txt))) return String(txt);
     var dig = String(txt).replace(/\D/g, '').replace(/^0+/, '').slice(0, 13);
     if (!dig) return '';
     return numBR(parseInt(dig, 10) / 100, 2, 2);
@@ -166,7 +190,7 @@
       var cb = ev.clipboardData || window.clipboardData;
       if (!cb) return;
       var n = lerNumero(cb.getData('text'));
-      if (isNaN(n)) return;
+      if (!Number.isFinite(n) || n < 0) { ev.preventDefault(); input.value = cb.getData('text'); return; }
       ev.preventDefault();
       input.value = numBR(n, 2, 2);
       input.dispatchEvent(new Event('input', { bubbles: true }));
@@ -183,14 +207,14 @@
 
   // ---------- Situação ----------
   var SIT = {
-    ok: { label: 'No ritmo esperado', cls: 'ok', badge: 'green' },
+    ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
     risk: { label: 'Abaixo do ritmo', cls: 'risk', badge: 'yellow' },
     late: { label: 'Prazo encerrado', cls: 'late', badge: 'red' },
-    hit: { label: 'Meta atingida', cls: 'hit', badge: 'blue' },
-    noalvo: { label: 'Objetivo alcançado', cls: 'hit', badge: 'blue' },
+    hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
+    noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
     andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
-    abaixo: { label: 'Objetivo pendente', cls: 'risk', badge: 'yellow' },
-    wait: { label: 'Aguardando avaliação', cls: 'neutral', badge: 'light-gray' },
+    abaixo: { label: 'Fora do objetivo', cls: 'risk', badge: 'yellow' },
+    wait: { label: 'A avaliar', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingida', cls: 'late', badge: 'red' },
     parcial: { label: 'Parcial', cls: 'risk', badge: 'yellow' },
@@ -245,8 +269,9 @@
     var r = { tipo: meta.tipo };
     var modo = meta.ritmo === 'corridos' ? 'corridos' : 'uteis';
     var total = contarDias(meta.ini, meta.fim, modo);
-    var passados = d < meta.ini ? 0 : contarDias(meta.ini, d > meta.fim ? meta.fim : d, modo);
-    var frac = total ? passados / total : 1;
+    var referencia = d > meta.fim ? meta.fim : addDias(d, -1);
+    var passados = d <= meta.ini ? 0 : contarDias(meta.ini, referencia, modo);
+    var frac = total ? passados / total : 0;
     r.total = total; r.passados = passados;
     r.esperado = Math.round(frac * 100);
     r.antes = d < meta.ini;
@@ -277,7 +302,7 @@
         r.diaria = diaria(meta, d);
         // Projeção linear pelo ritmo realizado até agora
         // Só a partir de um terço do período: antes disso a projeção oscila demais
-        if (r.depois) r.projecao = cur;
+        if (r.depois || meta.encerrada) r.projecao = cur;
         else if (total && passados / total >= 1 / 3) r.projecao = meta.vIni + (cur - meta.vIni) * total / passados;
       }
       var atingiu = meta.tipo === 'e' ? r.etapas > 0 && r.feitas >= r.etapas : r.falta <= 0;
@@ -308,9 +333,10 @@
     }
     r.info = SIT[r.sit];
     r.rotulo = r.sit === 'future' ? 'Começa em ' + dataBR(meta.ini) : r.info.label;
+    if (!total && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem dias úteis';
     if (r.sit === 'late' && meta.encerrada) r.rotulo = 'Encerrada sem atingir';
-    if (meta.tipo === 'q' && meta.fmt === 'p' && r.sit === 'hit') r.rotulo = 'Objetivo alcançado';
-    if (r.sit === 'ok' && (meta.tipo === 'e' ? r.difEtapas > 0 : arred(meta, r.dif) > 0)) r.rotulo = 'À frente do ritmo';
+    if (meta.tipo === 'q' && meta.fmt === 'p' && r.sit === 'hit') r.rotulo = 'No objetivo';
+    if (r.sit === 'ok' && (meta.tipo === 'e' ? r.difEtapas > 0 : arred(meta, r.dif) > 0)) r.rotulo = 'Adiantada';
     if (meta.tipo === 'e' && !r.etapas && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem etapas';
     return r;
   }
@@ -338,7 +364,7 @@
     if (!r.temBarra) return r.rotulo;
     if (meta.tipo === 'e') return r.rotulo + ' · ' + r.feitas + ' de ' + r.etapas;
     if (r.semRitmo) return r.rotulo + ' · ' + fmtValor(meta, r.atual);
-    return r.rotulo + ' · ' + numBR(r.pct, 1) + '% do percurso';
+    return r.rotulo + ' · ' + numBR(r.pct, 1) + '%';
   }
   function textoMetaDia(meta, r) {
     var d = r.diaria;
@@ -379,24 +405,56 @@
     });
   }
 
+  function prepararCard(t, card, meta) {
+    if (meta.tipo !== 'e') return Promise.resolve(card);
+    return autorizado(t).then(function (ok) {
+      if (!ok) throw falha('Autorize o acesso ao Trello para carregar as etapas.');
+      return rest(t, 'GET', '/cards/' + card.id + '/checklists', {checkItem_fields:'name,state'});
+    }).then(function (cls) {
+      var lista = meta.checklistId ? cls.filter(function (c) { return c.id === meta.checklistId; }) : cls.filter(function (c) { return c.name === 'Etapas'; });
+      if (!lista.length && !meta.checklistId && cls.length === 1) lista = cls;
+      if (lista.length !== 1) throw falha('Mantenha uma única checklist chamada Etapas no cartão.');
+      var itens = lista[0].checkItems || [];
+      card.badges = { checkItems: itens.length, checkItemsChecked: itens.filter(function (i) { return i.state === 'complete'; }).length };
+      delete card.etapasErro; return card;
+    }).catch(function (e) { card.etapasErro = erroUsuario(e); card.badges = {checkItems:0,checkItemsChecked:0}; return card; });
+  }
+
   // Todas as metas do quadro, em qualquer lista (cartões abertos)
   function carregarMetas(t) {
     return t.cards('id', 'name', 'idList', 'members', 'badges', 'url').then(function (cards) {
       return Promise.all(cards.map(function (c) {
-        return t.get(c.id, 'shared', CHAVE).then(function (m) { return m ? { card: c, meta: m } : null; }, function () { return null; });
+        return t.get(c.id, 'shared', CHAVE).then(function (m) { return m ? prepararCard(t,c,m).then(function () { return {card:c,meta:m}; }) : null; });
       }));
     }).then(function (lista) { return lista.filter(Boolean); });
   }
 
   function salvarMeta(t, escopo, meta) {
-    meta.v = 1;
-    var s = JSON.stringify(meta);
-    while (s.length > LIMITE && meta.hist && meta.hist.length > 2) {
-      meta.hist.splice(0, 1);
-      s = JSON.stringify(meta);
+    function gravar() {
+      if (t.memberCanWriteToModel && !t.memberCanWriteToModel(escopo === 'card' ? 'card' : 'board')) return Promise.reject(falha('Você não tem permissão para alterar este cartão.'));
+      return Promise.all([t.get(escopo, 'shared', CHAVE), contexto(t)]).then(function (dados) {
+        var atual = dados[0], ctx = dados[1];
+        if (!ctx.admin) {
+          if (!atual || !atual.dono || atual.dono.id !== ctx.eu.id || atual.quem === 'admin' || !periodoAberto(atual) || atual.tipo !== 'q') throw falha('Você não tem permissão para alterar esta meta.');
+          var protegido = function (x) { var c=JSON.parse(JSON.stringify(x)); delete c.hist; delete c.diaria; delete c.rev; delete c.v; return JSON.stringify(c); };
+          if (protegido(atual) !== protegido(meta)) throw falha('Somente administradores podem editar a configuração da meta.');
+        }
+        if ((atual && atual.rev || '') !== (meta.rev || '')) throw falha('Esta meta mudou em outra tela. Atualize os dados antes de salvar.', 'CONFLICT');
+        var novo = JSON.parse(JSON.stringify(meta));
+        novo.v = 1; novo.rev = Date.now().toString(36) + Math.random().toString(36).slice(2,10);
+        if (JSON.stringify(novo).length > LIMITE) throw falha('Histórico cheio. Use Exportar e resumir histórico para continuar.', 'HISTORY');
+        return t.set(escopo, 'shared', CHAVE, novo).then(function () {
+          return t.get(escopo, 'shared', CHAVE).then(function (checagem) {
+            if (!checagem || checagem.rev !== novo.rev) throw falha('Outra gravação ocorreu ao mesmo tempo. Atualize e confira o histórico.', 'CONFLICT');
+            meta.rev = novo.rev; meta.v = novo.v;
+          });
+        });
+      });
     }
-    if (s.length > LIMITE) return Promise.reject(new Error('Os textos desta meta passaram do limite que o Trello permite guardar. Encurte o critério ou as observações.'));
-    return t.set(escopo, 'shared', CHAVE, meta);
+    // Serializa abas da mesma origem no mesmo navegador. Entre computadores,
+    // a API não fornece compare-and-swap; a revisão detecta conflitos conhecidos.
+    if (typeof navigator !== 'undefined' && navigator.locks) return navigator.locks.request('metas:' + escopo, gravar);
+    return gravar();
   }
 
   // Cartão recém-criado pela API demora um pouco para o Trello reconhecer no quadro aberto.
@@ -450,11 +508,11 @@
         .then(function (resp) {
           if (resp.status === 401) {
             return api(t).clearToken().catch(function () {}).then(function () {
-              var e = new Error('A autorização do Power-Up venceu (ela vale 30 dias). Clique em Autorizar e tente de novo.');
+              var e = new Error('Autorize novamente o acesso ao Trello para continuar.');
               e.code = 'AUTH'; throw e;
             });
           }
-          if (!resp.ok) return resp.text().then(function (txt) { throw new Error('O Trello recusou a operação (' + resp.status + '): ' + txt); });
+          if (!resp.ok) return resp.text().then(function (txt) { throw falha(resp.status === 403 ? 'Você não tem permissão para esta operação.' : (resp.status === 429 ? 'Muitas operações em sequência. Aguarde e tente novamente.' : 'O Trello não concluiu a operação. Tente novamente.')); });
           return resp.json();
         });
     });
@@ -478,7 +536,7 @@
   function barra(r, opts) {
     opts = opts || {};
     var pos = r.marcaEm === undefined ? null : r.marcaEm;
-    var titulo = opts.texto || ('Progresso: ' + numBR(r.pct, 1) + '% do percurso');
+    var titulo = opts.texto || ('Progresso: ' + numBR(r.pct, 1) + '%');
     if (pos !== null) titulo = opts.texto || ('O traço marca o objetivo de ' + numBR(r.marcaEm) + '%');
     var valor = pos !== null ? r.fill : Math.max(0, Math.min(100, r.pct));
     return '<div class="barra' + (opts.grossa ? ' barra-grossa' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + valor +
@@ -502,15 +560,15 @@
   }
 
   window.Metas = {
-    CFG: CFG, singular: singular, faltam: faltam, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
+    CFG: CFG, unidade: unidade, pluralUnidade: pluralUnidade, erroUsuario: erroUsuario, validarValor: validarValor, periodoAberto: periodoAberto, singular: singular, faltam: faltam, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
     formatarCentavos: formatarCentavos, mascararDinheiro: mascararDinheiro, mascararValor: mascararValor,
-    iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
+    dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
     numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

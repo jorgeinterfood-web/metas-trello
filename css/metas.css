@@ -264,3 +264,19 @@ details.mais summary:hover { text-decoration: underline; }
   .hist-linha { grid-template-columns: 44px minmax(0, 1fr); }
   .hist-quem { grid-column: 2; }
 }
+
+/* v10: leitura em telas estreitas e mensagens sem repetição. */
+.periodo-controles { flex-wrap: wrap; min-width: 0; }
+.aviso-painel:empty { display: none; }
+.aviso-painel { padding: 8px 24px; color: var(--aviso-texto); }
+.hist { max-height: 480px; overflow: auto; }
+.detalhe .linha { flex-wrap: wrap; }
+@media (max-width: 900px) {
+  #app .linha-tab.meta > span:nth-child(3) { display: block; grid-column: 1 / -1; white-space: normal; }
+}
+@media (max-width: 480px) {
+  .grade { grid-template-columns: minmax(0, 1fr); }
+  .form-rodape { flex-wrap: wrap; }
+  .periodo-nome { min-width: 140px; }
+  .registro-valor { max-width: 100%; }
+}

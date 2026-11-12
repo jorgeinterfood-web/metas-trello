@@ -1,72 +1,111 @@
-# Power-Up Metas
+# Power-Up Metas, versão 10
 
-Metas por pessoa no Trello: de valor (R$, número ou percentual), por etapas ou por avaliação.
+## Atualizar
 
-## Arquivos
-- `index.html`: conector que o Trello carrega
-- `painel.html`: painel em tela cheia, com a equipe, o detalhe de cada meta e o formulário de criar e editar
-- `meta.html`: seção Meta no verso do cartão
-- `js/detalhe.js`: detalhe da meta (progresso, meta do dia, atualização, gráfico, histórico), usado no painel e no cartão
-- `js/form.js`: formulário de criar, transformar cartão em meta e editar
-- `js/config.js`: chave da API, nomes das listas, feriados locais
-- `css/metas.css`: cores claro e escuro no padrão do Trello
+Este pacote contém os arquivos alterados por inteiro. Substitua os arquivos de
+mesmo nome no GitHub, mantendo js/config.js e os ícones já existentes. Os HTMLs
+usam ?v=10. Após a publicação do GitHub Pages, recarregue o Trello e reabra o
+painel. nova-meta.html agora é um encaminhamento para o painel atual.
 
-## Capacidades a ativar no admin de Power-Ups
-Board buttons, Card badges, Card back section, Card buttons.
+Antes da atualização, guarde uma cópia do código atual. Não é necessário apagar
+ou recriar cartões. Os dados existentes continuam sendo lidos.
 
-## Onde os dados ficam
-Nos dados do Power-Up de cada cartão (limite do Trello: cerca de 4 mil caracteres por cartão). O histórico mais antigo é descartado se chegar perto do limite.
+## Textos e unidades
 
-## Regras
-- Só admins do quadro criam, editam, avaliam e encerram metas.
-- Todas as metas ficam visíveis para todos no painel. Quem tem meta atualiza o próprio valor pelo cartão ou pelo painel.
-- Cartões de meta não devem ser arquivados: cartão arquivado some do painel.
-- Feriados nacionais já são considerados nos dias úteis. Feriados locais vão em `feriadosExtras`, no config.js.
-- Os arquivos carregam com `?v=9` nos endereços. Ao publicar uma nova versão, troque o número nos HTMLs para o Trello não usar a cópia antiga.
+- Unidades comuns em minúsculas; siglas são preservadas.
+- Campo Unidade no plural e campo Unidade no singular, com sugestão editável.
+- Metas antigas usam a normalização de exibição. Confira unidades personalizadas
+  ao editar; não há algoritmo capaz de inferir todos os plurais com segurança.
+- Situações totais: No ritmo, Adiantada, Abaixo do ritmo, Atingida, Prazo
+  encerrado, Encerrada sem atingir. Taxas: No objetivo / Fora do objetivo.
+- Situação diária: Em andamento, Atingido ou Superado, na seção Objetivo de hoje.
+- Filtros por situação, sem depender da cor.
+- Ajuda de cálculo recolhida por padrão; sucessos rotineiros curtos.
+- Mensagens técnicas são traduzidas para instruções em português.
 
+## Cálculos e períodos
 
-## Atualização v9: barras e situações
+- O progresso mede o avanço entre o valor inicial e o objetivo.
+- O consolidado financeiro usa a mesma base, somando os avanços e os objetivos
+  líquidos das metas de crescimento em dinheiro. Não inclui reduções.
+- O consolidado inclui apenas metas com as mesmas datas do período selecionado.
+  As demais continuam listadas por pessoa, sem serem somadas como se fossem mensais.
+- Ritmo: comparação com os dias encerrados, até ontem. Evita atraso artificial
+  na manhã do primeiro dia. Depois do prazo, considera o período completo.
+- Objetivo diário: saldo no início de hoje dividido pelos dias restantes,
+  arredondado para cima na precisão da meta; permanece fixo durante o dia.
+- Quantidades podem ter casas decimais se os valores iniciais/objetivos forem
+  configurados com elas. Entradas incompatíveis são rejeitadas, não convertidas
+  silenciosamente para outro número.
+- Taxas: valores entre 0 e 100. Dinheiro/quantidade: não negativos e até 1 trilhão.
+- Não se aceitam períodos sem dias úteis quando a contagem é em dias úteis.
+- Novos registros são permitidos apenas dentro das datas da meta e enquanto ela
+  estiver aberta. Para corrigir um período passado, um administrador deve editar
+  explicitamente suas datas e reabrir a meta. Não há lançamento retroativo.
+- O dia do negócio é America/Sao_Paulo e o vencimento do cartão é 23:59:59, -03:00.
+  Configurações opcionais fusoHorario/deslocamentoUTC podem alterar esses padrões;
+  devem ser compatíveis entre si. Não é necessário adicionar nada ao config atual.
 
-Este ZIP é um pacote de atualização: inclui apenas arquivos alterados, completos.
-Extraia e substitua os arquivos de mesmo nome no repositório. Preserve o config.js,
-os ícones e os demais arquivos que já estão publicados. Depois da publicação,
-feche e abra o painel e o cartão. As referências dos arquivos agora usam ?v=9.
-O arquivo antigo nova-meta.html não participa do fluxo atual e pode ser removido.
+## Etapas e autorização
 
-### Barras
-- No painel da equipe, cada meta continua com uma barra total.
-- No detalhe do cartão e do painel, dinheiro e quantidade de crescimento ganham
-  duas barras: Progresso da meta e Objetivo de hoje.
-- O objetivo de hoje é o saldo no início do dia dividido pelos dias restantes,
-  arredondado para cima na precisão da meta. Ele fica fixo durante o dia.
-- O realizado de hoje é a variação líquida do total desde o início do dia.
-  Correções do total também alteram esse realizado; não há data retroativa.
-- O primeiro registro do dia guarda a referência diária nos dados da meta.
-  Para metas existentes, ela é reconstruída a partir do histórico disponível.
-- No dia seguinte, o objetivo diário é recalculado a partir do saldo restante.
-- Em dias não úteis, metas que contam dias úteis não exibem barra diária.
-  Registros nesses dias continuam contando para o total.
-- Percentuais, redução e etapas mantêm uma barra adequada ao seu tipo.
-- O traço de ritmo esperado saiu das barras totais. Em percentuais, o traço
-  permanece porque indica o valor-alvo da taxa.
+A meta usa sua checklist vinculada, não todas as listas do cartão. Metas novas
+salvam checklistId. Nas antigas, usa a única checklist chamada Etapas, ou a única
+checklist existente. Havendo ambiguidade, mantenha uma única checklist chamada
+Etapas. O progresso só é mostrado após obter os itens corretos pela API.
 
-### Situações
-- No ritmo esperado: o realizado corresponde ao esperado até hoje.
-- À frente do ritmo: o realizado está à frente do esperado até hoje.
-- Abaixo do ritmo: o realizado está atrás do esperado até hoje.
-- O ritmo compara o realizado com a expectativa acumulada até o fim de hoje,
-  considerando dias úteis ou corridos. A antiga tolerância de 5 pontos foi removida.
-- Meta atingida: o valor real alcançou o objetivo, sem arredondamento antecipado.
-- Prazo encerrado: o período acabou sem alcançar o objetivo.
-- Encerrada sem atingir: um admin encerrou a meta sem alcançar o objetivo.
-- Objetivo alcançado / Objetivo pendente: usados em taxas percentuais, inclusive
-  quando o objetivo é reduzir uma taxa. Diferenças são pontos percentuais.
-- A barra diária tem situações próprias: objetivo de hoje pendente, atingido ou
-  superado. A pendência durante o dia não é marcada como atraso.
-- O percentual exibido tem até uma casa decimal e não chega a 100% por
-  arredondamento quando o objetivo real ainda não foi alcançado.
+É necessário autorizar o acesso ao Trello para carregar etapas e sincronizar os
+campos nativos. Sem autorização, a interface informa o que não foi carregado ou
+sincronizado, sem inventar progresso. A autorização continua read,write / 30 dias.
 
-### Validação
-Sintaxe dos JavaScripts, 17 cenários de cálculo e testes de geração do HTML e de
-registro com o cliente do Trello simulado. A aparência e a integração real ainda
-precisam ser verificadas dentro do Trello.
+## Gravações e recuperação
+
+- Permissão efetiva de escrita e papel do usuário são reavaliados ao salvar.
+- Revisão por meta detecta cópias antigas e conflitos visíveis. Web Locks serializa
+  abas da mesma origem no mesmo navegador, quando disponível.
+- LIMITAÇÃO: t.set não fornece transação ou compare-and-swap. Revisão, checagem após
+  gravação e locks locais reduzem o risco, mas não garantem exclusão mútua entre
+  computadores. Autorização inviolável por responsável e gravações atômicas exigem
+  um serviço de dados com autenticação; o GitHub Pages sozinho não o oferece.
+- Não mantenha versões antigas do Power-Up abertas ao atualizar.
+- Falhas preservam valor e observação; há Atualizar dados para resolver conflitos.
+- Criações parciais retomam o mesmo cartão na mesma sessão. Marcadores na descrição
+  ajudam a reencontrar operações com resposta perdida. Se fechar a tela durante
+  uma criação incompleta, confira o cartão criado antes de iniciar outra.
+- Repetição usa marcador de origem e período para reencontrar cartões já gerados
+  pela v10 e completar checklists. Cartões repetidos por versões anteriores não
+  têm esse marcador: confira o período antes de repetir.
+- Alterações de tipo, formato, unidade, precisão ou valor inicial são bloqueadas
+  quando há registros. Crie outra meta para mudar o significado dos valores.
+- Responsável e datas são sincronizados sem remover outros membros do cartão;
+  falhas de sincronização aparecem como sucesso parcial.
+- Conclusão nativa do cartão é sincronizada após salvar quando houver autorização.
+  Reabrir também tenta mover o cartão de volta à lista Metas.
+
+## Histórico
+
+Não há mais exclusão automática para liberar espaço. Ao atingir a margem de
+3.800 caracteres, o registro é recusado e permanece preenchido na tela.
+
+Exportar histórico baixa JSON com os dados da meta. Ver histórico completo mostra
+os registros ainda disponíveis no cartão. Exportar e resumir histórico, exclusivo
+de administradores, primeiro inicia o download e depois pede confirmação explícita.
+Confira o arquivo salvo antes de confirmar. O resumo mantém o último registro e
+sua base anterior; o gráfico indica somente os pontos disponíveis, sem recriar
+registros removidos. Arquivos exportados podem conter nomes e observações da equipe.
+
+Registros que versões antigas já excluíram não podem ser recuperados pelo código.
+
+## Atualização e interface
+
+O painel recarrega dados a cada 30 segundos e quando o Trello sinaliza mudanças,
+sem substituir formulários ou rascunhos de registros/avaliações. Há atualização
+manual no painel. A leitura de dados falha explicitamente, em vez de esconder metas.
+Valores continuam visíveis em telas estreitas. Títulos têm acesso ao texto completo.
+
+## Validação
+
+Sintaxe de todos os JavaScripts, testes de cálculos, unidades, precisão, validação,
+permissões, conflitos, limite do histórico, geração do detalhe, registro diário,
+consolidado, avaliações na atenção e retomada de criação após erro, com Trello
+simulado. Não houve alteração no GitHub ou no Trello. A inspeção visual e a
+integração autenticada precisam ser verificadas no Trello após publicar.

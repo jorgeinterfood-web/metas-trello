@@ -9,9 +9,9 @@
   function carregar() {
     return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('id', 'name', 'members', 'badges'), M.contexto(t)]).then(function (res) {
       if (!res[0]) { app.innerHTML = ''; ajustar(); return; }
-      M.detalhe(app, { t: t, escopo: 'card', meta: res[0], card: res[1], ctx: res[2], ajustar: ajustar });
+      return M.prepararCard(t,res[1],res[0]).then(function () { M.detalhe(app, { t: t, escopo: 'card', meta: res[0], card: res[1], ctx: res[2], ajustar: ajustar }); });
     }).catch(function (e) {
-      app.innerHTML = '<p class="erro">Não foi possível carregar a meta. ' + esc(e.message || '') + '</p>';
+      app.innerHTML = '<p class="erro">Não foi possível carregar a meta. ' + esc(M.erroUsuario(e)) + '</p>';
       ajustar();
     });
   }

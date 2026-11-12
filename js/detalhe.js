@@ -31,13 +31,13 @@
     }
     var porDia = {}, ordem = [];
     h.forEach(function (e) { if (!(e[0] in porDia)) ordem.push(e[0]); porDia[e[0]] = e[1]; });
-    var real = [[0, meta.vIni]];
+    var real = meta.histCortado ? [] : [[0, meta.vIni]];
     ordem.forEach(function (d) { real.push([xDe(d), porDia[d]]); });
     var hojeIso = M.hoje(), xHoje = null;
     if (hojeIso >= meta.ini && hojeIso <= meta.fim) {
       xHoje = xDe(hojeIso);
       var ult = real[real.length - 1];
-      if (ult[0] < xHoje) real.push([xHoje, ult[1]]);
+      if (ult && ult[0] < xHoje) real.push([xHoje, ult[1]]);
     }
 
     var vals = esp.map(function (p) { return p[1]; }).concat(real.map(function (p) { return p[1]; })).concat([meta.alvo]);
@@ -67,7 +67,7 @@
     var linhaHoje = xHoje === null ? '' :
       '<line x1="' + X(xHoje).toFixed(1) + '" y1="' + mt + '" x2="' + X(xHoje).toFixed(1) + '" y2="' + (mt + ph) + '" style="stroke:var(--fraco)" stroke-width="1" stroke-dasharray="2 3"/>' +
       '<text x="' + X(xHoje).toFixed(1) + '" y="' + (mt - 6) + '" text-anchor="middle" font-size="11" style="fill:var(--sub)">Hoje</text>';
-    var bolas = real.slice(1, ordem.length + 1).map(function (p, k) {
+    var bolas = real.slice(meta.histCortado ? 0 : 1, ordem.length + (meta.histCortado ? 0 : 1)).map(function (p, k) {
       return '<circle cx="' + X(p[0]).toFixed(1) + '" cy="' + Y(p[1]).toFixed(1) + '" r="3.5" style="fill:' + cor + '"><title>' + M.dataBR(ordem[k]) + ': ' + esc(M.fmtValor(meta, p[1])) + '</title></circle>';
     }).join('');
     var desc = 'Evolução de ' + M.fmtValor(meta, meta.vIni) + ' a ' + M.fmtValor(meta, M.valorAtual(meta)) + ' entre ' + M.dataBR(meta.ini) + ' e ' + M.dataBR(meta.fim) + '. Objetivo: ' + M.fmtValor(meta, meta.alvo) + '.';
@@ -82,7 +82,7 @@
 
   // o: { t, escopo, meta, card, ctx, aoSalvar, ajustar, abrirCartao }
   M.detalhe = function (el, o) {
-    var st = { msg: null, ocupado: false, reg: null, obs: false, confirmar: false, alterarAval: false };
+    var st = { msg: null, ocupado: false, reg: null, obs: false, rascunho: '', nota: '', todos: false, resumir: false, confirmar: false, alterarAval: false };
     var meta = o.meta;
     var D = {};
 
@@ -91,7 +91,7 @@
     function reg() { return podeSomar() ? (st.reg || 'add') : 'tot'; }
     function ajustar() { if (o.ajustar) o.ajustar(); }
     function podeAtualizar() {
-      if (meta.encerrada || meta.tipo !== 'q') return false;
+      if (!M.periodoAberto(meta) || meta.tipo !== 'q') return false;
       if (o.ctx.admin) return true;
       return meta.quem !== 'admin' && meta.dono && meta.dono.id === o.ctx.eu.id;
     }
@@ -112,10 +112,11 @@
       if (m.tipo === 'a') return [];
       if (m.tipo === 'e') {
         if (!r.etapas) return ['Adicione as etapas à checklist do cartão.'];
+        if (o.card.etapasErro) return ['As etapas ainda não foram carregadas.'];
         if (r.sit === 'hit') return ['Todas as etapas foram concluídas.'];
         var pendentes = r.etapas - r.feitas;
         if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + ' com ' + pendentes + (pendentes === 1 ? ' etapa pendente.' : ' etapas pendentes.')];
-        return ['Esperado até hoje: ' + r.etapasEsperadas + ' de ' + r.etapas + ' etapas. ' + M.textoDiff(m, r) + '.'];
+        return ['Esperado até ontem: ' + r.etapasEsperadas + ' de ' + r.etapas + (r.etapas === 1 ? ' etapa. ' : ' etapas. ') + M.textoDiff(m, r) + '.'];
       }
       if (ehTaxa()) {
         var limite = m.dir === 'down' ? 'no máximo ' : 'pelo menos ';
@@ -126,10 +127,10 @@
       }
       if (r.sit === 'hit') {
         var extra = m.dir === 'down' ? m.alvo - r.atual : r.atual - m.alvo;
-        return [extra > 0 ? 'Objetivo superado em ' + f(extra) + '.' : 'O valor registrado alcançou o objetivo do período.'];
+        return [extra > 0 ? 'Objetivo superado em ' + f(extra) + '.' : ''];
       }
       if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + '. ' + M.faltam(m, r.falta, true) + ' ' + f(r.falta) + ' para o objetivo.'];
-      return ['Esperado até hoje: ' + f(M.arred(m, r.valorEsperado)) + '. ' + M.textoDiff(m, r) + '.',
+      return ['Esperado até ontem: ' + f(M.arred(m, r.valorEsperado)) + '. ' + (M.textoDiff(m, r).charAt(0).toUpperCase() + M.textoDiff(m, r).slice(1)) + '.',
         M.faltam(m, r.falta) + ' ' + f(r.falta) + ' para o objetivo do período, até ' + data(m.fim) + '.'];
     }
 
@@ -141,13 +142,13 @@
         if (!ehTaxa()) pct = '<span class="forte num det-pct">' + M.numBR(r.pct, 1) + '%</span>';
       } else if (m.tipo === 'e') {
         titulo = 'Etapas concluídas';
-        principal = '<span class="grande num">' + r.feitas + ' de ' + r.etapas + '</span><span class="sub">etapas</span>';
+        principal = '<span class="grande num">' + r.feitas + ' de ' + r.etapas + '</span><span class="sub">' + (r.etapas === 1 ? 'etapa' : 'etapas') + '</span>';
         pct = '<span class="forte num det-pct">' + M.numBR(r.pct, 1) + '%</span>';
       } else {
         titulo = 'Avaliação da meta';
         principal = '<span class="forte">' + (m.aval ? 'Resultado da avaliação' : 'Avaliação em ' + data(m.fim)) + '</span>';
       }
-      var linhas = frases().map(function (txt) { return '<p class="det-frase">' + esc(txt) + '</p>'; }).join('');
+      var linhas = frases().filter(Boolean).map(function (txt) { return '<p class="det-frase">' + esc(txt) + '</p>'; }).join('');
       if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) linhas += '<p class="det-frase sub">O progresso mede o percurso entre o valor inicial de ' + esc(f(m.vIni)) + ' e o objetivo.</p>';
       if (r.parada) linhas += '<p class="det-frase parada">Sem atualização há ' + r.diasSemAtualizar + ' dias.</p>';
       return '<section class="det-resumo" aria-label="' + titulo + '"><h3 class="det-titulo">' + titulo + '</h3>' +
@@ -160,40 +161,42 @@
       var m = meta, d = D.r.diaria;
       if (!d) {
         if (m.tipo === 'q' && m.dir !== 'down' && m.fmt !== 'p' && !m.encerrada && !D.r.antes && !D.r.depois && D.r.sit !== 'hit' && m.ritmo !== 'corridos' && !M.diaUtil(M.hoje())) {
-          return '<section class="det-dia"><h3 class="det-titulo">Objetivo de hoje</h3><p class="det-frase sub">Hoje não entra na contagem de dias úteis. Os registros continuam disponíveis e contam para o progresso total.</p></section>';
+          return '<section class="det-dia"><h3 class="det-titulo">Objetivo de hoje</h3><p class="det-frase sub">Sem objetivo diário hoje. Os registros contam para o total.</p></section>';
         }
         return '';
       }
-      var rot = d.superou ? 'Objetivo de hoje superado' : (d.atingiu ? 'Objetivo de hoje atingido' : 'Objetivo de hoje pendente');
+      var rot = d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento');
       var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
       var status = '<span class="selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + rot + '</span>';
-      var falta = d.atingiu ? (d.superou ? 'Acima do objetivo de hoje: ' + f(d.realizado - d.alvo) + '.' : 'O objetivo de hoje foi concluído.') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo de hoje.';
+      var falta = d.atingiu ? (d.superou ? 'Acima do objetivo de hoje: ' + f(d.realizado - d.alvo) + '.' : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo de hoje.';
       return '<section class="det-dia" aria-label="Objetivo de hoje"><h3 class="det-titulo">Objetivo de hoje</h3>' +
         '<div class="det-topo"><div class="det-valor"><span class="forte num">' + esc(f(d.realizado)) + '</span><span class="sub">de ' + esc(f(d.alvo)) + ' hoje</span></div>' + status + '</div>' +
         '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso de hoje', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' hoje; ' + rot.toLowerCase() }) + '<span class="forte num det-pct">' + M.numBR(d.pct, 1) + '%</span></div>' +
-        '<p class="det-frase">' + esc(falta) + '</p><p class="peq sub">Calculado pelo saldo no início do dia e pelos dias restantes. O realizado é a variação líquida do total registrado hoje, incluindo correções.</p></section>';
+        (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '<details class="mais"><summary>Como é calculado</summary><p class="ajuda">O saldo no início do dia é dividido pelos dias restantes. O realizado considera os registros e as correções de hoje.</p></details></section>';
     }
 
     function registro() {
       var m = meta;
       if (m.tipo !== 'q' || m.encerrada) return '';
-      if (!podeAtualizar()) return '<p class="det-frase sub">' + (m.quem === 'admin' ? 'Só admins do quadro atualizam o valor desta meta.' : 'Só ' + esc(m.dono ? m.dono.fullName : 'o responsável') + ' e os admins do quadro atualizam o valor desta meta.') + '</p>';
+      if (!M.periodoAberto(m)) return '<p class="det-frase sub">Registros disponíveis apenas durante o período da meta.</p>';
+      if (!podeAtualizar()) return '<p class="det-frase sub">' + (m.quem === 'admin' ? 'Só administradores do quadro atualizam o valor desta meta.' : 'Só ' + esc(m.dono ? m.dono.fullName : 'o responsável') + ' e os administradores do quadro atualizam o valor desta meta.') + '</p>';
       var modo = reg();
       var rot = modo === 'add' ? 'Adicionar' : (ehTaxa() ? 'Novo valor' : 'Novo total');
-      var pre = m.fmt === 'r' ? 'R$' : '', suf = m.fmt === 'p' ? '%' : (m.fmt === 'n' ? (m.unit || '') : '');
+      var pre = m.fmt === 'r' ? 'R$' : '', suf = m.fmt === 'p' ? '%' : (m.fmt === 'n' ? M.unidade(m.unit) : '');
       var links = [];
       if (podeSomar()) links.push('<button type="button" class="btn-link" id="trocaReg">' + (modo === 'add' ? 'Corrigir o total' : 'Voltar a somar') + '</button>');
       if (!st.obs) links.push('<button type="button" class="btn-link" id="maisObs">Adicionar observação</button>');
       return '<form class="registro" id="fAtualizar" novalidate>' +
         '<div class="registro-linha"><label for="valor" class="registro-rotulo">' + rot + '</label>' +
-        '<span class="campo-prefixo registro-valor">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" type="text" inputmode="decimal" autocomplete="off" placeholder="' + (m.fmt === 'r' ? '0,00' : '0') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span>' +
-        (st.obs ? '<input id="obs" class="campo-solto registro-obs" type="text" maxlength="60" placeholder="Observação, ex.: pedido grande faturado" aria-label="Observação">' : '') +
+        '<span class="campo-prefixo registro-valor">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" value="' + esc(st.rascunho) + '" type="text" inputmode="decimal" autocomplete="off" placeholder="' + (m.fmt === 'r' ? '0,00' : '0') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span>' +
+        (st.obs ? '<input id="obs" value="' + esc(st.nota) + '" class="campo-solto registro-obs" type="text" maxlength="60" placeholder="Observação, ex.: pedido grande faturado" aria-label="Observação">' : '') +
         '<button type="submit" class="btn btn-primario"' + (st.ocupado ? ' disabled' : '') + '>Registrar</button></div>' +
         '<div class="registro-pe">' + (links.length ? '<span class="linha gap12">' + links.join('') + '</span>' : '') + '<span class="ajuda" id="previa" aria-live="polite"></span></div></form>';
     }
 
     function etapas() {
       if (meta.tipo !== 'e' || meta.encerrada) return '';
+      if (o.card.etapasErro) return '<p class="aviso">' + esc(o.card.etapasErro) + '</p><button class="btn" id="authEtapas">Autorizar e atualizar</button>';
       if (o.abrirCartao) return '<div><button type="button" class="btn" id="marcar">Marcar etapas no cartão</button></div>';
       return '';
     }
@@ -225,17 +228,17 @@
       var graf = h.length ? '<div id="graf"></div><div class="linha peq sub gap16"><span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR[D.r.info.cls] + ')"></span>Realizado</span>' +
         '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>' + (ehTaxa() ? 'Objetivo' : 'Ritmo esperado') + '</span></div>' : '<p class="det-frase sub">O gráfico aparece a partir do primeiro registro.</p>';
       var linhas = [];
-      for (var i = h.length - 1; i >= 0 && linhas.length < 8; i--) {
-        var e = h[i], ant = i > 0 ? h[i - 1][1] : meta.vIni, dif = e[1] - ant;
+      for (var i = h.length - 1; i >= 0 && (st.todos || linhas.length < 8); i--) {
+        var e = h[i], ant = i > 0 ? h[i - 1][1] : (meta.histBase !== undefined ? meta.histBase : meta.vIni), dif = e[1] - ant;
         var bom = meta.dir === 'down' ? dif <= 0 : dif >= 0;
         var tdif = ehTaxa() ? M.pontos(meta, dif) : f(Math.abs(dif));
         linhas.push('<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
           '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (bom ? 'dif-mais' : 'dif-menos') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
           '<span class="sub hist-quem">' + esc(e[3] || '') + (e[4] ? ' · ' + esc(e[4]) : '') + '</span></div>');
       }
-      var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<span class="peq sub">Mostrando os 8 registros mais recentes.</span>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
+      var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
       return '<div class="det-grade"><section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Evolução</h3>' + graf + '</section>' +
-        '<section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Histórico</h3>' + hist + '</section></div>';
+        '<section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Histórico</h3><div class="linha gap8"><button type="button" class="btn-link" id="exportar">Exportar histórico</button>' + (o.ctx.admin ? '<button type="button" class="btn-link" id="resumir">' + (st.resumir ? 'Confirmar resumo' : 'Exportar e resumir histórico') + '</button>' : '') + '</div>' + (meta.histCortado ? '<p class="ajuda">Histórico resumido. Os registros anteriores estão na exportação feita ao resumir.</p>' : '') + hist + '</section></div>';
     }
 
     function rodape() {
@@ -248,11 +251,13 @@
 
     function render() {
       D.r = M.avaliar(meta, o.card.badges);
+      if(o.card.etapasErro){D.r.sit='andamento';D.r.info=M.SIT.andamento;D.r.rotulo='Etapas indisponíveis';}
       var membros = (o.card.members || []).map(function (x) { return x.id; });
       var avisoDono = meta.dono && membros.indexOf(meta.dono.id) < 0 ? '<p class="aviso">' + esc(meta.dono.fullName) + ' é o responsável por esta meta, mas não está como membro do cartão.</p>' : '';
-      var msg = st.msg ? '<p class="' + (st.msg.erro ? 'erro' : 'sucesso') + '" role="status">' + esc(st.msg.texto) + '</p>' : '';
+      var msg = st.msg ? '<p class="' + (st.msg.erro ? 'erro' : 'sucesso') + '" role="status">' + esc(st.msg.texto) + '</p>' + (st.msg.erro ? '<button type="button" class="btn" id="atualizarDados">Atualizar dados</button>' : '') : '';
       el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + rodape() + '</div>';
       ligar();
+      if(st.msg && !st.msg.erro){var foco=el.querySelector('#valor');if(foco)foco.focus();}
       desenhar();
       ajustar();
     }
@@ -264,23 +269,42 @@
     }
 
     function salvar(novo, aviso) {
+      var reabrindo=meta.encerrada && !novo.encerrada;
       st.ocupado = true;
       el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
       return M.salvarMeta(o.t, o.escopo, novo).then(function () {
-        meta = novo; st.ocupado = false; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
+        meta = novo; if(aviso === 'Valor registrado.') {st.rascunho = ''; st.nota = ''; st.obs = false; st.reg = null;} st.ocupado = false; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
         if (o.aoSalvar) o.aoSalvar(meta);
-        render();
-      }).catch(function (e) { st.ocupado = false; st.msg = { erro: true, texto: e.message || 'Não foi possível salvar.' }; render(); });
+        var rAtual=M.avaliar(meta,o.card.badges);
+        return M.autorizado(o.t).then(function(ok){if(!ok)return false;return M.rest(o.t,'PUT','/cards/'+o.card.id,{dueComplete:rAtual.sit==='hit'||rAtual.sit==='noalvo'}).then(function(){if(!reabrindo)return true;return M.garantirLista(o.t,M.CFG.listaMetas,'top').then(function(l){return M.rest(o.t,'PUT','/cards/'+o.card.id,{idList:l.id,pos:'top'});}).then(function(){st.msg={texto:'Meta reaberta e cartão movido.'};return true;});});}).catch(function(){return false;}).then(function(ok){if(!ok)st.msg={texto:(aviso || 'Meta salva.')+' Confira a conclusão no cartão; ela não foi sincronizada.'};render();});
+      }).catch(function (e) { st.ocupado = false; st.msg = { erro: true, texto: M.erroUsuario(e) }; render(); });
     }
 
     function ligar() {
       var $ = function (id) { return el.querySelector('#' + id); };
+      if ($('atualizarDados')) $('atualizarDados').onclick = function(){Promise.all([o.t.get(o.escopo,'shared',M.CHAVE),M.contexto(o.t)]).then(function(v){if(!v[0])throw new Error('A meta não está mais disponível.');meta=v[0];o.ctx=v[1];return M.prepararCard(o.t,o.card,meta);}).then(function(){if(o.aoSalvar)o.aoSalvar(meta);st.msg={texto:'Dados atualizados. Confira o valor antes de registrar.'};render();}).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();});};
+      if ($('verHist')) $('verHist').onclick = function () { st.todos = !st.todos; render(); };
+      function exportar() {
+        var a = document.createElement('a'); var url = URL.createObjectURL(new Blob([JSON.stringify({cartao:o.card.id,meta:meta},null,2)],{type:'application/json'}));
+        a.href = url; a.download = 'meta-' + o.card.id + '-' + M.hoje() + '.json'; a.click(); setTimeout(function () { URL.revokeObjectURL(url); },1000);
+      }
+      if ($('exportar')) $('exportar').onclick = exportar;
+      if ($('resumir')) $('resumir').onclick = function () {
+        if (!st.resumir) { exportar(); st.resumir=true; st.msg={texto:'Salve a exportação. Depois, clique em Confirmar resumo para remover os registros antigos do cartão.'}; render(); return; }
+        st.resumir=false;
+        var n = JSON.parse(JSON.stringify(meta)), h = n.hist || [];
+        if (h.length < 2) return;
+        n.histBase = h[h.length-2][1]; n.hist = h.slice(-1); n.histCortado = (n.histCortado || 0) + h.length - 1;
+        salvar(n, 'Histórico resumido. Guarde a exportação.');
+      };
+      if ($('obs')) $('obs').addEventListener('input',function () { st.nota = this.value; });
       var fr = $('fAtualizar');
       if (fr) {
         var campo = $('valor'), previa = $('previa');
         M.mascararValor(campo, meta.fmt, M.casasDe(meta));
         var atual = M.valorAtual(meta);
         campo.addEventListener('input', function () {
+          st.rascunho = campo.value;
           campo.removeAttribute('aria-invalid');
           previa.className = 'ajuda';
           var v = M.lerNumero(campo.value);
@@ -294,9 +318,10 @@
           ev.preventDefault();
           if (st.ocupado) return;
           var v = M.lerNumero(campo.value);
-          var falha = function (txt) { campo.setAttribute('aria-invalid', 'true'); previa.className = 'ajuda erro-campo'; previa.textContent = txt; campo.focus(); };
+          var falha = function (txt) { campo.setAttribute('aria-describedby', 'previa'); campo.setAttribute('aria-invalid', 'true'); previa.className = 'ajuda erro-campo'; previa.textContent = txt; campo.focus(); };
           if (isNaN(v)) { falha(meta.fmt === 'r' ? 'Digite um valor. Os dígitos entram pelos centavos: 50029 vira 500,29.' : 'Digite um valor.'); return; }
           if (reg() === 'add' && v <= 0) { falha('Digite um valor maior que zero. Para corrigir um registro, use Corrigir o total.'); return; }
+          try { M.validarValor(v, meta); } catch (e) { falha(e.message); return; }
           var novoMeta = JSON.parse(JSON.stringify(meta));
           var novo = reg() === 'add' ? M.valorAtual(novoMeta) + v : v;
           var obs = $('obs') ? $('obs').value.trim().slice(0, 60) : '';
@@ -304,10 +329,11 @@
           if (diaFixo) novoMeta.diaria = { em: diaFixo.em, base: diaFixo.base, alvo: diaFixo.alvo };
           novoMeta.hist = novoMeta.hist || [];
           novoMeta.hist.push([M.hoje(), Math.round(novo * 100) / 100, o.ctx.eu.id, o.ctx.eu.fullName.split(' ')[0], obs]);
-          st.obs = false; st.reg = null;
-          salvar(novoMeta, 'Registrado. Total agora: ' + f(Math.round(novo * 100) / 100) + '.');
+          st.rascunho = campo.value; st.nota = obs;
+          salvar(novoMeta, 'Valor registrado.');
         };
       }
+      if ($('authEtapas')) $('authEtapas').onclick = function () { M.autorizar(o.t).then(function () { return M.prepararCard(o.t,o.card,meta); }).then(function () { render(); }).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();}); };
       if ($('marcar')) $('marcar').onclick = function () { o.abrirCartao(); };
       if ($('alterarAval')) $('alterarAval').onclick = function () { st.alterarAval = true; render(); };
       el.querySelectorAll('[data-nota]').forEach(function (b) {
@@ -322,7 +348,7 @@
       if ($('reabrir')) $('reabrir').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
         novoMeta.encerrada = false; delete novoMeta.encerradaEm;
-        salvar(novoMeta, 'Meta reaberta. Se quiser, mova o cartão de volta para a lista ' + M.CFG.listaMetas + '.');
+        salvar(novoMeta, 'Meta reaberta. Mova o cartão para ' + M.CFG.listaMetas + '.');
       };
       if ($('encerrarSim')) $('encerrarSim').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
@@ -338,7 +364,7 @@
             }).then(function () { return 'Meta encerrada e cartão movido para ' + M.CFG.listaEncerradas + '.'; });
           });
         }).then(function (texto) { st.ocupado = false; st.confirmar = false; st.msg = { texto: texto }; render(); })
-          .catch(function (e) { st.ocupado = false; st.confirmar = false; st.msg = { erro: true, texto: e.message || 'Não foi possível encerrar.' }; render(); });
+          .catch(function (e) { st.ocupado = false; st.confirmar = false; st.msg = { erro: true, texto: M.erroUsuario(e) }; render(); });
       };
     }
 
