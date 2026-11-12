@@ -256,7 +256,8 @@
         etapas = Array.prototype.map.call($('etapas').querySelectorAll('input'), function (i) { return i.value.trim(); }).filter(Boolean);
         if (!etapas.length) { mostrarFalha(new Falha('etapas', 'Inclua pelo menos uma etapa.')); return; }
       }
-      var btn = $('salvar'); btn.disabled = true;
+      var btn = $('salvar'), rotulo = btn.textContent; btn.disabled = true;
+      if (modo === 'criar') btn.textContent = 'Criando…';
       var auth;
       if (modo === 'criar') auth = garantirAuth(true);
       else if (datasMudaram(meta)) auth = garantirAuth(false);
@@ -271,7 +272,7 @@
           return M.rest(t, 'POST', '/cards', { idList: lista.id, name: titulo + ' · ' + meta.dono.fullName, idMembers: meta.dono.id, start: start.toISOString(), due: due.toISOString(), pos: 'bottom' });
         }).then(function (card) {
           novo = card;
-          return M.salvarMeta(t, card.id, meta);
+          return M.salvarMetaNova(t, card.id, meta);
         }).then(function () {
           if (!etapas.length) return null;
           return M.rest(t, 'POST', '/checklists', { idCard: novo.id, name: 'Etapas' }).then(function (cl) {
@@ -290,7 +291,7 @@
       p.catch(function (e) {
         if (e.code === 'AUTH') S.auth = false;
         geral(e.message || 'Não foi possível salvar a meta.');
-        btn.disabled = false;
+        btn.disabled = false; btn.textContent = rotulo;
       });
     }
 
