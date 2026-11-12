@@ -112,7 +112,7 @@
       if (r.antes) return ['Começa em ' + data(m.ini) + '.'];
       if (m.tipo === 'q' && ehTaxa()) {
         if (r.sit === 'noalvo') out.push('Está no objetivo.');
-        else if (r.sit === 'abaixo') out.push('Faltam ' + M.pontos(m, r.faltaPontos) + ' para o objetivo.');
+        else if (r.sit === 'abaixo') out.push(M.faltam(m, r.faltaPontos) + ' ' + M.pontos(m, r.faltaPontos) + ' para o objetivo.');
         else if (r.sit === 'hit') out.push('Fechou o período no objetivo.');
         else if (r.sit === 'late') out.push('O período terminou em ' + data(m.fim) + ' abaixo do objetivo.');
         return out;
@@ -122,12 +122,12 @@
       var ondeEsta = '(' + r.passados + ' de ' + dias(r.total) + ')';
       if (m.tipo === 'q') {
         if (r.sit === 'hit') return ['Objetivo atingido.'];
-        if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' sem atingir o objetivo. Faltaram ' + f(r.falta) + '.'];
+        if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' sem atingir o objetivo. ' + M.faltam(m, r.falta, true) + ' ' + f(r.falta) + '.'];
         // 1. Onde deveria estar hoje e a distância até lá
         var esperado = M.arred(m, r.valorEsperado), q = M.arred(m, Math.abs(r.dif));
         var l1 = 'Até hoje ' + ondeEsta + ', o esperado era ' + f(esperado) + '.';
         if (q === 0) l1 += ' Está exatamente no esperado.';
-        else if (r.dif < 0) l1 += ' Faltam ' + f(q) + ' para chegar lá.';
+        else if (r.dif < 0) l1 += ' ' + M.faltam(m, q) + ' ' + f(q) + ' para chegar lá.';
         else l1 += ' Está ' + f(q) + (m.dir === 'down' ? ' abaixo' : ' acima') + ' disso.';
         out.push(l1);
         // 2. O que precisa fazer até o fim
@@ -136,7 +136,7 @@
           var n = r.diasRestantes;
           if (r.mostrarDia && n > 1) out.push(fecho + ': ' + f(r.porDiaArred) + ' por ' + (corridos ? 'dia' : 'dia útil') + ' nos ' + dias(n) + ' que restam' + (r.registrouHoje ? '.' : ', contando hoje.'));
           else if (r.mostrarDia && n === 1) out.push(fecho + ': ' + f(r.falta) + ' no último ' + (corridos ? 'dia' : 'dia útil') + '.');
-          else out.push('Faltam ' + f(r.falta) + ' para o objetivo até ' + data(m.fim) + '.');
+          else out.push(M.faltam(m, r.falta) + ' ' + f(r.falta) + ' para o objetivo até ' + data(m.fim) + '.');
         }
         return out;
       }
@@ -144,6 +144,11 @@
         if (!r.etapas) return ['Nenhuma etapa na checklist do cartão.'];
         if (r.sit === 'hit') return ['Todas as etapas foram concluídas.'];
         if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' com etapas pendentes.'];
+        if (r.sit === 'andamento') {
+          var dia = M.hoje(), modoE = corridos ? 'corridos' : 'uteis';
+          while (dia < m.fim && Math.round(r.etapas * M.contarDias(m.ini, dia, modoE) / r.total) < 1) dia = M.addDias(dia, 1);
+          return ['A primeira etapa é esperada até ' + data(dia) + '.'];
+        }
         var espE = Math.round(r.etapas * r.esperado / 100), dE = r.feitas - espE;
         var tE = 'Até hoje ' + ondeEsta + ', o esperado era ' + espE + ' de ' + r.etapas + ' etapas.';
         if (dE < 0) tE += ' ' + (dE === -1 ? 'Falta 1' : 'Faltam ' + (-dE)) + ' para chegar lá.';
@@ -194,7 +199,7 @@
     function etapas() {
       if (meta.tipo !== 'e' || meta.encerrada) return '';
       if (o.abrirCartao) return '<div><button type="button" class="btn" id="marcar">Marcar etapas no cartão</button></div>';
-      return '<p class="det-frase sub">Marque as etapas na checklist deste cartão.</p>';
+      return '';
     }
 
     function avaliacao() {

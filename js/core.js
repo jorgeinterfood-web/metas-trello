@@ -65,10 +65,25 @@
     var frac = function (x) { return Math.abs(x - Math.round(x)) > 0.0001; };
     return frac(meta.alvo) || frac(meta.vIni) ? 2 : 0;
   }
+  // Singular de uma unidade digitada no plural ("clientes novos" vira "cliente novo")
+  function singularPalavra(p) {
+    if (p.length < 3) return p;
+    var r = [[/ões$/i, 'ão'], [/ães$/i, 'ão'], [/ãos$/i, 'ão'], [/ais$/i, 'al'], [/éis$/i, 'el'], [/eis$/i, 'il'], [/óis$/i, 'ol'], [/uis$/i, 'ul'],
+      [/^meses$/i, 'mês'], [/ns$/i, 'm'], [/([rz])es$/i, '$1'], [/s$/i, '']];
+    for (var i = 0; i < r.length; i++) if (r[i][0].test(p)) return p.replace(r[i][0], r[i][1]);
+    return p;
+  }
+  function singular(txt) { return String(txt).split(' ').map(singularPalavra).join(' '); }
+  function ehUm(meta, v) { return Math.abs(arred(meta, v)) === 1; }
+  // "Falta 1 cliente" e "Faltam 2 clientes"; dinheiro fica sempre no plural
+  function faltam(meta, v, passado) {
+    var um = meta.fmt !== 'r' && ehUm(meta, v);
+    return passado ? (um ? 'Faltou' : 'Faltaram') : (um ? 'Falta' : 'Faltam');
+  }
   function fmtValor(meta, v) {
     if (meta.fmt === 'r') return 'R$ ' + numBR(v, 2, 2);
     if (meta.fmt === 'p') return numBR(v, casasDe(meta)) + '%';
-    return numBR(v, casasDe(meta)) + (meta.unit ? ' ' + meta.unit : '');
+    return numBR(v, casasDe(meta)) + (meta.unit ? ' ' + (ehUm(meta, v) ? singular(meta.unit) : meta.unit) : '');
   }
   // Rótulo curto para o eixo do gráfico
   function rotuloEixo(meta, v) {
@@ -173,6 +188,7 @@
     late: { label: 'Não atingida', cls: 'late', badge: 'red' },
     hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
     noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
+    andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
     abaixo: { label: 'Abaixo do objetivo', cls: 'risk', badge: 'yellow' },
     wait: { label: 'Aguardando avaliação', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
@@ -244,6 +260,8 @@
       if (meta.tipo === 'q' && meta.fmt === 'p') {
         // Taxa não cresce em linha reta: vale onde ela está agora em relação ao alvo
         r.semRitmo = true;
+        r.fill = Math.max(0, Math.min(100, cur));
+        r.marcaEm = Math.max(0, Math.min(100, meta.alvo));
         r.faltaPontos = meta.dir === 'down' ? cur - meta.alvo : meta.alvo - cur;
         var chegou = r.faltaPontos <= 0;
         if (r.antes) r.sit = 'future';
@@ -251,6 +269,7 @@
         else r.sit = chegou ? 'noalvo' : 'abaixo';
       }
       else if (pct >= 100) r.sit = 'hit';
+      else if (meta.tipo === 'e' && !r.antes && !r.depois && !meta.encerrada && r.feitas === 0 && Math.round(r.etapas * frac) === 0) r.sit = 'andamento';
       else if (meta.encerrada || r.depois) r.sit = 'late';
       else if (r.antes) r.sit = 'future';
       else if (pct < r.esperado - 5) r.sit = 'risk'; // mais de 5 pontos atrás do esperado
@@ -271,7 +290,7 @@
   // Quanto a meta está à frente ou atrás do esperado, na unidade da própria meta
   function textoDiff(meta, r) {
     if (!r.temBarra || r.antes || r.sit === 'hit' || r.sit === 'noalvo') return '';
-    if (r.semRitmo) return r.faltaPontos > 0 ? 'faltam ' + pontos(meta, r.faltaPontos) + ' para o objetivo' : '';
+    if (r.semRitmo) return r.faltaPontos > 0 ? faltam(meta, r.faltaPontos).toLowerCase() + ' ' + pontos(meta, r.faltaPontos) + ' para o objetivo' : '';
     if (meta.tipo === 'e') {
       var n = r.difEtapas || 0;
       if (!n) return 'no ritmo esperado';
@@ -425,12 +444,13 @@
   // Barra de progresso com um traço vertical onde a meta deveria estar hoje
   function barra(r, opts) {
     opts = opts || {};
-    var marca = !r.semRitmo && !r.antes && !r.depois && r.esperado > 0 && r.esperado < 100;
-    var titulo = marca ? 'O traço mostra onde deveria estar hoje: ' + r.esperado + '%' : 'Progresso: ' + r.pct + '%';
+    var pos = null, titulo = 'Progresso: ' + r.pct + '%';
+    if (r.marcaEm !== undefined) { pos = r.marcaEm; titulo = 'O traço marca o objetivo: ' + numBR(r.marcaEm) + '%'; }
+    else if (!r.antes && !r.depois && r.esperado > 0 && r.esperado < 100) { pos = r.esperado; titulo = 'O traço mostra onde deveria estar hoje: ' + r.esperado + '%'; }
     return '<div class="barra' + (opts.grossa ? ' barra-grossa' : '') + (opts.fina ? ' barra-fina' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + r.pct +
       '" aria-label="' + esc((opts.label || 'Progresso') + ', ' + titulo) + '" title="' + esc(titulo) + '">' +
       '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div>' +
-      (marca ? '<div class="barra-marca" style="left:' + r.esperado + '%"></div>' : '') + '</div>';
+      (pos !== null ? '<div class="barra-marca" style="left:' + pos + '%"></div>' : '') + '</div>';
   }
   function selo(r) { return '<span class="selo sit-' + r.info.cls + '">' + esc(r.rotulo || r.info.label) + '</span>'; }
   function avatar(m, tam) {
@@ -448,7 +468,7 @@
   }
 
   window.Metas = {
-    CFG: CFG, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
+    CFG: CFG, singular: singular, faltam: faltam, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
     formatarCentavos: formatarCentavos, mascararDinheiro: mascararDinheiro, mascararValor: mascararValor,
     iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
