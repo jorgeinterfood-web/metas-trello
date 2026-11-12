@@ -16,7 +16,7 @@
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
   var ICO = { esq: icone('<path d="M15 6l-6 6 6 6"/>'), dir: icone('<path d="M9 6l6 6-6 6"/>'), mais: icone('<path d="M12 5v14M5 12h14"/>') };
-  var CHIPS = [['ok','No ritmo'],['ahead','Adiantados'],['risk','Atrasados'],['hit','Atingidos'],['superada','Superados'],['abaixo','Pendentes'],['late','Não atingidos'],['future','A iniciar'],['wait','A avaliar'],['parcial','Parciais'],['andamento','Sem etapas'],['indisponivel','Indisponíveis'],['semdias','Sem dias úteis']];
+  var CHIPS = [['ok','No ritmo'],['ahead','Adiantados'],['risk','Atrasados'],['hit','Completos'],['superada','Superados'],['abaixo','Pendentes'],['late','Não atingidos'],['future','A iniciar'],['wait','A avaliar'],['parcial','Parciais'],['andamento','Sem etapas'],['indisponivel','Indisponíveis'],['semdias','Sem dias úteis']];
   function grupo(it) {
     if(it.card.etapasErro)return 'indisponivel';
     if(it.r.rotulo==='Sem dias úteis')return 'semdias';

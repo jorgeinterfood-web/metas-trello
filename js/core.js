@@ -210,15 +210,15 @@
     ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
     risk: { label: 'Atrasado', cls: 'risk', badge: 'yellow' },
     late: { label: 'Não atingido', cls: 'late', badge: 'red' },
-    hit: { label: 'Atingido', cls: 'hit', badge: 'blue' },
-    noalvo: { label: 'Atingido', cls: 'hit', badge: 'blue' },
+    hit: { label: 'Completo', cls: 'hit', badge: 'blue' },
+    noalvo: { label: 'Completo', cls: 'hit', badge: 'blue' },
     andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
     abaixo: { label: 'Pendente', cls: 'risk', badge: 'yellow' },
     wait: { label: 'A avaliar', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'A iniciar', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingido', cls: 'late', badge: 'red' },
     parcial: { label: 'Parcial', cls: 'risk', badge: 'yellow' },
-    atingida: { label: 'Atingido', cls: 'hit', badge: 'blue' },
+    atingida: { label: 'Completo', cls: 'hit', badge: 'blue' },
     superada: { label: 'Superado', cls: 'hit', badge: 'blue' }
   };
   var IMP = { 1: 'Normal', 2: 'Alta', 3: 'Muito alta' };
@@ -363,7 +363,7 @@
   function separar(partes) {
     return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(': ');
   }
-  function situacaoDia(d) { return d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento'); }
+  function situacaoDia(d) { return d.superou ? 'Superado' : (d.atingiu ? 'Completo' : 'Em andamento'); }
   function dimensionarTags(root) {
     try {
       if (!root || !root.querySelectorAll || typeof document === 'undefined' || !window.getComputedStyle) return;
@@ -373,20 +373,19 @@
       var ctx=document.createElement('canvas').getContext('2d');
       if (!ctx) return;
       ctx.font=estilo.font || (estilo.fontWeight+' '+estilo.fontSize+' '+estilo.fontFamily);
-      var textos=['No ritmo','Atrasado','Não atingido','Atingido','Pendente','A iniciar','Adiantado','Em andamento','Superado','Sem etapas','Sem dias úteis'];
       var largura=0;
-      textos.forEach(function(txt){largura=Math.max(largura,ctx.measureText(txt+': 000,0%').width);});
       Array.prototype.forEach.call(tags,function(tag){largura=Math.max(largura,ctx.measureText(tag.textContent).width);});
       largura=Math.ceil(largura + parseFloat(estilo.paddingLeft || 0) + parseFloat(estilo.paddingRight || 0) + 4);
       document.documentElement.style.setProperty('--metas-tag-largura',largura+'px');
     } catch (e) { /* A largura de reserva do CSS continua válida. */ }
   }
   function textoBadge(meta, r) {
+    if (r.rotulo === 'Completo') return 'Completo';
     if (!r.temBarra || r.rotulo === 'Etapas indisponíveis') return r.rotulo;
     var valor = r.semRitmo ? fmtValor(meta,r.atual) : numBR(r.pct,1) + '%';
     return separar([r.rotulo, valor]);
   }
-  function textoProgressoDia(d) { return separar([situacaoDia(d), numBR(d.pct,1) + '%']); }
+  function textoProgressoDia(d) { return d.atingiu && !d.superou ? 'Completo' : separar([situacaoDia(d), numBR(d.pct,1) + '%']); }
   function textoMetaDia(meta, r) {
     return r.diaria ? textoProgressoDia(r.diaria) + ' no dia' : '';
   }

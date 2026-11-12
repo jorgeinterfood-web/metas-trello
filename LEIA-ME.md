@@ -1,33 +1,33 @@
-# Power-Up Metas, versão 15
+# Power-Up Metas, versão 16
 
-## Atualizar a versão 14
+## Atualizar a versão 15
 
-Substitua os arquivos correspondentes no GitHub. Todos os arquivos do ZIP estão
-completos. Preserve config.js, ícones e os arquivos que não estão no pacote.
-Não há nova-meta.html. Após a publicação, recarregue o Trello e reabra os cartões
-e o painel. As referências usam ?v=15.
+Substitua os arquivos correspondentes no GitHub, mantendo config.js, ícones e
+arquivos não incluídos. Todos os arquivos estão completos. Não há nova-meta.html.
+Após publicar, recarregue o Trello e reabra cartões e painel. As referências
+passaram a ?v=16.
 
-## Ajustes solicitados
+## Ajustes
 
-- Período: e as datas usam exatamente o mesmo tamanho de 16px, peso 600 e
-  entrelinha de 24px.
-- Progresso da meta foi renomeado para Progresso geral.
-- Variações negativas do histórico aparecem em vermelho, inclusive em metas
-  de redução. Essa cor indica o sinal da operação; não altera a avaliação de
-  sucesso da meta. Variações positivas continuam verdes.
-- Tags mais compactas, mantendo largura comum. A medição considera apenas os
-  nomes que podem acompanhar percentuais, com uma casa decimal como na interface,
-  e o maior texto efetivamente exibido. Mensagens como Etapas indisponíveis não
-  recebem mais uma reserva fictícia de percentual. A reserva do CSS é 164px;
-  números maiores continuam ampliando a largura comum se necessário.
-- Separação entre Evolução e Histórico: vertical quando estão lado a lado e
-  horizontal quando o espaço disponível faz os blocos ficarem empilhados.
-
-Somar/Subtrair, máscara por centavos, filtros e cálculos foram preservados.
+- A largura comum das tags agora depende somente do maior texto presente na
+  tela, com seu padding. Foi retirada toda a reserva para nomes ou percentuais
+  hipotéticos. A largura pode diminuir quando os textos ficam menores e crescer
+  se um valor real precisar de mais espaço. Todas as tags dessa tela continuam
+  com a mesma largura. O fallback do CSS, caso a medição não esteja disponível,
+  foi reduzido para 128px.
+- Atingido foi substituído por Completo. Essa tag não apresenta porcentagem ou
+  valor, no cartão aberto, no cartão fechado, nas etapas, nas taxas e no resumo
+  financeiro. O filtro da equipe correspondente passou a Completos.
+- O objetivo diário exatamente atingido também usa Completo sem número. Quando
+  o objetivo diário é ultrapassado, a situação Superado continua própria e mantém
+  sua porcentagem. O complemento "no dia" no selo fechado apenas identifica que
+  se trata do objetivo diário.
+- Cálculos, máscara por centavos e operações Somar/Subtrair foram preservados.
 
 ## Validação
 
-Sintaxe dos JavaScripts e testes com Trello simulado: unidades, cálculos,
-validações, permissões, conflitos, formulário, painel, registro e subtração,
-histórico, nomes dos títulos e redução da largura uniforme das tags.
-A aparência deve ser conferida no Trello. Não houve alteração remota.
+Sintaxe dos JavaScripts; testes de cálculos, registros, validações, permissões,
+conflitos, formulário, painel, histórico, largura das tags e novo texto de
+conclusão. Testes específicos verificam que metas incompletas não recebem o texto
+Completo por arredondamento. A aparência deve ser conferida no Trello.
+Nenhuma alteração foi feita remotamente.

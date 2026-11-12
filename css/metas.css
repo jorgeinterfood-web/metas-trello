@@ -414,3 +414,6 @@ details.mais summary:hover { text-decoration: underline; }
     padding-top: 20px;
   }
 }
+
+/* v16: largura baseada somente nas tags presentes, sem reserva fictícia. */
+:root { --metas-tag-largura: 128px; }
