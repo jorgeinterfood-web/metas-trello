@@ -66,10 +66,7 @@
     return frac(meta.alvo) || frac(meta.vIni) ? 2 : 0;
   }
   function fmtValor(meta, v) {
-    if (meta.fmt === 'r') {
-      var inteiro = Math.abs(v - Math.round(v)) < 0.005;
-      return 'R$ ' + (inteiro ? numBR(Math.round(v), 0) : numBR(v, 2, 2));
-    }
+    if (meta.fmt === 'r') return 'R$ ' + numBR(v, 2, 2);
     if (meta.fmt === 'p') return numBR(v, casasDe(meta)) + '%';
     return numBR(v, casasDe(meta)) + (meta.unit ? ' ' + meta.unit : '');
   }
@@ -85,11 +82,11 @@
     return numBR(v, casasDe(meta));
   }
   function arredCima(meta, v) {
-    var c = meta.fmt === 'r' ? 0 : casasDe(meta), f = Math.pow(10, c);
+    var f = Math.pow(10, casasDe(meta));
     return Math.ceil(v * f - 1e-9) / f;
   }
   function arred(meta, v) {
-    var c = meta.fmt === 'r' ? 0 : casasDe(meta), f = Math.pow(10, c);
+    var f = Math.pow(10, casasDe(meta));
     return Math.round(v * f) / f;
   }
   function lerNumero(txt) {
@@ -138,6 +135,32 @@
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
   }
+  // Dinheiro no estilo de banco: os dígitos entram pelos centavos (50029 vira 500,29)
+  function formatarCentavos(txt) {
+    var dig = String(txt).replace(/\D/g, '').replace(/^0+/, '').slice(0, 13);
+    if (!dig) return '';
+    return numBR(parseInt(dig, 10) / 100, 2, 2);
+  }
+  function mascararDinheiro(input) {
+    input.addEventListener('input', function () {
+      var novo = formatarCentavos(input.value);
+      if (novo !== input.value) input.value = novo;
+      try { input.setSelectionRange(novo.length, novo.length); } catch (e) {}
+    });
+    input.addEventListener('paste', function (ev) {
+      var cb = ev.clipboardData || window.clipboardData;
+      if (!cb) return;
+      var n = lerNumero(cb.getData('text'));
+      if (isNaN(n)) return;
+      ev.preventDefault();
+      input.value = numBR(n, 2, 2);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+  // Escolhe a máscara pelo formato da meta
+  function mascararValor(input, fmt, casas) {
+    if (fmt === 'r') mascararDinheiro(input); else mascarar(input, casas);
+  }
   function decimaisDigitados(txt) {
     var i = String(txt).indexOf(',');
     return i < 0 ? 0 : String(txt).length - i - 1;
@@ -149,6 +172,8 @@
     risk: { label: 'Em risco', cls: 'risk', badge: 'yellow' },
     late: { label: 'Não atingida', cls: 'late', badge: 'red' },
     hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
+    noalvo: { label: 'No alvo', cls: 'hit', badge: 'blue' },
+    abaixo: { label: 'Abaixo do alvo', cls: 'risk', badge: 'yellow' },
     wait: { label: 'Aguardando avaliação', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingida', cls: 'late', badge: 'red' },
@@ -158,6 +183,7 @@
   };
   var IMP = { 1: 'Normal', 2: 'Alta', 3: 'Muito alta' };
   var TIPO = { q: 'Valor', e: 'Etapas', a: 'Avaliação' };
+  var FORMATO = { r: 'Dinheiro', n: 'Quantidade', p: 'Percentual', e: 'Etapas', a: 'Avaliação' };
 
   function valorAtual(meta) {
     var h = meta.hist || [];
@@ -208,13 +234,23 @@
         r.porDiaArred = arredCima(meta, r.porDia);
         r.mostrarDia = meta.dir !== 'down' && meta.fmt !== 'p';
         // Projeção linear pelo ritmo realizado até agora
+        // Só a partir de um terço do período: antes disso a projeção oscila demais
         if (r.depois) r.projecao = cur;
-        else if (passados > 0 && total) r.projecao = meta.vIni + (cur - meta.vIni) * total / passados;
+        else if (total && passados / total >= 1 / 3) r.projecao = meta.vIni + (cur - meta.vIni) * total / passados;
       }
       pct = Math.max(0, Math.round(pct));
       r.pct = pct; r.fill = Math.min(pct, 100); r.temBarra = true;
       r.diff = pct - r.esperado;
-      if (pct >= 100) r.sit = 'hit';
+      if (meta.tipo === 'q' && meta.fmt === 'p') {
+        // Taxa não cresce em linha reta: vale onde ela está agora em relação ao alvo
+        r.semRitmo = true;
+        r.faltaPontos = meta.dir === 'down' ? cur - meta.alvo : meta.alvo - cur;
+        var chegou = r.faltaPontos <= 0;
+        if (r.antes) r.sit = 'future';
+        else if (r.depois || meta.encerrada) r.sit = chegou ? 'hit' : 'late';
+        else r.sit = chegou ? 'noalvo' : 'abaixo';
+      }
+      else if (pct >= 100) r.sit = 'hit';
       else if (meta.encerrada || r.depois) r.sit = 'late';
       else if (r.antes) r.sit = 'future';
       else if (pct < r.esperado - 15) r.sit = 'risk';
@@ -222,7 +258,7 @@
     }
     // Sem atualização e lembrete (só metas de valor em andamento)
     r.parada = false; r.pendente = false;
-    if (meta.tipo === 'q' && !meta.encerrada && !r.antes && !r.depois && r.sit !== 'hit') {
+    if (meta.tipo === 'q' && !meta.encerrada && !r.antes && !r.depois && r.sit !== 'hit' && r.sit !== 'noalvo') {
       var ult = ultimaAtualizacao(meta), dias = diasEntre(ult, d);
       r.diasSemAtualizar = dias;
       r.parada = dias >= CFG.diasSemAtualizacao;
@@ -239,7 +275,8 @@
 
   // Quanto a meta está à frente ou atrás do esperado, na unidade da própria meta
   function textoDiff(meta, r) {
-    if (!r.temBarra || r.antes || r.sit === 'hit') return '';
+    if (!r.temBarra || r.antes || r.sit === 'hit' || r.sit === 'noalvo') return '';
+    if (r.semRitmo) return r.faltaPontos > 0 ? 'faltam ' + pontos(meta, r.faltaPontos) + ' para o alvo' : '';
     if (meta.tipo === 'e') {
       var n = r.difEtapas || 0;
       if (!n) return 'no ritmo esperado';
@@ -250,10 +287,16 @@
     if (q === 0) return 'no ritmo esperado';
     return fmtValor(meta, q) + (r.dif > 0 ? ' à frente' : ' atrás') + ' do esperado';
   }
+  function pontos(meta, n) {
+    var v = arred(meta, Math.abs(n));
+    return numBR(v, casasDe(meta)) + (v === 1 ? ' ponto' : ' pontos');
+  }
   function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < -15 ? 'dif-menos' : 'dif-neutro'); }
-  function textoBadge(r) {
+  function textoBadge(meta, r) {
     if (!r.temBarra) return r.rotulo;
-    return r.pct + '% · ' + r.rotulo;
+    if (meta.tipo === 'e') return r.rotulo + ' · ' + r.feitas + ' de ' + r.etapas;
+    if (r.semRitmo) return r.rotulo + ' · ' + fmtValor(meta, r.atual);
+    return r.rotulo + ' · ' + r.pct + '%';
   }
   function textoMetaDia(meta, r) {
     return 'Meta do dia: ' + fmtValor(meta, r.porDiaArred);
@@ -358,13 +401,15 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
+  // Barra de progresso com um traço vertical onde a meta deveria estar hoje
   function barra(r, opts) {
     opts = opts || {};
-    var titulo = 'Esperado hoje: ' + r.esperado + '%';
+    var marca = !r.semRitmo && !r.antes && !r.depois && r.esperado > 0 && r.esperado < 100;
+    var titulo = marca ? 'O traço mostra onde deveria estar hoje: ' + r.esperado + '%' : 'Progresso: ' + r.pct + '%';
     return '<div class="barra' + (opts.grossa ? ' barra-grossa' : '') + (opts.fina ? ' barra-fina' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + r.pct +
-      '" aria-label="' + esc((opts.label || 'Progresso') + ', ' + titulo) + '" title="' + titulo + '">' +
-      '<div class="barra-zona" style="width:' + r.esperado + '%"></div>' +
-      '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div></div>';
+      '" aria-label="' + esc((opts.label || 'Progresso') + ', ' + titulo) + '" title="' + esc(titulo) + '">' +
+      '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div>' +
+      (marca ? '<div class="barra-marca" style="left:' + r.esperado + '%"></div>' : '') + '</div>';
   }
   function selo(r) { return '<span class="selo sit-' + r.info.cls + '">' + esc(r.rotulo || r.info.label) + '</span>'; }
   function avatar(m, tam) {
@@ -382,7 +427,8 @@
   }
 
   window.Metas = {
-    CFG: CFG, SIT: SIT, IMP: IMP, TIPO: TIPO, MESES: MESES,
+    CFG: CFG, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
+    formatarCentavos: formatarCentavos, mascararDinheiro: mascararDinheiro, mascararValor: mascararValor,
     iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
     numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
