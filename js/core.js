@@ -172,8 +172,8 @@
     risk: { label: 'Em risco', cls: 'risk', badge: 'yellow' },
     late: { label: 'Não atingida', cls: 'late', badge: 'red' },
     hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
-    noalvo: { label: 'No alvo', cls: 'hit', badge: 'blue' },
-    abaixo: { label: 'Abaixo do alvo', cls: 'risk', badge: 'yellow' },
+    noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
+    abaixo: { label: 'Abaixo do objetivo', cls: 'risk', badge: 'yellow' },
     wait: { label: 'Aguardando avaliação', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingida', cls: 'late', badge: 'red' },
@@ -256,17 +256,12 @@
       else if (pct < r.esperado - 15) r.sit = 'risk';
       else r.sit = 'ok';
     }
-    // Sem atualização e lembrete (só metas de valor em andamento)
-    r.parada = false; r.pendente = false;
+    // Sem atualização há dias (só metas de valor em andamento)
+    r.parada = false;
     if (meta.tipo === 'q' && !meta.encerrada && !r.antes && !r.depois && r.sit !== 'hit' && r.sit !== 'noalvo') {
       var ult = ultimaAtualizacao(meta), dias = diasEntre(ult, d);
       r.diasSemAtualizar = dias;
       r.parada = dias >= CFG.diasSemAtualizacao;
-      if (meta.lembrete === 'dia') r.pendente = ult < d && diaUtil(d);
-      else if (meta.lembrete === 'seg') {
-        var dt = parse(d), back = (dt.getDay() + 6) % 7, seg = addDias(d, -back);
-        r.pendente = ult < seg;
-      } else if (meta.lembrete === '15') r.pendente = dias >= 15;
     }
     r.info = SIT[r.sit];
     r.rotulo = r.sit === 'future' ? 'Começa em ' + dataBR(meta.ini) : r.info.label;
@@ -276,7 +271,7 @@
   // Quanto a meta está à frente ou atrás do esperado, na unidade da própria meta
   function textoDiff(meta, r) {
     if (!r.temBarra || r.antes || r.sit === 'hit' || r.sit === 'noalvo') return '';
-    if (r.semRitmo) return r.faltaPontos > 0 ? 'faltam ' + pontos(meta, r.faltaPontos) + ' para o alvo' : '';
+    if (r.semRitmo) return r.faltaPontos > 0 ? 'faltam ' + pontos(meta, r.faltaPontos) + ' para o objetivo' : '';
     if (meta.tipo === 'e') {
       var n = r.difEtapas || 0;
       if (!n) return 'no ritmo esperado';

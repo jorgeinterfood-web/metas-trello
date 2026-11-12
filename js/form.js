@@ -2,7 +2,7 @@
 (function () {
   var M = window.Metas, esc = M.esc;
 
-  var TIPOS = [['r', 'Dinheiro'], ['n', 'Quantidade'], ['p', 'Percentual'], ['e', 'Etapas'], ['a', 'Avaliação']];
+  var TIPOS = [['r', 'Dinheiro'], ['n', 'Quantidade'], ['p', 'Percentual'], ['e', 'Etapas']];
   var AJUDA = {
     r: 'Valor em reais que acumula no período, como faturamento.',
     n: 'Contagem que acumula no período, como clientes novos ou pedidos.',
@@ -53,7 +53,7 @@
       '<div id="blocoSemChave" class="aviso oculto">A chave da API ainda não foi configurada, então não dá para criar cartões por aqui. Crie o cartão na lista Metas e use o botão Transformar em meta dentro dele.</div>' +
 
       '<div class="coluna gap8"><span class="rotulo" id="tipoL">Tipo de meta</span>' +
-      '<div class="seg seg-largo" role="group" aria-labelledby="tipoL">' + TIPOS.map(function (k) { return '<button type="button" data-kind="' + k[0] + '" aria-pressed="false">' + k[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="seg seg-largo" role="group" aria-labelledby="tipoL">' + TIPOS.concat(original && original.tipo === 'a' ? [['a', 'Avaliação']] : []).map(function (k) { return '<button type="button" data-kind="' + k[0] + '" aria-pressed="false">' + k[1] + '</button>'; }).join('') + '</div>' +
       '<span class="ajuda" id="tipoAjuda"></span></div>' +
 
       '<div class="grade">' +
@@ -68,8 +68,8 @@
       '<label class="campo">Fim<input id="fim" type="date">' + erroCampo('fim') + '</label></div>' +
 
       '<div class="grade" id="blocoQ">' +
-      '<label class="campo"><span id="rotVIni">Quanto já tem hoje</span><span class="campo-prefixo"><span class="pre"></span><input id="vIni" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('vIni') + '</label>' +
-      '<label class="campo">Alvo<span class="campo-prefixo"><span class="pre"></span><input id="alvo" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('alvo') + '</label>' +
+      '<label class="campo"><span id="rotVIni">Valor inicial</span><span class="campo-prefixo"><span class="pre"></span><input id="vIni" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('vIni') + '</label>' +
+      '<label class="campo">Objetivo<span class="campo-prefixo"><span class="pre"></span><input id="alvo" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('alvo') + '</label>' +
       '<label class="campo" id="campoUnidade">Unidade<input id="unit" type="text" placeholder="Ex.: clientes" maxlength="30">' + erroCampo('unit') + '</label></div>' +
 
       '<div class="coluna gap8 oculto" id="blocoE"><span class="rotulo">Etapas</span><div id="etapas" class="coluna gap8"></div>' + erroCampo('etapas') +
@@ -82,10 +82,8 @@
 
       '<details class="mais"><summary>Mais opções</summary><div class="coluna gap16 mais-corpo">' +
       '<div class="grade">' +
-      '<label class="campo" id="campoLembrete">Lembrar de atualizar<select id="lembrete"><option value="seg">Toda segunda-feira</option><option value="dia">Todo dia útil</option><option value="15">A cada 15 dias</option><option value="nao">Nunca</option></select></label>' +
       '<label class="campo" id="campoQuem">Quem atualiza<select id="quem"><option value="resp">Responsável e admins</option><option value="admin">Só admins</option></select></label>' +
-      '<label class="campo" id="campoRitmo">Contar o ritmo em<select id="ritmo"><option value="uteis">Dias úteis</option><option value="corridos">Dias corridos</option></select></label></div>' +
-      '<label class="campo" id="campoOque">O que conta para a meta<textarea id="oque" maxlength="400" placeholder="Ex.: pedidos faturados no mês, sem frete"></textarea></label></div></details>' +
+      '<label class="campo" id="campoRitmo">Contar o ritmo em<select id="ritmo"><option value="uteis">Dias úteis</option><option value="corridos">Dias corridos</option></select></label></div></div></details>' +
 
       '<div class="form-rodape"><span class="peq" id="rodapeInfo" role="status"></span>' +
       '<div class="linha gap8" style="flex:none"><button type="button" class="btn btn-texto" id="cancelar">Cancelar</button><button type="submit" class="btn btn-primario" id="salvar">' + rotuloBotao + '</button></div></div>' +
@@ -139,13 +137,11 @@
       $('blocoE').classList.toggle('oculto', S.kind !== 'e');
       $('blocoA').classList.toggle('oculto', S.kind !== 'a');
       $('campoUnidade').classList.toggle('invisivel', S.kind !== 'n');
-      $('campoLembrete').classList.toggle('oculto', !ehValor());
       $('campoQuem').classList.toggle('oculto', !ehValor());
       $('campoRitmo').classList.toggle('oculto', S.kind === 'a' || S.kind === 'p');
-      $('campoOque').classList.toggle('oculto', S.kind === 'a');
       el.querySelectorAll('.pre').forEach(function (s) { s.textContent = S.kind === 'r' ? 'R$' : ''; });
       el.querySelectorAll('.suf').forEach(function (s) { s.textContent = S.kind === 'p' ? '%' : ''; });
-      $('rotVIni').textContent = original && original.tipo === 'q' ? 'Valor no início' : (S.kind === 'p' ? 'Taxa hoje' : 'Quanto já tem hoje');
+      $('rotVIni').textContent = S.kind === 'p' ? 'Percentual inicial' : 'Valor inicial';
       reformatar($('vIni')); reformatar($('alvo'));
       ajustar();
     }
@@ -184,11 +180,11 @@
         var c = M.casasDe(meta);
         $('vIni').value = meta.fmt === 'r' ? M.numBR(meta.vIni, 2, 2) : M.numBR(meta.vIni, c);
         $('alvo').value = meta.fmt === 'r' ? M.numBR(meta.alvo, 2, 2) : M.numBR(meta.alvo, c);
-        $('unit').value = meta.unit || ''; $('ritmo').value = meta.ritmo || 'uteis'; $('lembrete').value = meta.lembrete || 'seg';
+        $('unit').value = meta.unit || ''; $('ritmo').value = meta.ritmo || 'uteis';
       }
       if (meta.tipo === 'e') $('ritmo').value = meta.ritmo || 'uteis';
-      $('crit').value = meta.crit || ''; $('oque').value = meta.oque || ''; $('quem').value = meta.quem || 'resp';
-      if (meta.oque || meta.quem === 'admin' || meta.ritmo === 'corridos' || (meta.lembrete && meta.lembrete !== 'seg')) el.querySelector('details.mais').open = true;
+      $('crit').value = meta.crit || ''; $('quem').value = meta.quem || 'resp';
+      if (meta.quem === 'admin' || meta.ritmo === 'corridos') el.querySelector('details.mais').open = true;
     }
 
     // ---------- leitura e validação ----------
@@ -203,7 +199,8 @@
       var rp = rotuloPeriodo(ini, fim);
       meta.dono = { id: dono.id, fullName: dono.fullName, initials: dono.initials || '' };
       meta.tipo = ehValor() ? 'q' : S.kind; meta.imp = S.imp; meta.ini = ini; meta.fim = fim; meta.periodo = rp ? rp.tipo : 'livre';
-      meta.quem = $('quem').value; meta.oque = S.kind === 'a' ? '' : $('oque').value.trim();
+      meta.quem = $('quem').value;
+      delete meta.oque; delete meta.lembrete; // campos que deixaram de existir
       meta.criadaEm = original ? original.criadaEm : M.hoje();
       meta.hist = original ? (original.hist || []) : [];
       meta.aval = original ? original.aval || null : null;
@@ -211,15 +208,15 @@
       if (ehValor()) {
         var tIni = $('vIni').value, tAlvo = $('alvo').value;
         var v0 = M.lerNumero(tIni), alvo = M.lerNumero(tAlvo);
-        if (isNaN(v0)) throw new Falha('vIni', 'Digite quanto já tem hoje. Use 0 se começa do zero.');
-        if (isNaN(alvo)) throw new Falha('alvo', 'Digite o alvo da meta.');
-        if (alvo === v0) throw new Falha('alvo', 'O alvo precisa ser diferente do valor de hoje.');
+        if (isNaN(v0)) throw new Falha('vIni', 'Digite o valor inicial. Use 0 se a meta começa do zero.');
+        if (isNaN(alvo)) throw new Falha('alvo', 'Digite o objetivo da meta.');
+        if (alvo === v0) throw new Falha('alvo', 'O objetivo precisa ser diferente do valor inicial.');
         if (S.kind === 'n' && !$('unit').value.trim()) throw new Falha('unit', 'Informe a unidade, por exemplo: clientes, pedidos, páginas.');
         meta.fmt = S.kind; meta.vIni = v0; meta.alvo = alvo;
-        meta.dir = alvo < v0 ? 'down' : 'up'; // alvo menor que o valor de hoje: meta de redução
+        meta.dir = alvo < v0 ? 'down' : 'up'; // objetivo menor que o valor inicial: meta de redução
         meta.unit = S.kind === 'n' ? $('unit').value.trim() : '';
         meta.casas = S.kind === 'r' ? 2 : Math.max(M.decimaisDigitados(tIni), M.decimaisDigitados(tAlvo));
-        meta.ritmo = S.kind === 'p' ? 'uteis' : $('ritmo').value; meta.lembrete = $('lembrete').value;
+        meta.ritmo = S.kind === 'p' ? 'uteis' : $('ritmo').value;
       }
       if (S.kind === 'e') meta.ritmo = $('ritmo').value;
       if (S.kind === 'a') {

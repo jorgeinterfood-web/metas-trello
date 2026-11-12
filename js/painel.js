@@ -73,7 +73,7 @@
   }
   function valorTexto(it) {
     var m = it.meta, r = it.r;
-    if (m.tipo === 'q' && m.fmt === 'p') return M.fmtValor(m, r.atual) + ', alvo ' + M.fmtValor(m, m.alvo);
+    if (m.tipo === 'q' && m.fmt === 'p') return M.fmtValor(m, r.atual) + ', objetivo ' + M.fmtValor(m, m.alvo);
     if (m.tipo === 'q') {
       if (m.fmt === 'n') return M.numBR(r.atual, M.casasDe(m)) + ' de ' + M.fmtValor(m, m.alvo);
       return M.fmtValor(m, r.atual) + ' de ' + M.fmtValor(m, m.alvo);
@@ -83,7 +83,7 @@
   }
   function atencao(it) {
     var m = it.meta, r = it.r, motivos = [], peso = 0;
-    if (r.sit === 'late') { motivos.push(m.tipo === 'a' ? 'Avaliada como não atingida' : 'Período encerrado sem atingir o alvo'); peso = 4; }
+    if (r.sit === 'late') { motivos.push(m.tipo === 'a' ? 'Avaliada como não atingida' : 'Período encerrado sem atingir o objetivo'); peso = 4; }
     else if (r.sit === 'risk' || r.sit === 'abaixo') { var d = M.textoDiff(m, r); motivos.push(d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Em risco'); peso = 3; }
     if (m.tipo === 'a' && r.sit === 'wait' && r.depois) { motivos.push('Avaliação pendente desde ' + M.dataBR(m.fim)); peso = Math.max(peso, 2); }
     if (r.parada) { motivos.push('Sem atualização há ' + r.diasSemAtualizar + ' dias'); peso = Math.max(peso, 1); }
@@ -125,7 +125,7 @@
     var frase = '';
     if (todasComProj && ehAtual()) {
       var pp = alvo ? Math.round(proj / alvo * 100) : 0;
-      frase = '<p class="det-frase">No ritmo atual, o período fecha em <span class="forte">' + esc(M.fmtValor(fmt, proj)) + '</span>, ' + pp + '% do alvo.</p>';
+      frase = '<p class="det-frase">No ritmo atual, o período fecha em <span class="forte">' + esc(M.fmtValor(fmt, proj)) + '</span>, ' + pp + '% do objetivo.</p>';
     } else if (ehAtual()) frase = '<p class="det-frase sub">A projeção aparece depois de um terço do período.</p>';
     return '<section class="bloco"><div class="det-topo"><div class="det-valor"><span class="grande num">' + esc(M.fmtValor(fmt, soma)) + '</span><span class="sub">de ' + esc(M.fmtValor(fmt, alvo)) + ' em metas de dinheiro</span></div></div>' +
       '<div class="det-barra">' + M.barra(r, { grossa: true, label: 'Soma das metas de dinheiro' }) + '<span class="forte num det-pct">' + pct + '%</span></div>' + frase + '</section>';
@@ -135,7 +135,7 @@
       return (b.it.meta.imp || 1) - (a.it.meta.imp || 1) || b.peso - a.peso || a.it.r.pct - b.it.r.pct;
     });
     var cab = '<h3 class="subtitulo">Precisa de atenção</h3>';
-    if (!lista.length) return '<section class="bloco">' + cab + '<p class="det-frase sub">Nenhuma meta em risco, encerrada abaixo do alvo ou sem atualização neste período.</p></section>';
+    if (!lista.length) return '<section class="bloco">' + cab + '<p class="det-frase sub">Nenhuma meta em risco, encerrada abaixo do objetivo ou sem atualização neste período.</p></section>';
     var linhas = lista.map(function (a) {
       var it = a.it;
       return '<button type="button" class="linha-tab atencao" data-card="' + esc(it.card.id) + '"><span class="cel-titulo">' + imp(it) + '<span class="trunca">' + esc(tituloCurto(it)) + '</span></span>' +
@@ -196,7 +196,7 @@
     var a = anterior(), nomeAnt = nomeDe(a.y, a.m).toLowerCase();
     if (S.repetir && S.repetir.andando) html += '<p>Criando ' + S.repetir.feitas + ' de ' + S.repetir.total + ' metas…</p>';
     else if (S.repetir && S.repetir.confirmar) {
-      html += '<p>Criar ' + rep.length + (rep.length === 1 ? ' meta' : ' metas') + ' em ' + esc(nomePeriodo().toLowerCase()) + ' com os mesmos responsáveis, títulos e alvos de ' + esc(nomeAnt) + '? Os registros começam do zero.</p>' +
+      html += '<p>Criar ' + rep.length + (rep.length === 1 ? ' meta' : ' metas') + ' em ' + esc(nomePeriodo().toLowerCase()) + ' com os mesmos responsáveis, títulos e objetivos de ' + esc(nomeAnt) + '? Os registros começam do zero.</p>' +
         '<div class="linha gap8" style="justify-content:center"><button class="btn btn-primario" id="repetirSim">Criar ' + rep.length + (rep.length === 1 ? ' meta' : ' metas') + '</button><button class="btn btn-texto" id="repetirNao">Cancelar</button></div>';
     } else if (rep.length) html += '<div class="linha gap8" style="justify-content:center"><button class="btn btn-primario" id="repetir">Repetir as metas de ' + esc(nomeAnt) + '</button>' + '<span class="sub">ou crie pelo botão Nova meta.</span></div>';
     else html += '<p>' + (CTX.admin ? 'Crie a primeira pelo botão Nova meta.' : 'Quando um admin criar uma meta, ela aparece aqui.') + '</p>';

@@ -36,9 +36,8 @@
         if (!meta) return [];
         return [
           selo(t, function (m, r) { return { text: M.textoBadge(m, r), color: r.info.badge, refresh: 300 }; }),
-          // Segundo selo: pendência de atualização tem prioridade; senão, a meta do dia
+          // Segundo selo: a meta do dia
           selo(t, function (m, r) {
-            if (r.pendente || r.parada) return { text: 'Atualizar valor', color: 'orange', refresh: 300 };
             if (M.temMetaDia(m, r)) return { text: M.textoMetaDia(m, r), refresh: 300 };
             return null;
           })

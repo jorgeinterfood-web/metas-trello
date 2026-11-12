@@ -70,7 +70,7 @@
     var bolas = real.slice(1, ordem.length + 1).map(function (p, k) {
       return '<circle cx="' + X(p[0]).toFixed(1) + '" cy="' + Y(p[1]).toFixed(1) + '" r="3.5" style="fill:' + cor + '"><title>' + M.dataBR(ordem[k]) + ': ' + esc(M.fmtValor(meta, p[1])) + '</title></circle>';
     }).join('');
-    var desc = 'Evolução de ' + M.fmtValor(meta, meta.vIni) + ' a ' + M.fmtValor(meta, M.valorAtual(meta)) + ' entre ' + M.dataBR(meta.ini) + ' e ' + M.dataBR(meta.fim) + '. Alvo: ' + M.fmtValor(meta, meta.alvo) + '.';
+    var desc = 'Evolução de ' + M.fmtValor(meta, meta.vIni) + ' a ' + M.fmtValor(meta, M.valorAtual(meta)) + ' entre ' + M.dataBR(meta.ini) + ' e ' + M.dataBR(meta.fim) + '. Objetivo: ' + M.fmtValor(meta, meta.alvo) + '.';
 
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(desc) + '" style="display:block;max-width:100%">' +
       grade + linhaAlvo + linhaHoje +
@@ -111,20 +111,20 @@
       var m = meta, r = D.r, out = [];
       if (r.antes) return ['Começa em ' + data(m.ini) + '.'];
       if (m.tipo === 'q' && ehTaxa()) {
-        if (r.sit === 'noalvo') out.push('Está no alvo.');
-        else if (r.sit === 'abaixo') out.push('Faltam ' + M.pontos(m, r.faltaPontos) + ' para o alvo.');
-        else if (r.sit === 'hit') out.push('Fechou o período no alvo.');
-        else if (r.sit === 'late') out.push('O período terminou em ' + data(m.fim) + ' abaixo do alvo.');
+        if (r.sit === 'noalvo') out.push('Está no objetivo.');
+        else if (r.sit === 'abaixo') out.push('Faltam ' + M.pontos(m, r.faltaPontos) + ' para o objetivo.');
+        else if (r.sit === 'hit') out.push('Fechou o período no objetivo.');
+        else if (r.sit === 'late') out.push('O período terminou em ' + data(m.fim) + ' abaixo do objetivo.');
         return out;
       }
       if (m.tipo === 'q') {
-        if (r.sit === 'hit') return ['Alvo atingido.'];
-        if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' sem atingir o alvo. Faltaram ' + f(r.falta) + '.'];
+        if (r.sit === 'hit') return ['Objetivo atingido.'];
+        if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' sem atingir o objetivo. Faltaram ' + f(r.falta) + '.'];
         var q = M.arred(m, Math.abs(r.dif));
         out.push(q === 0 ? 'Está no ritmo esperado para hoje.' : 'Está ' + f(q) + (r.dif > 0 ? ' à frente' : ' atrás') + ' do esperado para hoje (' + f(M.arred(m, r.valorEsperado)) + ').');
         if (r.falta > 0) {
           var uni = m.ritmo === 'corridos' ? 'dia' : 'dia útil';
-          out.push('Faltam ' + f(r.falta) + ' para o alvo até ' + data(m.fim) + (r.mostrarDia && r.diasRestantes > 1 ? ', cerca de ' + f(r.porDiaArred) + ' por ' + uni + '.' : '.'));
+          out.push('Faltam ' + f(r.falta) + ' para o objetivo até ' + data(m.fim) + (r.mostrarDia && r.diasRestantes > 1 ? ', cerca de ' + f(r.porDiaArred) + ' por ' + uni + '.' : '.'));
         }
         return out;
       }
@@ -141,7 +141,7 @@
     function resumo() {
       var m = meta, r = D.r, principal, pct = '';
       if (m.tipo === 'q') {
-        principal = '<span class="grande num">' + esc(f(r.atual)) + '</span><span class="sub">' + (ehTaxa() ? 'alvo ' : 'de ') + esc(f(m.alvo)) + '</span>';
+        principal = '<span class="grande num">' + esc(f(r.atual)) + '</span><span class="sub">' + (ehTaxa() ? 'objetivo ' : 'de ') + esc(f(m.alvo)) + '</span>';
         if (!ehTaxa()) pct = '<span class="forte num det-pct">' + r.pct + '%</span>';
       } else if (m.tipo === 'e') {
         principal = '<span class="grande num">' + r.feitas + ' de ' + r.etapas + '</span><span class="sub">etapas</span>';
@@ -151,7 +151,6 @@
       }
       var linhas = frases().map(function (t2) { return '<p class="det-frase">' + esc(t2) + '</p>'; }).join('');
       if (r.parada) linhas += '<p class="det-frase parada">Sem atualização há ' + r.diasSemAtualizar + ' dias.</p>';
-      if (m.oque) linhas += '<p class="det-frase sub"><span class="forte">O que conta:</span> ' + esc(m.oque) + '</p>';
       return '<section class="det-resumo">' +
         '<div class="det-topo"><div class="det-valor">' + principal + '</div>' + M.selo(r) + '</div>' +
         (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: 'Progresso da meta' }) + pct + '</div>' : '') +
@@ -207,7 +206,7 @@
       if (meta.tipo !== 'q') return '';
       var h = meta.hist || [];
       var graf = h.length ? '<div id="graf"></div><div class="linha peq sub gap16"><span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR[D.r.info.cls] + ')"></span>Realizado</span>' +
-        '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>' + (ehTaxa() ? 'Alvo' : 'Ritmo esperado') + '</span></div>' : '<p class="det-frase sub">O gráfico aparece a partir do primeiro registro.</p>';
+        '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>' + (ehTaxa() ? 'Objetivo' : 'Ritmo esperado') + '</span></div>' : '<p class="det-frase sub">O gráfico aparece a partir do primeiro registro.</p>';
       var linhas = [];
       for (var i = h.length - 1; i >= 0 && linhas.length < 8; i--) {
         var e = h[i], ant = i > 0 ? h[i - 1][1] : meta.vIni, dif = e[1] - ant;
