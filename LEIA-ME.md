@@ -1,113 +1,89 @@
-# Power-Up Metas, versão 22
+# Power-Up Metas, versão 23
 
-## Atualizar a versão 21
+## Instalação sobre a versão 22
 
-Substitua no GitHub os arquivos deste pacote: metas.css, detalhe.js, index.html,
-meta.html e painel.html. Os demais ficam como na versão 21. As referências
-passaram a ?v=22.
+Esta atualização usa exclusivamente a v22 do ZIP enviado como base.
+Substitua no GitHub os arquivos deste pacote, mantendo config.js, os ícones e
+os demais arquivos. Os arquivos incluídos estão completos. Não há nova-meta.html.
+Publique todos os arquivos juntos e recarregue o Trello nas telas abertas.
+As referências passaram a ?v=23. Nenhuma alteração remota foi feita nesta entrega.
 
-## Ajuste
+## Navegar no tempo
 
-- Os blocos de resumo passaram a ter rótulo e valor na mesma linha, no formato
-  da linha do período:
-  Progresso geral: R$ 85.560,00 de R$ 300.000,00
-  Percentual atual: 85%
-  Etapas concluídas: 1 de 4
-  Objetivo do dia: R$ 3.200,00 de R$ 15.909,09
-  Metas de redução: Progresso geral: 65 devoluções (objetivo: 20 devoluções)
-- O complemento (de R$ …, objetivo) fica sem negrito. Evolução e Histórico
-  continuam como títulos.
+No painel da equipe, clique em Explorar período, no bloco Navegar no tempo.
 
----
+- Arraste o controle de tempo ou escolha uma data no calendário.
+- As setas percorrem um dia por vez. Os limites são o início do período e o
+  último dia já ocorrido. Não há resultados futuros simulados.
+- Reproduzir percorre os dias nas velocidades 1×, 2× e 4×. Ao chegar ao fim,
+  a reprodução para; um novo clique reinicia no começo.
+- As barras verticais pequenas indicam quantas metas da equipe têm registros
+  disponíveis em cada dia. O controle abaixo seleciona a data.
+- O progresso financeiro, a atenção, as situações e as metas por pessoa usam
+  a data consultada. Os filtros de pessoa e situação continuam funcionando.
+- Registros de cada dia aparecem abaixo das metas. Clique em um registro ou
+  em uma meta para consultar o resumo e os registros daquela data.
+- A consulta histórica é somente de leitura. Editar, registrar, repetir e criar
+  metas continuam disponíveis na visão atual. Abrir cartão atual abre o cartão
+  real do Trello, e não uma cópia antiga.
+- Filtrar, trocar a data ou abrir uma meta pausa a reprodução. Ocultar a página
+  também pausa. Há suporte ao teclado no controle de tempo e ao movimento reduzido.
+- Visão atual sai da consulta e busca os dados mais recentes do Trello. Trocar
+  mês ou trimestre também encerra a consulta histórica.
 
-# Versão 21
+## O que pode ser reconstruído
 
-## Atualizar a versão 20
+Os valores quantitativos usam os registros existentes até a data escolhida,
+com o último total daquele dia. Os registros antigos não têm horário: o passado
+é exibido por dia completo; hoje é identificado como Até agora. O objetivo do
+dia é recalculado com o saldo e os dias restantes daquela data, usando os mesmos
+critérios da v22. O ritmo esperado mantém a referência até o dia anterior.
 
-Substitua no GitHub os arquivos deste pacote: metas.css, core.js, detalhe.js,
-index.html, meta.html e painel.html. Os demais ficam como na versão 20. As
-referências passaram a ?v=21.
+A partir desta versão, alterações de objetivo, período, responsável, avaliação
+e encerramento guardam diferenças da configuração anterior no próprio cartão.
+Mudanças no mesmo dia mantêm o estado final do dia. Versões anteriores à captura
+não podem ser recuperadas: nesses casos, a tela informa que usa a configuração
+mais antiga disponível. Títulos dos cartões continuam usando o título atual.
 
-## Ajuste
+A v22 não guardava histórico de etapas. A v23 passa a guardar observações das
+contagens ao carregar o painel na visão atual ou abrir a meta, quando houver
+permissão de escrita. Não há servidor capturando alterações com o Power-Up
+fechado. Entre observações, é mostrada a última contagem conhecida com sua data.
+Antes da primeira observação, a situação é Sem histórico; a checklist atual
+nunca é aplicada a uma data antiga sem observação.
 
-- A importância Alta ou Muito alta saiu do lado das datas e virou uma tag à
-  direita da linha do período, com a mesma largura e alinhamento da tag de
-  situação. Fundo cinza neutro, seta laranja (Alta) ou vermelha (Muito alta).
-  Metas de importância normal continuam sem tag.
+A consulta não grava dados nem observa etapas. Reproduzir o período não faz
+chamadas ao Trello a cada passo. Na visão atual, observações iguais no mesmo dia
+não geram outra gravação. Atualizações de valores e configurações mantêm as
+permissões e a verificação de conflitos existentes.
 
----
+## Histórico incompleto e armazenamento
 
-# Versão 20
+A v22 pode ter agrupado registros de um mesmo dia ou removido os mais antigos
+para caber no cartão. A consulta não recupera dados removidos. Lacunas aparecem
+como Sem histórico, e o financeiro não mostra uma porcentagem se houver valores
+necessários ausentes. Quando há saldo preservado, ele é identificado e não vira
+um lançamento inventado.
 
-## Atualizar a versão 19
+O histórico continua compacto e dentro do limite usado pela v22. Se necessário,
+as observações e versões mais antigas são reduzidas primeiro, com indicação da
+cobertura disponível. Novos cortes de valores guardam a data do saldo preservado.
+O saldo atual e a lógica de compactação da v22 continuam preservados.
 
-Substitua no GitHub os arquivos deste pacote: metas.css, index.html, meta.html e
-painel.html. Os demais ficam como na versão 19. As referências passaram a ?v=20.
-Se a versão 19 ainda não foi publicada, publique primeiro os arquivos dela e
-depois estes.
-
-## Ajuste
-
-- A linha do período passou a ter o mesmo tamanho e peso dos títulos das seções,
-  como Etapas concluídas e Progresso geral: 14 px, seminegrito.
-
----
-
-# Versão 19
-
-## Atualizar a versão 17 ou 18
-
-Este pacote reúne as mudanças das versões 18 e 19. Se a 18 não chegou a ser
-publicada, publique direto esta.
-
-Substitua no GitHub os arquivos deste pacote, mantendo config.js e os ícones.
-Cada arquivo incluído está completo. As referências passaram a ?v=19.
-Publique todos de uma vez e peça para quem estiver com o Trello aberto recarregar
-a página: uma aba ainda na versão 17 lê o histórico novo como vazio.
-
-## Ajustes
-
-- Histórico compacto. Cada registro ocupava cerca de 64 caracteres e cabiam uns
-  50 por meta. Agora a data é guardada como dias desde o início e a pessoa como
-  índice: cabem perto de 200. Perto do limite, os registros de um mesmo dia
-  anterior a hoje são juntados no total do fim do dia; só em último caso os dias
-  mais antigos saem do histórico, sem mudar o valor atual nem o objetivo do dia.
-  As metas existentes são convertidas sozinhas no próximo registro.
-- Etapas sem autorização. Quem não autorizou passa a ver a contagem nativa do
-  cartão, em vez de "Etapas indisponíveis". Essa contagem soma todas as
-  checklists do cartão; nos cartões criados pelo Power-Up só existe a Etapas.
-- Descrição dos cartões. O marcador usado para evitar cartão duplicado
-  ("metas-criar:…" ou "metas-repetir:…") sai da descrição assim que a meta é
-  gravada. Os cartões antigos são limpos quando um admin autorizado abre o painel.
-  Criar e repetir metas passaram a ler só a lista Metas, não o quadro inteiro.
-  Metas repetidas guardam o cartão de origem, e é isso que impede duplicação.
-- Projeção. Em metas de dinheiro e quantidade, a partir de um terço do período,
-  o resumo mostra quanto a meta fecha no ritmo atual e quanto isso representa do
-  objetivo. O gráfico prolonga a linha pontilhada de hoje até o fim do período.
-- Autorização sem vencimento. A autorização do Trello deixou de vencer a cada
-  30 dias. Quem autorizou na versão 17 autoriza mais uma vez quando o token
-  antigo vencer, e a partir daí não precisa mais.
-
-## Ajustes da versão 19
-
-- Linhas que terminam com valor (dinheiro, quantidade, percentual, data ou
-  contagem) ficaram sem ponto final.
-- A projeção passou para depois de "Restante para o objetivo final" e o
-  percentual foi para parênteses: Projeção no ritmo atual: R$ 360.000,00 (90% do
-  objetivo).
-
-## Atenção sobre a autorização
-
-O token fica guardado no navegador de cada pessoa e dá leitura e escrita no
-Trello dela enquanto não for revogado. Em computador compartilhado, a pessoa
-deve revogar o acesso do Power-Up Metas na página de aplicativos da conta do
-Trello quando deixar de usar a máquina.
+O painel continua usando as metas dos cartões abertos disponíveis no quadro,
+em qualquer lista, como na v22. Cartões excluídos ou arquivados não são incluídos.
+A navegação não cria, move ou reorganiza listas. A futura organização em listas
+por colaboradora não foi implementada nesta atualização.
 
 ## Validação
 
-Sintaxe dos JavaScripts e testes com Trello simulado: compactação com 163
-registros (3.018 caracteres), caso extremo com corte, leitura de metas antigas,
-migração no registro, convivência com aba na versão 17, objetivo do dia
-inalterado após compactar, Etapas com e sem autorização, projeção em metas de
-aumento e de redução, ausência de projeção em percentual. A conferência visual
-no Trello continua pendente. Nenhuma alteração remota foi realizada.
+Sintaxe de todos os JavaScripts e testes automatizados de reconstrução diária,
+subtrações, percentuais mínimos e máximos, redução, versões de configuração,
+reabertura, avaliações, etapas, lacunas, compactação, permissões, conflitos,
+carregamento sem escrita, controles, filtros, reprodução, calendário, ano
+bissexto, detalhe somente de leitura e retorno à visão atual.
+
+Também foram verificadas as operações existentes de criação e retomada sem
+cartão duplicado, registro, objetivo diário e rótulo Completo sem números.
+A conferência visual no Trello permanece pendente: o ambiente de teste bloqueou
+a abertura da prévia local no navegador.
