@@ -293,3 +293,48 @@ details.mais summary:hover { text-decoration: underline; }
   #app .registro-campo { min-width: 0; width: 100%; max-width: none; flex: 1 1 100%; }
   #app .registro-linha > .btn { width: 100%; }
 }
+
+/* v12: marcador de lista explícito, espaço tipográfico único e registro alinhado. */
+#app ul.det-feedback {
+  display: block !important;
+  list-style: disc outside !important;
+  margin: 0 !important;
+  padding: 0 0 0 20px !important;
+}
+#app ul.det-feedback > li {
+  display: list-item !important;
+  list-style: disc outside !important;
+  margin: 0 0 4px !important;
+  padding: 0 0 0 2px !important;
+}
+#app ul.det-feedback > li:last-child { margin-bottom: 0 !important; }
+#app ul.det-feedback > li::marker { content: "•  "; color: var(--texto); font-size: 1.1em; }
+#app .det-resumo .det-valor, #app .det-dia .det-valor { display: block; }
+#app .det-resumo .det-valor > span, #app .det-dia .det-valor > span { margin: 0; }
+#app .registro-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 380px) max-content;
+  grid-template-areas: "label ." "field button";
+  gap: 4px 12px;
+  align-items: center;
+  justify-content: start;
+}
+#app label.registro-label {
+  grid-area: label;
+  margin: 0;
+  color: var(--sub);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+#app .registro-entrada { grid-area: field; min-width: 0; height: var(--ctrl); }
+#app .registro-submit {
+  grid-area: button;
+  align-self: center;
+  height: var(--ctrl);
+  width: auto;
+  margin: 0;
+}
+@media (max-width: 480px) {
+  #app .registro-linha { grid-template-columns: minmax(0, 1fr) max-content; }
+}

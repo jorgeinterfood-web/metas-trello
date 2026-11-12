@@ -1,65 +1,36 @@
-# Power-Up Metas, versão 11
+# Power-Up Metas, versão 12
 
-## Atualizar a versão 10
+## Atualizar a versão 11
 
 Substitua no GitHub os arquivos correspondentes aos deste ZIP. Cada arquivo está
-completo. Preserve js/config.js, os ícones e os outros arquivos da versão 10.
-Remova nova-meta.html do repositório, caso ainda exista: ele não é utilizado e
-não faz parte deste pacote. Não apague cartões ou dados do Power-Up.
+completo. Preserve js/config.js, os ícones e os demais arquivos já existentes.
+Não há nova-meta.html neste pacote; remova a página antiga se ainda existir.
+Após a publicação, recarregue o Trello e reabra o painel e os cartões.
+As referências agora usam ?v=12.
 
-Depois da publicação, recarregue o Trello e reabra os cartões e o painel.
-As referências dos arquivos foram atualizadas para ?v=11.
+## Ajustes solicitados
 
-## Mudanças
-
-- Adiantado e Atrasado são os rótulos curtos de ritmo. As situações do progresso
-  usam o masculino de modo consistente: Atingido, Não atingido, Superado.
-- Cartão aberto, cartão fechado e painel usam as mesmas situações. Os selos
-  fechados acrescentam apenas o dado de progresso e o contexto Dia.
-- Objetivo do dia substitui Objetivo de hoje.
-- Progresso da meta e Objetivo do dia usam o mesmo tamanho e peso dos valores.
-- Quando há mais de um feedback abaixo da barra, ele aparece em lista com bullets.
-- Fragmentos relacionados usam o separador |, sem confundir pontos de milhar com
-  finais de frases. Exemplo: Esperado até ontem: R$ 110.526,32 | R$ 25.526,32 atrás
-  do esperado.
-- O saldo final usa: Faltam R$ ... para o objetivo final.
-- O excedente diário em dinheiro usa: Excedente do dia: 60.000,00.
-- Removidos Como é calculado, Corrigir o total, Exportar histórico e Exportar e
-  resumir histórico, incluindo seus manipuladores e a alternância para corrigir.
-- A seção de histórico e a consulta de seus registros continuam disponíveis.
-- O limite de armazenamento continua protegido: atingir o limite impede novos
-  registros e orienta criar outra meta. Não há exclusão automática do histórico.
-
-## Registro de valores
-
-Metas acumuladas: campo Valor do registro e botão Registrar valor. O valor
-informado é somado ao total. Uma prévia mostra:
-Total atual: R$ 85.000,00 | Após o registro: R$ 85.500,00
-
-Nesse campo, digitar 500 significa R$ 500,00. Use vírgula para centavos, por
-exemplo 500,50. A moeda tem prefixo R$ e recebe duas casas ao sair do campo.
-A inclusão de observação é opcional. Não há alternância para corrigir o total.
-
-Taxas e metas de redução: campo Percentual atual ou Valor atual e botão Atualizar
-valor. Nesses casos o número substitui o valor atual; não é somado.
-
-O formulário de criação/edição mantém a entrada monetária da versão 10 e sua
-orientação específica; a mudança de digitação acima é da área de registro.
-
-## Mantido da versão 10
-
-Validação de números, períodos, permissões, unidades, objetivo diário estável,
-consolidado com a mesma base do detalhe, revisão por gravação, alertas e recuperação
-de criações parciais. Não foi feita alteração no GitHub nem no Trello.
-
-Gravações simultâneas entre computadores continuam limitadas pela API t.set,
-que não oferece transação. As proteções existentes não são exclusão mútua global.
-Registros antigos já removidos por versões anteriores não podem ser recuperados.
+- Restaurada a máscara monetária por centavos na área de registro: 500 vira 5,00;
+  50029 vira 500,29. Não há mais a formatação introduzida na versão 11 que tratava
+  500 digitado diretamente como 500 reais.
+- Listas de feedback com marcadores disc explícitos e estilos com prioridade
+  sobre o CSS do Trello, incluindo o marcador visível.
+- Separador entre trechos relacionados alterado de | para ● em mensagens,
+  prévias e selos do cartão. A barra vertical usada internamente nas datas do
+  formulário não foi alterada, pois não é texto apresentado ao usuário.
+- Valores e o trecho "de R$ ..." separados por um espaço tipográfico normal,
+  sem o gap adicional de 8px entre os dois trechos.
+- Rótulos da área de registro seguem o padrão dos demais rótulos de campo:
+  12px, peso 600 e cor secundária.
+- Botão com o texto Registrar, alinhado ao centro vertical da entrada de valor.
+  O rótulo ocupa uma linha própria acima do campo; não participa desse alinhamento.
+- Preservados os ajustes de situações, feedbacks e histórico da versão 11.
 
 ## Validação
 
-Sintaxe de todos os JavaScripts e testes com Trello simulado: cálculos, validação,
-permissões, conflito, limite de armazenamento, formulário, painel e detalhes.
-Testes adicionais conferem os textos solicitados, os bullets, os separadores,
-a ausência das ações removidas, a igualdade dos rótulos e o registro de 500 como
-R$ 500,00. A aparência e a integração autenticada devem ser conferidas no Trello.
+Sintaxe dos JavaScripts; testes de valores, máscara por centavos, registro,
+permissões, conflitos, histórico, formulário, consolidado, alertas e geração dos
+componentes com Trello simulado. Os testes verificam também as classes de rótulo,
+o espaço normal antes de "de", os separadores e as ações removidas.
+A renderização real e a integração autenticada devem ser conferidas no Trello.
+Nenhum dado foi alterado no GitHub ou no Trello.

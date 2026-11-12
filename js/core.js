@@ -361,7 +361,7 @@
   }
   function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < 0 ? 'dif-menos' : 'dif-neutro'); }
   function separar(partes) {
-    return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(' | ');
+    return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(' ● ');
   }
   function situacaoDia(d) { return d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento'); }
   function textoBadge(meta, r) {
