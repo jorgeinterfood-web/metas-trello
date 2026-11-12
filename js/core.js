@@ -492,9 +492,6 @@
   function caber(meta) {
     var enc = codificar(meta);
     if (tamanho(enc) <= LIMITE) return enc;
-    while (window.Metas.Tempo && window.Metas.Tempo.reduzir(meta)) {
-      enc = codificar(meta); if (tamanho(enc) <= LIMITE) return enc;
-    }
     var h = meta.hist || [], d = hoje(), dias = [];
     h.forEach(function (e) { if (e[0] < d && dias.indexOf(e[0]) < 0) dias.push(e[0]); });
     for (var i = 0; i < dias.length; i++) {
@@ -510,7 +507,7 @@
     }
     while (h.length > 1) {
       var tirado = h.shift();
-      meta.hist = h; meta.histBase = tirado[1]; meta.histBaseEm = tirado[0]; meta.histCortado = true;
+      meta.hist = h; meta.histBase = tirado[1]; meta.histCortado = true;
       enc = codificar(meta);
       if (tamanho(enc) <= LIMITE) return enc;
     }
@@ -520,29 +517,26 @@
   function ler(t, escopo) { return t.get(escopo, 'shared', CHAVE).then(decodificar); }
 
   // Todas as metas do quadro, em qualquer lista (cartões abertos)
-  function carregarMetas(t, opcoes) {
+  function carregarMetas(t) {
     return t.cards('id', 'name', 'desc', 'idList', 'members', 'badges', 'url').then(function (cards) {
       return Promise.all(cards.map(function (c) {
-        return ler(t, c.id).then(function (m) { return m ? prepararCard(t,c,m).then(function () { return window.Metas.Tempo && !(opcoes && opcoes.somenteLeitura) ? window.Metas.Tempo.observar(t,c,m) : c; }).then(function () { return {card:c,meta:m}; }) : null; });
+        return ler(t, c.id).then(function (m) { return m ? prepararCard(t,c,m).then(function () { return {card:c,meta:m}; }) : null; });
       }));
     }).then(function (lista) { return lista.filter(Boolean); });
   }
 
-  function salvarMeta(t, escopo, meta, observacao) {
+  function salvarMeta(t, escopo, meta) {
     function gravar() {
       if (t.memberCanWriteToModel && !t.memberCanWriteToModel(escopo === 'card' ? 'card' : 'board')) return Promise.reject(falha('Você não tem permissão para alterar este cartão.'));
       return Promise.all([ler(t, escopo), contexto(t)]).then(function (dados) {
         var atual = dados[0], ctx = dados[1];
-        if (observacao && observacao.etapas) {
-          if (!atual || !window.Metas.Tempo || !window.Metas.Tempo.iguais(atual,meta)) throw falha('Esta meta mudou. Atualize antes de observar as etapas.', 'CONFLICT');
-        } else if (!ctx.admin) {
+        if (!ctx.admin) {
           if (!atual || !atual.dono || atual.dono.id !== ctx.eu.id || atual.quem === 'admin' || !periodoAberto(atual) || atual.tipo !== 'q') throw falha('Você não tem permissão para alterar esta meta.');
-          var protegido = function (x) { var c=JSON.parse(JSON.stringify(x)); delete c.hist; delete c.histBase; delete c.histCortado; delete c.histBaseEm; delete c.diaria; delete c.rev; delete c.v; return JSON.stringify(c); };
+          var protegido = function (x) { var c=JSON.parse(JSON.stringify(x)); delete c.hist; delete c.histBase; delete c.histCortado; delete c.diaria; delete c.rev; delete c.v; return JSON.stringify(c); };
           if (protegido(atual) !== protegido(meta)) throw falha('Somente administradores podem editar a configuração da meta.');
         }
         if ((atual && atual.rev || '') !== (meta.rev || '')) throw falha('Esta meta mudou em outra tela. Atualize os dados antes de salvar.', 'CONFLICT');
         var novo = JSON.parse(JSON.stringify(meta));
-        if (window.Metas.Tempo) window.Metas.Tempo.prepararGravacao(atual, novo, observacao && observacao.etapas);
         novo.rev = Date.now().toString(36) + Math.random().toString(36).slice(2,10);
         var gravar = caber(novo);
         return t.set(escopo, 'shared', CHAVE, gravar).then(function () {
@@ -550,8 +544,7 @@
             if (!checagem || checagem.rev !== novo.rev) throw falha('Outra gravação ocorreu ao mesmo tempo. Atualize e confira o histórico.', 'CONFLICT');
             // A tela passa a mostrar o histórico como ficou gravado
             meta.rev = novo.rev; meta.v = 2; meta.hist = novo.hist;
-            if (novo.lt) meta.lt = novo.lt;
-            if (novo.histCortado) { meta.histCortado = true; meta.histBase = novo.histBase; meta.histBaseEm = novo.histBaseEm; }
+            if (novo.histCortado) { meta.histCortado = true; meta.histBase = novo.histBase; }
           });
         });
       });
