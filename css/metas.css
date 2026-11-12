@@ -362,3 +362,31 @@ details.mais summary:hover { text-decoration: underline; }
   #app .det-barra { gap: 12px; }
   #app .det-status { max-width: 160px; white-space: normal; }
 }
+
+/* v14: largura comum, período em destaque e operações de registro. */
+:root { --metas-tag-largura: 224px; --c4: var(--metas-tag-largura); }
+#app .det-status, #app .cel-selo .selo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--metas-tag-largura);
+  min-width: var(--metas-tag-largura);
+  max-width: none;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#app .det-barra { grid-template-columns: minmax(0, 1fr) var(--metas-tag-largura); }
+.det-periodo { margin: 0; color: var(--texto); font-size: 14px; line-height: 24px; }
+.det-periodo .forte { font-size: 16px; line-height: 24px; }
+#app .registro-acoes { grid-area: button; display: flex; align-items: center; gap: 8px; }
+#app .registro-acoes .btn { height: var(--ctrl); width: auto; }
+.registro-previa { display: flex; flex-direction: column; gap: 4px; }
+.resumo-financeiro { padding: 20px; }
+.resumo-financeiro .subtitulo { font-size: 20px; line-height: 28px; }
+.resumo-financeiro .financeiro-valores p { font-size: 16px; line-height: 28px; }
+.resumo-financeiro .financeiro-valores .num { font-size: 20px; line-height: 28px; }
+@media (max-width: 480px) {
+  #app .det-barra { gap: 12px; }
+  .resumo-financeiro { padding: 16px; }
+}

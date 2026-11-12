@@ -364,6 +364,23 @@
     return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(': ');
   }
   function situacaoDia(d) { return d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento'); }
+  function dimensionarTags(root) {
+    try {
+      if (!root || !root.querySelectorAll || typeof document === 'undefined' || !window.getComputedStyle) return;
+      var tags=root.querySelectorAll('.det-status, .cel-selo .selo');
+      if (!tags.length) return;
+      var estilo=window.getComputedStyle(tags[0]);
+      var ctx=document.createElement('canvas').getContext('2d');
+      if (!ctx) return;
+      ctx.font=estilo.font || (estilo.fontWeight+' '+estilo.fontSize+' '+estilo.fontFamily);
+      var textos=Object.keys(SIT).map(function(k){return SIT[k].label;}).concat(['Adiantado','Sem dias úteis','Sem etapas','Etapas indisponíveis']);
+      var largura=0;
+      textos.forEach(function(txt){largura=Math.max(largura,ctx.measureText(txt+': 000,00%').width);});
+      Array.prototype.forEach.call(tags,function(tag){largura=Math.max(largura,ctx.measureText(tag.textContent).width);});
+      largura=Math.ceil(largura + parseFloat(estilo.paddingLeft || 0) + parseFloat(estilo.paddingRight || 0) + 4);
+      document.documentElement.style.setProperty('--metas-tag-largura',largura+'px');
+    } catch (e) { /* A largura de reserva do CSS continua válida. */ }
+  }
   function textoBadge(meta, r) {
     if (!r.temBarra || r.rotulo === 'Etapas indisponíveis') return r.rotulo;
     var valor = r.semRitmo ? fmtValor(meta,r.atual) : numBR(r.pct,1) + '%';
@@ -562,7 +579,7 @@
   window.Metas = {
     CFG: CFG, unidade: unidade, pluralUnidade: pluralUnidade, erroUsuario: erroUsuario, validarValor: validarValor, periodoAberto: periodoAberto, singular: singular, faltam: faltam, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
     formatarCentavos: formatarCentavos, mascararDinheiro: mascararDinheiro, mascararValor: mascararValor,
-    textoProgressoDia: textoProgressoDia, separar: separar, situacaoDia: situacaoDia, dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
+    dimensionarTags: dimensionarTags, textoProgressoDia: textoProgressoDia, separar: separar, situacaoDia: situacaoDia, dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
     numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,

@@ -16,8 +16,14 @@
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
   var ICO = { esq: icone('<path d="M15 6l-6 6 6 6"/>'), dir: icone('<path d="M9 6l6 6-6 6"/>'), mais: icone('<path d="M12 5v14M5 12h14"/>') };
-  var CHIPS = [['ok',M.SIT.ok.label],['ahead','Adiantado'],['risk',M.SIT.risk.label],['abaixo',M.SIT.abaixo.label],['late',M.SIT.late.label],['hit',M.SIT.hit.label],['future',M.SIT.future.label],['wait',M.SIT.wait.label],['parcial',M.SIT.parcial.label],['andamento','Sem etapas']];
-  function grupo(it) { var v=it.r.sit; if(v==='ok' && it.r.rotulo==='Adiantado') return 'ahead'; return {noalvo:'hit',atingida:'hit',superada:'hit',nao:'late'}[v] || v; }
+  var CHIPS = [['ok','No ritmo'],['ahead','Adiantados'],['risk','Atrasados'],['hit','Atingidos'],['superada','Superados'],['abaixo','Pendentes'],['late','Não atingidos'],['future','A iniciar'],['wait','A avaliar'],['parcial','Parciais'],['andamento','Sem etapas'],['indisponivel','Indisponíveis'],['semdias','Sem dias úteis']];
+  function grupo(it) {
+    if(it.card.etapasErro)return 'indisponivel';
+    if(it.r.rotulo==='Sem dias úteis')return 'semdias';
+    var v=it.r.sit;
+    if(v==='ok' && it.r.rotulo==='Adiantado')return 'ahead';
+    return {noalvo:'hit',atingida:'hit',nao:'late'}[v] || v;
+  }
 
   function carregar() {
     app.innerHTML = '<div class="carregando">Carregando metas…</div>';
@@ -135,7 +141,7 @@
     var rr={temBarra:true,pct:alvo ? M.percentualExibido(soma/alvo*100,atingiu) : 0,fill:alvo ? Math.max(0,Math.min(100,soma/alvo*100)):0,info:M.SIT[sit],rotulo:M.SIT[sit].label};
     if(sit==='ok' && M.arred({fmt:'r'},soma-esperado)>0)rr.rotulo='Adiantado';
     var dinheiro={fmt:'r'};
-    return '<section class="bloco resumo-financeiro"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
+    return '<section class="bloco resumo-financeiro tab"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
       '<div class="financeiro-valores"><p>Realizado: <span class="forte num">' + esc(M.fmtValor(dinheiro,soma)) + '</span></p><p>Objetivo: <span class="forte num">' + esc(M.fmtValor(dinheiro,alvo)) + '</span></p></div>' +
       '<div class="det-barra">' + M.barra(rr,{grossa:true,label:'Progresso financeiro da equipe'}) + '<span class="det-status selo sit-' + rr.info.cls + '">' + esc(M.textoBadge({tipo:'q',fmt:'r'},rr)) + '</span></div>' +
       (reais.some(function(it){return it.meta.vIni!==0;}) ? '<p class="ajuda">Os valores mostram o avanço a partir dos valores iniciais.</p>':'') + '</section>';
@@ -158,7 +164,7 @@
     var n = {}; CHIPS.forEach(function(c){n[c[0]]=0;});
     itens.forEach(function (it) { n[grupo(it)] = (n[grupo(it)] || 0) + 1; });
     var chips = '<button type="button" class="chip" data-sit="" aria-pressed="' + (!S.sit) + '">Todas <span class="num">' + itens.length + '</span></button>' +
-      CHIPS.filter(function (c) { return n[c[0]] || S.sit === c[0]; }).map(function (c) {
+      CHIPS.filter(function (c) { return ['ok','ahead','risk','hit'].indexOf(c[0])>=0 || n[c[0]] || S.sit === c[0]; }).map(function (c) {
         return '<button type="button" class="chip" data-sit="' + c[0] + '" aria-pressed="' + (S.sit === c[0]) + '">' + c[1] + ' <span class="num">' + n[c[0]] + '</span></button>';
       }).join('');
     var donos = {};
@@ -307,6 +313,7 @@
       });
     }
     ligar();
+    M.dimensionarTags(app);
   }
 
   function ligar() {

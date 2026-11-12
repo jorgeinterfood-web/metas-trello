@@ -98,12 +98,11 @@
     function f(v) { return M.fmtValor(meta, v); }
 
     function cabecalho() {
-      var m = meta, partes = [data(m.ini) + ' a ' + data(m.fim)];
-      if (m.dono) partes.push(esc(m.dono.fullName));
-      var html = partes.join('<span aria-hidden="true">·</span>');
-      if ((m.imp || 1) > 1) html += '<span aria-hidden="true">·</span><span class="linha gap4">' + M.iconeImp(m.imp) + esc(M.IMP[m.imp]) + '</span>';
-      if (m.encerrada) html += '<span aria-hidden="true">·</span><span class="forte">Encerrada</span>';
-      return '<div class="det-cabeca">' + html + '</div>';
+      var m=meta;
+      var html='<p class="det-periodo"><span>Período:</span> <span class="forte num">' + esc(data(m.ini)+' a '+data(m.fim)) + '</span></p>';
+      if ((m.imp || 1)>1) html+='<span class="linha gap4">'+M.iconeImp(m.imp)+esc(M.IMP[m.imp])+'</span>';
+      if (m.encerrada) html+='<span class="forte">Encerrada</span>';
+      return '<div class="det-cabeca">'+html+'</div>';
     }
 
     function frases() {
@@ -193,8 +192,8 @@
       return '<form class="registro" id="fAtualizar" novalidate>' +
         '<div class="registro-linha"><label class="rotulo registro-label" for="valor">' + rot + '</label>' +
         '<span class="campo-prefixo registro-entrada">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" value="' + esc(st.rascunho) + '" type="text" inputmode="decimal" autocomplete="off" aria-describedby="previa" placeholder="' + (m.fmt === 'r' ? '0,00' : '0') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span>' +
-        '<button type="submit" class="btn btn-primario registro-submit"' + (st.ocupado ? ' disabled' : '') + '>' + 'Registrar' + '</button></div>' +
-        '<p class="ajuda registro-previa" id="previa" aria-live="polite"></p>' + '</form>';
+        (podeSomar() ? '<div class="registro-acoes"><button type="submit" name="operacao" value="add" class="btn btn-primario"' + (st.ocupado ? ' disabled' : '') + '>Somar</button><button type="submit" name="operacao" value="sub" class="btn"' + (st.ocupado ? ' disabled' : '') + '>Subtrair</button></div>' : '<button type="submit" class="btn btn-primario registro-submit"' + (st.ocupado ? ' disabled' : '') + '>Registrar</button>') + '</div>' +
+        '<div class="ajuda registro-previa" id="previa" aria-live="polite"></div>' + '</form>';
     }
 
     function etapas() {
@@ -260,6 +259,7 @@
       var msg = st.msg ? '<p class="' + (st.msg.erro ? 'erro' : 'sucesso') + '" role="status">' + esc(st.msg.texto) + '</p>' + (st.msg.erro ? '<button type="button" class="btn" id="atualizarDados">Atualizar dados</button>' : '') : '';
       el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + rodape() + '</div>';
       ligar();
+      M.dimensionarTags(el);
       if(st.msg && !st.msg.erro){var foco=el.querySelector('#valor');if(foco)foco.focus();}
       desenhar();
       ajustar();
@@ -300,7 +300,9 @@
           if (!campo.value.trim()) { previa.textContent = 'Total atual: ' + f(atual); return; }
           try { M.validarValor(v, meta); } catch(e) { previa.textContent=e.message;previa.className='ajuda erro-campo';return; }
           var novo = reg() === 'add' ? atual + v : v;
-          previa.textContent = 'Após o registro: ' + f(M.arred(meta,novo));
+          if (podeSomar()) {
+            previa.innerHTML='<span>Após somar: '+esc(f(M.arred(meta,atual+v)))+'</span><span>'+(v>atual ? 'A subtração deixaria o total negativo.' : 'Após subtrair: '+esc(f(M.arred(meta,atual-v))))+'</span>';
+          } else previa.textContent = 'Após o registro: ' + f(M.arred(meta,novo));
         }
         campo.addEventListener('input', previaValor); previaValor();
         fr.onsubmit = function (ev) {
@@ -312,7 +314,10 @@
           if (reg() === 'add' && v <= 0) { falha('Digite um valor maior que zero.'); return; }
           try { M.validarValor(v, meta); } catch (e) { falha(e.message); return; }
           var novoMeta = JSON.parse(JSON.stringify(meta));
-          var novo = reg() === 'add' ? M.valorAtual(novoMeta) + v : v;
+          var subtrair=podeSomar() && ev.submitter && ev.submitter.value==='sub';
+          var novo = podeSomar() ? M.valorAtual(novoMeta) + (subtrair ? -v : v) : v;
+          if (novo<0) {falha('A subtração não pode deixar o total negativo.');return;}
+          try {M.validarValor(novo,meta);} catch(e){falha(e.message);return;}
           var diaFixo = M.diaria(meta);
           if (diaFixo) novoMeta.diaria = { em: diaFixo.em, base: diaFixo.base, alvo: diaFixo.alvo };
           novoMeta.hist = novoMeta.hist || [];
