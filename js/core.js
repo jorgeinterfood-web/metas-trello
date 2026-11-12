@@ -183,13 +183,13 @@
 
   // ---------- Situação ----------
   var SIT = {
-    ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
-    risk: { label: 'Em risco', cls: 'risk', badge: 'yellow' },
-    late: { label: 'Não atingida', cls: 'late', badge: 'red' },
-    hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
-    noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
+    ok: { label: 'No ritmo esperado', cls: 'ok', badge: 'green' },
+    risk: { label: 'Abaixo do ritmo', cls: 'risk', badge: 'yellow' },
+    late: { label: 'Prazo encerrado', cls: 'late', badge: 'red' },
+    hit: { label: 'Meta atingida', cls: 'hit', badge: 'blue' },
+    noalvo: { label: 'Objetivo alcançado', cls: 'hit', badge: 'blue' },
     andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
-    abaixo: { label: 'Abaixo do objetivo', cls: 'risk', badge: 'yellow' },
+    abaixo: { label: 'Objetivo pendente', cls: 'risk', badge: 'yellow' },
     wait: { label: 'Aguardando avaliação', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingida', cls: 'late', badge: 'red' },
@@ -208,6 +208,35 @@
   function ultimaAtualizacao(meta) {
     var h = meta.hist || [];
     return h.length ? h[h.length - 1][0] : meta.criadaEm;
+  }
+
+  // O alvo diário usa o saldo no início do dia. O primeiro registro guarda
+  // essa referência, inclusive quando o histórico antigo precisar ser reduzido.
+  function diaria(meta, ref) {
+    var d = ref || hoje();
+    if (meta.tipo !== 'q' || meta.dir === 'down' || meta.fmt === 'p' || meta.encerrada || d < meta.ini || d > meta.fim) return null;
+    var modo = meta.ritmo === 'corridos' ? 'corridos' : 'uteis';
+    if (modo === 'uteis' && !diaUtil(d)) return null;
+    var base = meta.vIni;
+    (meta.hist || []).forEach(function (e) { if (e[0] < d) base = e[1]; });
+    var n = contarDias(d, meta.fim, modo);
+    var alvo = n ? arredCima(meta, Math.max(0, meta.alvo - base) / n) : 0;
+    var fixo = meta.diaria;
+    if (fixo && fixo.em === d && Number.isFinite(fixo.base) && Number.isFinite(fixo.alvo)) {
+      base = fixo.base; alvo = fixo.alvo;
+    }
+    if (alvo <= 0) return null;
+    var realizado = arred(meta, valorAtual(meta) - base);
+    var raw = realizado / alvo * 100;
+    var atingiu = realizado >= alvo;
+    return { em: d, base: base, alvo: alvo, realizado: realizado,
+      falta: arred(meta, Math.max(0, alvo - realizado)),
+      pct: percentualExibido(raw, atingiu), fill: Math.max(0, Math.min(100, raw)),
+      atingiu: atingiu, superou: realizado > alvo };
+  }
+  function percentualExibido(raw, atingiu) {
+    var n = Math.max(0, Math.round(raw * 10) / 10);
+    return !atingiu && n >= 100 ? 99.9 : n;
   }
 
   // badges: objeto badges do cartão (checkItems, checkItemsChecked)
@@ -232,7 +261,8 @@
         var t = (badges && badges.checkItems) || 0, f = (badges && badges.checkItemsChecked) || 0;
         pct = t ? f / t * 100 : 0;
         r.feitas = f; r.etapas = t;
-        r.difEtapas = Math.round(f - t * frac);
+        r.etapasEsperadas = Math.round(t * frac);
+        r.difEtapas = f - r.etapasEsperadas;
       } else {
         var cur = valorAtual(meta), den;
         r.atual = cur;
@@ -241,39 +271,33 @@
         r.valorEsperado = meta.vIni + (meta.alvo - meta.vIni) * frac;
         r.dif = meta.dir === 'down' ? r.valorEsperado - cur : cur - r.valorEsperado; // positivo: à frente
         r.falta = meta.dir === 'down' ? cur - meta.alvo : meta.alvo - cur;
-        // Meta do dia: o que falta dividido pelos dias que ainda restam.
-        // Se já houve registro hoje, a conta recomeça amanhã.
         r.registrouHoje = (meta.hist || []).some(function (e) { return e[0] === d; });
-        var comeco = d < meta.ini ? meta.ini : (r.registrouHoje ? addDias(d, 1) : d);
-        r.diasRestantes = d > meta.fim || comeco > meta.fim ? 0 : contarDias(comeco, meta.fim, modo);
-        r.porDia = r.diasRestantes && r.falta > 0 ? r.falta / r.diasRestantes : 0;
-        r.porDiaArred = arredCima(meta, r.porDia);
+        r.diasRestantes = d > meta.fim ? 0 : contarDias(d < meta.ini ? meta.ini : d, meta.fim, modo);
         r.mostrarDia = meta.dir !== 'down' && meta.fmt !== 'p';
+        r.diaria = diaria(meta, d);
         // Projeção linear pelo ritmo realizado até agora
         // Só a partir de um terço do período: antes disso a projeção oscila demais
         if (r.depois) r.projecao = cur;
         else if (total && passados / total >= 1 / 3) r.projecao = meta.vIni + (cur - meta.vIni) * total / passados;
       }
-      pct = Math.max(0, Math.round(pct));
-      r.pct = pct; r.fill = Math.min(pct, 100); r.temBarra = true;
+      var atingiu = meta.tipo === 'e' ? r.etapas > 0 && r.feitas >= r.etapas : r.falta <= 0;
+      r.pct = percentualExibido(pct, atingiu);
+      r.fill = Math.max(0, Math.min(pct, 100)); r.temBarra = true;
       r.diff = pct - r.esperado;
       if (meta.tipo === 'q' && meta.fmt === 'p') {
-        // Taxa não cresce em linha reta: vale onde ela está agora em relação ao alvo
         r.semRitmo = true;
         r.fill = Math.max(0, Math.min(100, cur));
         r.marcaEm = Math.max(0, Math.min(100, meta.alvo));
         r.faltaPontos = meta.dir === 'down' ? cur - meta.alvo : meta.alvo - cur;
-        var chegou = r.faltaPontos <= 0;
         if (r.antes) r.sit = 'future';
-        else if (r.depois || meta.encerrada) r.sit = chegou ? 'hit' : 'late';
-        else r.sit = chegou ? 'noalvo' : 'abaixo';
-      }
-      else if (pct >= 100) r.sit = 'hit';
-      else if (meta.tipo === 'e' && !r.antes && !r.depois && !meta.encerrada && r.feitas === 0 && Math.round(r.etapas * frac) === 0) r.sit = 'andamento';
+        else if (r.depois || meta.encerrada) r.sit = atingiu ? 'hit' : 'late';
+        else r.sit = atingiu ? 'noalvo' : 'abaixo';
+      } else if (r.antes) r.sit = 'future';
+      else if (atingiu) r.sit = 'hit';
       else if (meta.encerrada || r.depois) r.sit = 'late';
-      else if (r.antes) r.sit = 'future';
-      else if (pct < r.esperado - 5) r.sit = 'risk'; // mais de 5 pontos atrás do esperado
-      else r.sit = 'ok';
+      else if (meta.tipo === 'e' && !r.etapas) r.sit = 'andamento';
+      else if (meta.tipo === 'e') r.sit = r.difEtapas < 0 ? 'risk' : 'ok';
+      else r.sit = arred(meta, r.dif) < 0 ? 'risk' : 'ok';
     }
     // Sem atualização há dias (só metas de valor em andamento)
     r.parada = false;
@@ -284,6 +308,10 @@
     }
     r.info = SIT[r.sit];
     r.rotulo = r.sit === 'future' ? 'Começa em ' + dataBR(meta.ini) : r.info.label;
+    if (r.sit === 'late' && meta.encerrada) r.rotulo = 'Encerrada sem atingir';
+    if (meta.tipo === 'q' && meta.fmt === 'p' && r.sit === 'hit') r.rotulo = 'Objetivo alcançado';
+    if (r.sit === 'ok' && (meta.tipo === 'e' ? r.difEtapas > 0 : arred(meta, r.dif) > 0)) r.rotulo = 'À frente do ritmo';
+    if (meta.tipo === 'e' && !r.etapas && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem etapas';
     return r;
   }
 
@@ -303,20 +331,24 @@
   }
   function pontos(meta, n) {
     var v = arred(meta, Math.abs(n));
-    return numBR(v, casasDe(meta)) + (v === 1 ? ' ponto' : ' pontos');
+    return numBR(v, casasDe(meta)) + (meta.fmt === 'p' ? (v === 1 ? ' ponto percentual' : ' pontos percentuais') : (v === 1 ? ' ponto' : ' pontos'));
   }
-  function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < -5 ? 'dif-menos' : 'dif-neutro'); }
+  function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < 0 ? 'dif-menos' : 'dif-neutro'); }
   function textoBadge(meta, r) {
     if (!r.temBarra) return r.rotulo;
     if (meta.tipo === 'e') return r.rotulo + ' · ' + r.feitas + ' de ' + r.etapas;
     if (r.semRitmo) return r.rotulo + ' · ' + fmtValor(meta, r.atual);
-    return r.rotulo + ' · ' + r.pct + '%';
+    return r.rotulo + ' · ' + numBR(r.pct, 1) + '% do percurso';
   }
   function textoMetaDia(meta, r) {
-    return 'Meta do dia: ' + fmtValor(meta, r.porDiaArred);
+    var d = r.diaria;
+    if (!d) return '';
+    if (d.superou) return 'Objetivo de hoje superado';
+    if (d.atingiu) return 'Objetivo de hoje atingido';
+    return 'Hoje: ' + faltam(meta, d.falta).toLowerCase() + ' ' + fmtValor(meta, d.falta);
   }
   function temMetaDia(meta, r) {
-    return meta.tipo === 'q' && r.mostrarDia && !meta.encerrada && !r.antes && !r.depois && r.sit !== 'hit' && r.porDia > 0;
+    return !!r.diaria;
   }
 
   // ---------- Contexto e dados ----------
@@ -441,14 +473,16 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  // Barra de progresso com um traço vertical onde a meta deveria estar hoje
+  // O marcador é exclusivo de taxas: ali ele indica o percentual-alvo.
+  // Ritmo esperado é explicado em texto, sem um segundo significado na barra.
   function barra(r, opts) {
     opts = opts || {};
-    var pos = null, titulo = 'Progresso: ' + r.pct + '%';
-    if (r.marcaEm !== undefined) { pos = r.marcaEm; titulo = 'O traço marca o objetivo: ' + numBR(r.marcaEm) + '%'; }
-    else if (!r.antes && !r.depois && r.esperado > 0 && r.esperado < 100) { pos = r.esperado; titulo = 'O traço mostra onde deveria estar hoje: ' + r.esperado + '%'; }
-    return '<div class="barra' + (opts.grossa ? ' barra-grossa' : '') + (opts.fina ? ' barra-fina' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + r.pct +
-      '" aria-label="' + esc((opts.label || 'Progresso') + ', ' + titulo) + '" title="' + esc(titulo) + '">' +
+    var pos = r.marcaEm === undefined ? null : r.marcaEm;
+    var titulo = opts.texto || ('Progresso: ' + numBR(r.pct, 1) + '% do percurso');
+    if (pos !== null) titulo = opts.texto || ('O traço marca o objetivo de ' + numBR(r.marcaEm) + '%');
+    var valor = pos !== null ? r.fill : Math.max(0, Math.min(100, r.pct));
+    return '<div class="barra' + (opts.grossa ? ' barra-grossa' : '') + '" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + valor +
+      '" aria-valuetext="' + esc(titulo) + '" aria-label="' + esc(opts.label || 'Progresso') + '" title="' + esc(titulo) + '">' +
       '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div>' +
       (pos !== null ? '<div class="barra-marca" style="left:' + pos + '%"></div>' : '') + '</div>';
   }
@@ -474,7 +508,7 @@
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
     numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
-    valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
+    diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
     aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,

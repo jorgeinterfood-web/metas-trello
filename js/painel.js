@@ -9,7 +9,7 @@
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
   var ICO = { esq: icone('<path d="M15 6l-6 6 6 6"/>'), dir: icone('<path d="M9 6l6 6-6 6"/>'), mais: icone('<path d="M12 5v14M5 12h14"/>') };
-  var CHIPS = [['ok', 'No ritmo'], ['risk', 'Em risco'], ['late', 'Não atingida'], ['hit', 'Atingida'], ['neutral', 'Sem cobrança ainda']];
+  var CHIPS = [['ok', 'No ritmo ou à frente'], ['risk', 'Pendentes ou abaixo do ritmo'], ['late', 'Não atingidas'], ['hit', 'Atingidas'], ['neutral', 'Outras situações']];
 
   function carregar() {
     app.innerHTML = '<div class="carregando">Carregando metas…</div>';
@@ -84,7 +84,7 @@
   function atencao(it) {
     var m = it.meta, r = it.r, motivos = [], peso = 0;
     if (r.sit === 'late') { motivos.push(m.tipo === 'a' ? 'Avaliada como não atingida' : 'Período encerrado sem atingir o objetivo'); peso = 4; }
-    else if (r.sit === 'risk' || r.sit === 'abaixo') { var d = M.textoDiff(m, r); motivos.push(d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Em risco'); peso = 3; }
+    else if (r.sit === 'risk' || r.sit === 'abaixo') { var d = M.textoDiff(m, r); motivos.push(d ? d.charAt(0).toUpperCase() + d.slice(1) : 'Abaixo do ritmo'); peso = 3; }
     if (m.tipo === 'a' && r.sit === 'wait' && r.depois) { motivos.push('Avaliação pendente desde ' + M.dataBR(m.fim)); peso = Math.max(peso, 2); }
     if (r.parada) { motivos.push('Sem atualização há ' + r.diasSemAtualizar + ' dias'); peso = Math.max(peso, 1); }
     if (!motivos.length) return null;
@@ -120,22 +120,22 @@
     if (!reais.length) return '';
     var soma = 0, alvo = 0, proj = 0, todasComProj = true;
     reais.forEach(function (it) { soma += it.r.atual; alvo += it.meta.alvo; if (it.r.projecao === undefined) todasComProj = false; else proj += it.r.projecao; });
-    var fmt = { fmt: 'r' }, esp = esperadoPeriodo(), pct = alvo ? Math.round(soma / alvo * 100) : 0;
-    var r = { pct: pct, fill: Math.min(pct, 100), esperado: esp, info: { cls: pct >= 100 ? 'hit' : (pct >= esp - 5 ? 'ok' : 'risk') }, antes: esp === 0, depois: esp === 100 };
+    var fmt = { fmt: 'r' }, esp = esperadoPeriodo(), pct = alvo ? M.percentualExibido(soma / alvo * 100, soma >= alvo) : 0;
+    var r = { pct: pct, fill: Math.min(pct, 100), esperado: esp, info: { cls: pct >= 100 ? 'hit' : (pct >= esp ? 'ok' : 'risk') }, antes: esp === 0, depois: esp === 100 };
     var frase = '';
     if (todasComProj && ehAtual()) {
       var pp = alvo ? Math.round(proj / alvo * 100) : 0;
       frase = '<p class="det-frase">No ritmo atual, o período fecha em <span class="forte">' + esc(M.fmtValor(fmt, proj)) + '</span>, ' + pp + '% do objetivo.</p>';
     } else if (ehAtual()) frase = '<p class="det-frase sub">A projeção aparece depois de um terço do período.</p>';
     return '<section class="bloco"><div class="det-topo"><div class="det-valor"><span class="grande num">' + esc(M.fmtValor(fmt, soma)) + '</span><span class="sub">de ' + esc(M.fmtValor(fmt, alvo)) + ' em metas de dinheiro</span></div></div>' +
-      '<div class="det-barra">' + M.barra(r, { grossa: true, label: 'Soma das metas de dinheiro' }) + '<span class="forte num det-pct">' + pct + '%</span></div>' + frase + '</section>';
+      '<div class="det-barra">' + M.barra(r, { grossa: true, label: 'Soma das metas de dinheiro' }) + '<span class="forte num det-pct">' + M.numBR(pct, 1) + '%</span></div>' + frase + '</section>';
   }
   function blocoAtencao(itens) {
     var lista = itens.map(atencao).filter(Boolean).sort(function (a, b) {
       return (b.it.meta.imp || 1) - (a.it.meta.imp || 1) || b.peso - a.peso || a.it.r.pct - b.it.r.pct;
     });
     var cab = '<h3 class="subtitulo">Precisa de atenção</h3>';
-    if (!lista.length) return '<section class="bloco">' + cab + '<p class="det-frase sub">Nenhuma meta em risco, encerrada abaixo do objetivo ou sem atualização neste período.</p></section>';
+    if (!lista.length) return '<section class="bloco">' + cab + '<p class="det-frase sub">Nenhuma meta com objetivo pendente, abaixo do ritmo, com prazo encerrado sem atingir ou sem atualização neste período.</p></section>';
     var linhas = lista.map(function (a) {
       var it = a.it;
       return '<button type="button" class="linha-tab atencao" data-card="' + esc(it.card.id) + '"><span class="cel-titulo">' + imp(it) + '<span class="trunca">' + esc(tituloCurto(it)) + '</span></span>' +
@@ -219,7 +219,7 @@
       return lista.reduce(function (pr, it) {
         return pr.then(function () {
           var v = it.meta, nova = JSON.parse(JSON.stringify(v)), novoCard;
-          nova.ini = p.a; nova.fim = p.b; nova.hist = []; nova.aval = null; nova.encerrada = false; delete nova.encerradaEm; nova.criadaEm = M.hoje();
+          nova.ini = p.a; nova.fim = p.b; nova.hist = []; delete nova.diaria; nova.aval = null; nova.encerrada = false; delete nova.encerradaEm; nova.criadaEm = M.hoje();
           if (v.tipo === 'q' && v.fmt === 'p') nova.vIni = M.valorAtual(v); // taxa começa de onde parou
           return M.rest(t, 'POST', '/cards', { idList: listaMetas.id, name: tituloCurto(it) + ' · ' + v.dono.fullName, idMembers: v.dono.id, start: start.toISOString(), due: due.toISOString(), pos: 'bottom' })
             .then(function (c) { novoCard = c; return M.salvarMetaNova(t, c.id, nova); })

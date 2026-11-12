@@ -223,6 +223,7 @@
         meta.crit = $('crit').value.trim();
         if (!meta.crit) throw new Falha('crit', 'Explique como a meta será avaliada, para a pessoa saber o que se espera.');
       }
+      if (original && (original.ini !== meta.ini || original.fim !== meta.fim || original.alvo !== meta.alvo || original.vIni !== meta.vIni || original.tipo !== meta.tipo || original.fmt !== meta.fmt || original.ritmo !== meta.ritmo)) delete meta.diaria;
       return meta;
     }
 

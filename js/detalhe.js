@@ -106,76 +106,72 @@
       return '<div class="det-cabeca">' + html + '</div>';
     }
 
-    // Frases do resumo: no máximo duas, cada fato uma vez
     function frases() {
-      var m = meta, r = D.r, out = [];
-      if (r.antes) return ['Começa em ' + data(m.ini) + '.'];
-      if (m.tipo === 'q' && ehTaxa()) {
-        if (r.sit === 'noalvo') out.push('Está no objetivo.');
-        else if (r.sit === 'abaixo') out.push(M.faltam(m, r.faltaPontos) + ' ' + M.pontos(m, r.faltaPontos) + ' para o objetivo.');
-        else if (r.sit === 'hit') out.push('Fechou o período no objetivo.');
-        else if (r.sit === 'late') out.push('O período terminou em ' + data(m.fim) + ' abaixo do objetivo.');
-        return out;
-      }
-      var corridos = m.ritmo === 'corridos';
-      var dias = function (n) { return n + ' ' + (corridos ? (n === 1 ? 'dia' : 'dias') : (n === 1 ? 'dia útil' : 'dias úteis')); };
-      var ondeEsta = '(' + r.passados + ' de ' + dias(r.total) + ')';
-      if (m.tipo === 'q') {
-        if (r.sit === 'hit') return ['Objetivo atingido.'];
-        if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' sem atingir o objetivo. ' + M.faltam(m, r.falta, true) + ' ' + f(r.falta) + '.'];
-        // 1. Onde deveria estar hoje e a distância até lá
-        var esperado = M.arred(m, r.valorEsperado), q = M.arred(m, Math.abs(r.dif));
-        var l1 = 'Até hoje ' + ondeEsta + ', o esperado era ' + f(esperado) + '.';
-        if (q === 0) l1 += ' Está exatamente no esperado.';
-        else if (r.dif < 0) l1 += ' ' + M.faltam(m, q) + ' ' + f(q) + ' para chegar lá.';
-        else l1 += ' Está ' + f(q) + (m.dir === 'down' ? ' abaixo' : ' acima') + ' disso.';
-        out.push(l1);
-        // 2. O que precisa fazer até o fim
-        if (r.falta > 0) {
-          var fecho = { mes: 'Para fechar o mês', tri: 'Para fechar o trimestre', sem: 'Para fechar o semestre' }[m.periodo] || 'Para fechar até ' + data(m.fim);
-          var n = r.diasRestantes;
-          if (r.mostrarDia && n > 1) out.push(fecho + ': ' + f(r.porDiaArred) + ' por ' + (corridos ? 'dia' : 'dia útil') + ' nos ' + dias(n) + ' que restam' + (r.registrouHoje ? '.' : ', contando hoje.'));
-          else if (r.mostrarDia && n === 1) out.push(fecho + ': ' + f(r.falta) + ' no último ' + (corridos ? 'dia' : 'dia útil') + '.');
-          else out.push(M.faltam(m, r.falta) + ' ' + f(r.falta) + ' para o objetivo até ' + data(m.fim) + '.');
-        }
-        return out;
-      }
+      var m = meta, r = D.r;
+      if (r.antes) return ['O período começa em ' + data(m.ini) + '.'];
+      if (m.tipo === 'a') return [];
       if (m.tipo === 'e') {
-        if (!r.etapas) return ['Nenhuma etapa na checklist do cartão.'];
+        if (!r.etapas) return ['Adicione as etapas à checklist do cartão.'];
         if (r.sit === 'hit') return ['Todas as etapas foram concluídas.'];
-        if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' com etapas pendentes.'];
-        if (r.sit === 'andamento') {
-          var dia = M.hoje(), modoE = corridos ? 'corridos' : 'uteis';
-          while (dia < m.fim && Math.round(r.etapas * M.contarDias(m.ini, dia, modoE) / r.total) < 1) dia = M.addDias(dia, 1);
-          return ['A primeira etapa é esperada até ' + data(dia) + '.'];
-        }
-        var espE = Math.round(r.etapas * r.esperado / 100), dE = r.feitas - espE;
-        var tE = 'Até hoje ' + ondeEsta + ', o esperado era ' + espE + ' de ' + r.etapas + ' etapas.';
-        if (dE < 0) tE += ' ' + (dE === -1 ? 'Falta 1' : 'Faltam ' + (-dE)) + ' para chegar lá.';
-        else if (dE > 0) tE += ' Está ' + dE + (dE === 1 ? ' etapa' : ' etapas') + ' à frente.';
-        else tE += ' Está exatamente no esperado.';
-        return [tE];
+        var pendentes = r.etapas - r.feitas;
+        if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + ' com ' + pendentes + (pendentes === 1 ? ' etapa pendente.' : ' etapas pendentes.')];
+        return ['Esperado até hoje: ' + r.etapasEsperadas + ' de ' + r.etapas + ' etapas. ' + M.textoDiff(m, r) + '.'];
       }
-      return [];
+      if (ehTaxa()) {
+        var limite = m.dir === 'down' ? 'no máximo ' : 'pelo menos ';
+        var texto = 'Objetivo: ' + limite + f(m.alvo) + '.';
+        if (r.faltaPontos > 0) texto += (M.arred(m, r.faltaPontos) === 1 ? ' Falta 1 ponto percentual' : ' Faltam ' + M.numBR(r.faltaPontos, M.casasDe(m)) + ' pontos percentuais') + ' para alcançá-lo.';
+        if (r.sit === 'late') texto += m.encerrada ? ' A meta foi encerrada sem alcançar o objetivo.' : ' O prazo terminou em ' + data(m.fim) + '.';
+        return [texto];
+      }
+      if (r.sit === 'hit') {
+        var extra = m.dir === 'down' ? m.alvo - r.atual : r.atual - m.alvo;
+        return [extra > 0 ? 'Objetivo superado em ' + f(extra) + '.' : 'O valor registrado alcançou o objetivo do período.'];
+      }
+      if (r.sit === 'late') return [(m.encerrada ? 'Meta encerrada' : 'Prazo encerrado em ' + data(m.fim)) + '. ' + M.faltam(m, r.falta, true) + ' ' + f(r.falta) + ' para o objetivo.'];
+      return ['Esperado até hoje: ' + f(M.arred(m, r.valorEsperado)) + '. ' + M.textoDiff(m, r) + '.',
+        M.faltam(m, r.falta) + ' ' + f(r.falta) + ' para o objetivo do período, até ' + data(m.fim) + '.'];
     }
 
     function resumo() {
-      var m = meta, r = D.r, principal, pct = '';
+      var m = meta, r = D.r, principal, pct = '', titulo;
       if (m.tipo === 'q') {
-        principal = '<span class="grande num">' + esc(f(r.atual)) + '</span><span class="sub">' + (ehTaxa() ? 'objetivo ' : 'de ') + esc(f(m.alvo)) + '</span>';
-        if (!ehTaxa()) pct = '<span class="forte num det-pct">' + r.pct + '%</span>';
+        titulo = ehTaxa() ? 'Percentual atual' : 'Progresso da meta';
+        principal = '<span class="grande num">' + esc(f(r.atual)) + '</span><span class="sub">' + (m.dir === 'down' || ehTaxa() ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
+        if (!ehTaxa()) pct = '<span class="forte num det-pct">' + M.numBR(r.pct, 1) + '%</span>';
       } else if (m.tipo === 'e') {
+        titulo = 'Etapas concluídas';
         principal = '<span class="grande num">' + r.feitas + ' de ' + r.etapas + '</span><span class="sub">etapas</span>';
-        pct = '<span class="forte num det-pct">' + r.pct + '%</span>';
+        pct = '<span class="forte num det-pct">' + M.numBR(r.pct, 1) + '%</span>';
       } else {
+        titulo = 'Avaliação da meta';
         principal = '<span class="forte">' + (m.aval ? 'Resultado da avaliação' : 'Avaliação em ' + data(m.fim)) + '</span>';
       }
-      var linhas = frases().map(function (t2) { return '<p class="det-frase">' + esc(t2) + '</p>'; }).join('');
+      var linhas = frases().map(function (txt) { return '<p class="det-frase">' + esc(txt) + '</p>'; }).join('');
+      if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) linhas += '<p class="det-frase sub">O progresso mede o percurso entre o valor inicial de ' + esc(f(m.vIni)) + ' e o objetivo.</p>';
       if (r.parada) linhas += '<p class="det-frase parada">Sem atualização há ' + r.diasSemAtualizar + ' dias.</p>';
-      return '<section class="det-resumo">' +
+      return '<section class="det-resumo" aria-label="' + titulo + '"><h3 class="det-titulo">' + titulo + '</h3>' +
         '<div class="det-topo"><div class="det-valor">' + principal + '</div>' + M.selo(r) + '</div>' +
-        (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: 'Progresso da meta' }) + pct + '</div>' : '') +
+        (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: titulo, texto: ehTaxa() ? f(r.atual) + '; objetivo ' + (m.dir === 'down' ? 'no máximo ' : 'pelo menos ') + f(m.alvo) : undefined }) + pct + '</div>' : '') +
         (linhas ? '<div class="coluna gap4">' + linhas + '</div>' : '') + '</section>';
+    }
+
+    function objetivoHoje() {
+      var m = meta, d = D.r.diaria;
+      if (!d) {
+        if (m.tipo === 'q' && m.dir !== 'down' && m.fmt !== 'p' && !m.encerrada && !D.r.antes && !D.r.depois && D.r.sit !== 'hit' && m.ritmo !== 'corridos' && !M.diaUtil(M.hoje())) {
+          return '<section class="det-dia"><h3 class="det-titulo">Objetivo de hoje</h3><p class="det-frase sub">Hoje não entra na contagem de dias úteis. Os registros continuam disponíveis e contam para o progresso total.</p></section>';
+        }
+        return '';
+      }
+      var rot = d.superou ? 'Objetivo de hoje superado' : (d.atingiu ? 'Objetivo de hoje atingido' : 'Objetivo de hoje pendente');
+      var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
+      var status = '<span class="selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + rot + '</span>';
+      var falta = d.atingiu ? (d.superou ? 'Acima do objetivo de hoje: ' + f(d.realizado - d.alvo) + '.' : 'O objetivo de hoje foi concluído.') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo de hoje.';
+      return '<section class="det-dia" aria-label="Objetivo de hoje"><h3 class="det-titulo">Objetivo de hoje</h3>' +
+        '<div class="det-topo"><div class="det-valor"><span class="forte num">' + esc(f(d.realizado)) + '</span><span class="sub">de ' + esc(f(d.alvo)) + ' hoje</span></div>' + status + '</div>' +
+        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso de hoje', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' hoje; ' + rot.toLowerCase() }) + '<span class="forte num det-pct">' + M.numBR(d.pct, 1) + '%</span></div>' +
+        '<p class="det-frase">' + esc(falta) + '</p><p class="peq sub">Calculado pelo saldo no início do dia e pelos dias restantes. O realizado é a variação líquida do total registrado hoje, incluindo correções.</p></section>';
     }
 
     function registro() {
@@ -255,7 +251,7 @@
       var membros = (o.card.members || []).map(function (x) { return x.id; });
       var avisoDono = meta.dono && membros.indexOf(meta.dono.id) < 0 ? '<p class="aviso">' + esc(meta.dono.fullName) + ' é o responsável por esta meta, mas não está como membro do cartão.</p>' : '';
       var msg = st.msg ? '<p class="' + (st.msg.erro ? 'erro' : 'sucesso') + '" role="status">' + esc(st.msg.texto) + '</p>' : '';
-      el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + registro() + etapas() + avaliacao() + evolucao() + rodape() + '</div>';
+      el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + rodape() + '</div>';
       ligar();
       desenhar();
       ajustar();
@@ -269,6 +265,7 @@
 
     function salvar(novo, aviso) {
       st.ocupado = true;
+      el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
       return M.salvarMeta(o.t, o.escopo, novo).then(function () {
         meta = novo; st.ocupado = false; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
         if (o.aoSalvar) o.aoSalvar(meta);
@@ -295,6 +292,7 @@
         if ($('maisObs')) $('maisObs').onclick = function () { var v = campo.value; st.obs = true; render(); $('valor').value = v; $('obs').focus(); };
         fr.onsubmit = function (ev) {
           ev.preventDefault();
+          if (st.ocupado) return;
           var v = M.lerNumero(campo.value);
           var falha = function (txt) { campo.setAttribute('aria-invalid', 'true'); previa.className = 'ajuda erro-campo'; previa.textContent = txt; campo.focus(); };
           if (isNaN(v)) { falha(meta.fmt === 'r' ? 'Digite um valor. Os dígitos entram pelos centavos: 50029 vira 500,29.' : 'Digite um valor.'); return; }
@@ -302,6 +300,8 @@
           var novoMeta = JSON.parse(JSON.stringify(meta));
           var novo = reg() === 'add' ? M.valorAtual(novoMeta) + v : v;
           var obs = $('obs') ? $('obs').value.trim().slice(0, 60) : '';
+          var diaFixo = M.diaria(meta);
+          if (diaFixo) novoMeta.diaria = { em: diaFixo.em, base: diaFixo.base, alvo: diaFixo.alvo };
           novoMeta.hist = novoMeta.hist || [];
           novoMeta.hist.push([M.hoje(), Math.round(novo * 100) / 100, o.ctx.eu.id, o.ctx.eu.fullName.split(' ')[0], obs]);
           st.obs = false; st.reg = null;
