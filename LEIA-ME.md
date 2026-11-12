@@ -22,4 +22,4 @@ Nos dados do Power-Up de cada cartão (limite do Trello: cerca de 4 mil caracter
 - Todas as metas ficam visíveis para todos no painel. Quem tem meta atualiza o próprio valor pelo cartão ou pelo painel.
 - Cartões de meta não devem ser arquivados: cartão arquivado some do painel.
 - Feriados nacionais já são considerados nos dias úteis. Feriados locais vão em `feriadosExtras`, no config.js.
-- Os arquivos carregam com `?v=4` nos endereços. Ao publicar uma nova versão, troque o número nos HTMLs para o Trello não usar a cópia antiga.
+- Os arquivos carregam com `?v=6` nos endereços. Ao publicar uma nova versão, troque o número nos HTMLs para o Trello não usar a cópia antiga.

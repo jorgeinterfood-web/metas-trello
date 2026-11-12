@@ -253,7 +253,7 @@
       else if (pct >= 100) r.sit = 'hit';
       else if (meta.encerrada || r.depois) r.sit = 'late';
       else if (r.antes) r.sit = 'future';
-      else if (pct < r.esperado - 15) r.sit = 'risk';
+      else if (pct < r.esperado - 5) r.sit = 'risk'; // mais de 5 pontos atrás do esperado
       else r.sit = 'ok';
     }
     // Sem atualização há dias (só metas de valor em andamento)
@@ -286,7 +286,7 @@
     var v = arred(meta, Math.abs(n));
     return numBR(v, casasDe(meta)) + (v === 1 ? ' ponto' : ' pontos');
   }
-  function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < -15 ? 'dif-menos' : 'dif-neutro'); }
+  function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < -5 ? 'dif-menos' : 'dif-neutro'); }
   function textoBadge(meta, r) {
     if (!r.temBarra) return r.rotulo;
     if (meta.tipo === 'e') return r.rotulo + ' · ' + r.feitas + ' de ' + r.etapas;
@@ -346,6 +346,32 @@
     }
     if (s.length > LIMITE) return Promise.reject(new Error('Os textos desta meta passaram do limite que o Trello permite guardar. Encurte o critério ou as observações.'));
     return t.set(escopo, 'shared', CHAVE, meta);
+  }
+
+  // Cartão recém-criado pela API demora um pouco para o Trello reconhecer no quadro aberto.
+  // Antes disso, gravar nele dá "Card not found or not on current board". Espera e tenta de novo.
+  function pausa(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  function esperarCartao(t, id, restam) {
+    restam = restam === undefined ? 30 : restam;
+    return t.cards('id').then(function (cs) {
+      if (cs.some(function (c) { return c.id === id; })) return true;
+      if (restam <= 0) return false;
+      return pausa(500).then(function () { return esperarCartao(t, id, restam - 1); });
+    });
+  }
+  function salvarMetaNova(t, id, meta) {
+    var tentar = function (n) {
+      return salvarMeta(t, id, meta).catch(function (e) {
+        if (n <= 0 || !/not found|not on current board/i.test(e && e.message || '')) throw e;
+        return pausa(1500).then(function () { return tentar(n - 1); });
+      });
+    };
+    return esperarCartao(t, id).then(function () { return tentar(4); }).catch(function (e) {
+      if (/not found|not on current board/i.test(e && e.message || '')) {
+        throw new Error('O cartão foi criado, mas o Trello demorou para reconhecê-lo e os dados da meta não foram gravados. Abra o cartão na lista ' + CFG.listaMetas + ' e use Transformar em meta.');
+      }
+      throw e;
+    });
   }
 
   function noPeriodo(meta, a, b) { return meta.ini <= b && meta.fim >= a; }
@@ -430,7 +456,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, noPeriodo: noPeriodo,
+    aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

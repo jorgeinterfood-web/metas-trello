@@ -117,14 +117,26 @@
         else if (r.sit === 'late') out.push('O período terminou em ' + data(m.fim) + ' abaixo do objetivo.');
         return out;
       }
+      var corridos = m.ritmo === 'corridos';
+      var dias = function (n) { return n + ' ' + (corridos ? (n === 1 ? 'dia' : 'dias') : (n === 1 ? 'dia útil' : 'dias úteis')); };
+      var ondeEsta = '(' + r.passados + ' de ' + dias(r.total) + ')';
       if (m.tipo === 'q') {
         if (r.sit === 'hit') return ['Objetivo atingido.'];
         if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' sem atingir o objetivo. Faltaram ' + f(r.falta) + '.'];
-        var q = M.arred(m, Math.abs(r.dif));
-        out.push(q === 0 ? 'Está no ritmo esperado para hoje.' : 'Está ' + f(q) + (r.dif > 0 ? ' à frente' : ' atrás') + ' do esperado para hoje (' + f(M.arred(m, r.valorEsperado)) + ').');
+        // 1. Onde deveria estar hoje e a distância até lá
+        var esperado = M.arred(m, r.valorEsperado), q = M.arred(m, Math.abs(r.dif));
+        var l1 = 'Até hoje ' + ondeEsta + ', o esperado era ' + f(esperado) + '.';
+        if (q === 0) l1 += ' Está exatamente no esperado.';
+        else if (r.dif < 0) l1 += ' Faltam ' + f(q) + ' para chegar lá.';
+        else l1 += ' Está ' + f(q) + (m.dir === 'down' ? ' abaixo' : ' acima') + ' disso.';
+        out.push(l1);
+        // 2. O que precisa fazer até o fim
         if (r.falta > 0) {
-          var uni = m.ritmo === 'corridos' ? 'dia' : 'dia útil';
-          out.push('Faltam ' + f(r.falta) + ' para o objetivo até ' + data(m.fim) + (r.mostrarDia && r.diasRestantes > 1 ? ', cerca de ' + f(r.porDiaArred) + ' por ' + uni + '.' : '.'));
+          var fecho = { mes: 'Para fechar o mês', tri: 'Para fechar o trimestre', sem: 'Para fechar o semestre' }[m.periodo] || 'Para fechar até ' + data(m.fim);
+          var n = r.diasRestantes;
+          if (r.mostrarDia && n > 1) out.push(fecho + ': ' + f(r.porDiaArred) + ' por ' + (corridos ? 'dia' : 'dia útil') + ' nos ' + dias(n) + ' que restam' + (r.registrouHoje ? '.' : ', contando hoje.'));
+          else if (r.mostrarDia && n === 1) out.push(fecho + ': ' + f(r.falta) + ' no último ' + (corridos ? 'dia' : 'dia útil') + '.');
+          else out.push('Faltam ' + f(r.falta) + ' para o objetivo até ' + data(m.fim) + '.');
         }
         return out;
       }
@@ -132,8 +144,12 @@
         if (!r.etapas) return ['Nenhuma etapa na checklist do cartão.'];
         if (r.sit === 'hit') return ['Todas as etapas foram concluídas.'];
         if (r.sit === 'late') return ['O período terminou em ' + data(m.fim) + ' com etapas pendentes.'];
-        var d = M.textoDiff(m, r);
-        return [d === 'no ritmo esperado' ? 'Está no ritmo esperado para hoje.' : 'Está ' + d + ' para hoje.'];
+        var espE = Math.round(r.etapas * r.esperado / 100), dE = r.feitas - espE;
+        var tE = 'Até hoje ' + ondeEsta + ', o esperado era ' + espE + ' de ' + r.etapas + ' etapas.';
+        if (dE < 0) tE += ' ' + (dE === -1 ? 'Falta 1' : 'Faltam ' + (-dE)) + ' para chegar lá.';
+        else if (dE > 0) tE += ' Está ' + dE + (dE === 1 ? ' etapa' : ' etapas') + ' à frente.';
+        else tE += ' Está exatamente no esperado.';
+        return [tE];
       }
       return [];
     }

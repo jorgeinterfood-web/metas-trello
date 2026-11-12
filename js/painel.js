@@ -121,7 +121,7 @@
     var soma = 0, alvo = 0, proj = 0, todasComProj = true;
     reais.forEach(function (it) { soma += it.r.atual; alvo += it.meta.alvo; if (it.r.projecao === undefined) todasComProj = false; else proj += it.r.projecao; });
     var fmt = { fmt: 'r' }, esp = esperadoPeriodo(), pct = alvo ? Math.round(soma / alvo * 100) : 0;
-    var r = { pct: pct, fill: Math.min(pct, 100), esperado: esp, info: { cls: pct >= 100 ? 'hit' : (pct >= esp - 15 ? 'ok' : 'risk') }, antes: esp === 0, depois: esp === 100 };
+    var r = { pct: pct, fill: Math.min(pct, 100), esperado: esp, info: { cls: pct >= 100 ? 'hit' : (pct >= esp - 5 ? 'ok' : 'risk') }, antes: esp === 0, depois: esp === 100 };
     var frase = '';
     if (todasComProj && ehAtual()) {
       var pp = alvo ? Math.round(proj / alvo * 100) : 0;
@@ -222,7 +222,7 @@
           nova.ini = p.a; nova.fim = p.b; nova.hist = []; nova.aval = null; nova.encerrada = false; delete nova.encerradaEm; nova.criadaEm = M.hoje();
           if (v.tipo === 'q' && v.fmt === 'p') nova.vIni = M.valorAtual(v); // taxa começa de onde parou
           return M.rest(t, 'POST', '/cards', { idList: listaMetas.id, name: tituloCurto(it) + ' · ' + v.dono.fullName, idMembers: v.dono.id, start: start.toISOString(), due: due.toISOString(), pos: 'bottom' })
-            .then(function (c) { novoCard = c; return M.salvarMeta(t, c.id, nova); })
+            .then(function (c) { novoCard = c; return M.salvarMetaNova(t, c.id, nova); })
             .then(function () {
               if (v.tipo !== 'e') return null;
               return M.rest(t, 'GET', '/cards/' + it.card.id + '/checklists', { fields: 'name', checkItem_fields: 'name' }).then(function (cls) {
