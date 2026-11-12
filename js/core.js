@@ -371,14 +371,15 @@
   function dimensionarTags(root) {
     try {
       if (!root || !root.querySelectorAll || typeof document === 'undefined' || !window.getComputedStyle) return;
-      var tags=root.querySelectorAll('.det-status, .cel-selo .selo');
+      var tags=root.querySelectorAll('.det-status, .cel-selo .selo, .det-imp');
       if (!tags.length) return;
       var estilo=window.getComputedStyle(tags[0]);
       var ctx=document.createElement('canvas').getContext('2d');
       if (!ctx) return;
       ctx.font=estilo.font || (estilo.fontWeight+' '+estilo.fontSize+' '+estilo.fontFamily);
       var largura=0;
-      Array.prototype.forEach.call(tags,function(tag){largura=Math.max(largura,ctx.measureText(tag.textContent).width);});
+      // O ícone da tag de importância ocupa 16 px mais 4 px de espaço
+      Array.prototype.forEach.call(tags,function(tag){largura=Math.max(largura,ctx.measureText(tag.textContent).width+(tag.querySelector('svg')?20:0));});
       largura=Math.ceil(largura + parseFloat(estilo.paddingLeft || 0) + parseFloat(estilo.paddingRight || 0) + 4);
       document.documentElement.style.setProperty('--metas-tag-largura',largura+'px');
     } catch (e) { /* A largura de reserva do CSS continua válida. */ }

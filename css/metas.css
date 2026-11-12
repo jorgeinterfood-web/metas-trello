@@ -418,3 +418,16 @@ details.mais summary:hover { text-decoration: underline; }
 
 /* v16: largura baseada somente nas tags presentes, sem reserva fictícia. */
 :root { --metas-tag-largura: 128px; }
+
+/* v21: importância como tag à direita da linha do período, na largura da tag de situação. */
+#app .det-cabeca { justify-content: space-between; }
+#app .det-imp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-sizing: border-box;
+  width: var(--metas-tag-largura);
+  min-width: var(--metas-tag-largura);
+  margin-left: auto;
+}

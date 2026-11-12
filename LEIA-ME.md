@@ -1,4 +1,21 @@
-# Power-Up Metas, versão 20
+# Power-Up Metas, versão 21
+
+## Atualizar a versão 20
+
+Substitua no GitHub os arquivos deste pacote: metas.css, core.js, detalhe.js,
+index.html, meta.html e painel.html. Os demais ficam como na versão 20. As
+referências passaram a ?v=21.
+
+## Ajuste
+
+- A importância Alta ou Muito alta saiu do lado das datas e virou uma tag à
+  direita da linha do período, com a mesma largura e alinhamento da tag de
+  situação. Fundo cinza neutro, seta laranja (Alta) ou vermelha (Muito alta).
+  Metas de importância normal continuam sem tag.
+
+---
+
+# Versão 20
 
 ## Atualizar a versão 19
 

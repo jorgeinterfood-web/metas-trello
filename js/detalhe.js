@@ -112,8 +112,9 @@
     function cabecalho() {
       var m=meta;
       var html='<p class="det-periodo"><span>Período:</span> <span class="forte num">' + esc(data(m.ini)+' a '+data(m.fim)) + '</span></p>';
-      if ((m.imp || 1)>1) html+='<span class="linha gap4">'+M.iconeImp(m.imp)+esc(M.IMP[m.imp])+'</span>';
       if (m.encerrada) html+='<span class="forte">Encerrada</span>';
+      // Importância fica à direita, como tag alinhada à tag de situação
+      if ((m.imp || 1)>1) html+='<span class="selo sit-neutral det-imp">'+M.iconeImp(m.imp)+esc(M.IMP[m.imp])+'</span>';
       return '<div class="det-cabeca">'+html+'</div>';
     }
 
