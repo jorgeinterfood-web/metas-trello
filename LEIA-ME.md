@@ -1,9 +1,12 @@
-# Power-Up Metas, versão 18
+# Power-Up Metas, versão 19
 
-## Atualizar a versão 17
+## Atualizar a versão 17 ou 18
+
+Este pacote reúne as mudanças das versões 18 e 19. Se a 18 não chegou a ser
+publicada, publique direto esta.
 
 Substitua no GitHub os arquivos deste pacote, mantendo config.js e os ícones.
-Cada arquivo incluído está completo. As referências passaram a ?v=18.
+Cada arquivo incluído está completo. As referências passaram a ?v=19.
 Publique todos de uma vez e peça para quem estiver com o Trello aberto recarregar
 a página: uma aba ainda na versão 17 lê o histórico novo como vazio.
 
@@ -29,6 +32,14 @@ a página: uma aba ainda na versão 17 lê o histórico novo como vazio.
 - Autorização sem vencimento. A autorização do Trello deixou de vencer a cada
   30 dias. Quem autorizou na versão 17 autoriza mais uma vez quando o token
   antigo vencer, e a partir daí não precisa mais.
+
+## Ajustes da versão 19
+
+- Linhas que terminam com valor (dinheiro, quantidade, percentual, data ou
+  contagem) ficaram sem ponto final.
+- A projeção passou para depois de "Restante para o objetivo final" e o
+  percentual foi para parênteses: Projeção no ritmo atual: R$ 360.000,00 (90% do
+  objetivo).
 
 ## Atenção sobre a autorização
 

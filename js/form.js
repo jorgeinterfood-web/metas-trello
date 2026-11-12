@@ -351,7 +351,7 @@
       });
     });
     el.querySelectorAll('#blocoQ .ajuda').forEach(function () {});
-    var ajudaDinheiro = document.createElement('p'); ajudaDinheiro.id='ajudaDinheiro'; ajudaDinheiro.className = 'ajuda'; ajudaDinheiro.textContent = 'Em dinheiro, os dígitos entram pelos centavos: 500 resulta em R$ 5,00.'; $('blocoQ').appendChild(ajudaDinheiro);
+    var ajudaDinheiro = document.createElement('p'); ajudaDinheiro.id='ajudaDinheiro'; ajudaDinheiro.className = 'ajuda'; ajudaDinheiro.textContent = 'Em dinheiro, os dígitos entram pelos centavos: 500 resulta em R$ 5,00'; $('blocoQ').appendChild(ajudaDinheiro);
     ajudaDinheiro.classList.toggle('oculto',S.kind!=='r');
     $('f').onsubmit = salvar;
     var primeiro = $('titulo') || $('dono');

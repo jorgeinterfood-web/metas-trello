@@ -88,9 +88,9 @@
   }
   function falha(txt, code) { var e = new Error(txt); e.usuario = true; e.code = code; return e; }
   function validarValor(v, meta) {
-    if (!Number.isFinite(v) || Math.abs(v) > 1e12) throw falha('Digite um valor válido de até 1 trilhão.');
+    if (!Number.isFinite(v) || Math.abs(v) > 1e12) throw falha('Digite um valor válido de até 1 trilhão');
     if (v < 0) throw falha('O valor não pode ser negativo.');
-    if (meta && meta.fmt === 'p' && v > 100) throw falha('Use um percentual entre 0 e 100.');
+    if (meta && meta.fmt === 'p' && v > 100) throw falha('Use um percentual entre 0 e 100');
     if (meta && Math.abs(v - arred(meta, v)) > 0.000001) throw falha('Use até ' + casasDe(meta) + ' casas decimais.');
     return v;
   }

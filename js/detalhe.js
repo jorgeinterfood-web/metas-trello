@@ -119,32 +119,32 @@
 
     function frases() {
       var m = meta, r = D.r;
-      if (r.antes) return ['O período começa em ' + data(m.ini) + '.'];
+      if (r.antes) return ['O período começa em ' + data(m.ini)];
       if (m.tipo === 'a') return [];
       if (m.tipo === 'e') {
         if (o.card.etapasErro) return ['As etapas ainda não foram carregadas.'];
         if (!r.etapas) return ['Adicione as etapas à checklist do cartão.'];
         if (r.sit === 'hit') return [];
-        if (r.sit === 'late') return ['Etapas pendentes: ' + (r.etapas-r.feitas) + '.'];
-        return ['Esperado até ontem: ' + r.etapasEsperadas + (r.etapasEsperadas === 1 ? ' etapa.' : ' etapas.')];
+        if (r.sit === 'late') return ['Etapas pendentes: ' + (r.etapas-r.feitas)];
+        return ['Esperado até ontem: ' + r.etapasEsperadas + (r.etapasEsperadas === 1 ? ' etapa' : ' etapas')];
       }
       if (ehTaxa()) {
         if (r.atual === m.alvo) return [];
-        var out = ['Objetivo ' + (m.dir === 'down' ? 'máximo: ' : 'mínimo: ') + f(m.alvo) + '.'];
-        if (r.faltaPontos > 0) out.push('Restante para o objetivo final: ' + M.pontos(m,r.faltaPontos) + '.');
+        var out = ['Objetivo ' + (m.dir === 'down' ? 'máximo: ' : 'mínimo: ') + f(m.alvo)];
+        if (r.faltaPontos > 0) out.push('Restante para o objetivo final: ' + M.pontos(m,r.faltaPontos));
         return out;
       }
       if (r.sit === 'hit') {
         var extra = m.dir === 'down' ? m.alvo - r.atual : r.atual - m.alvo;
-        return extra > 0 ? ['Acima do objetivo final: ' + f(extra) + '.'] : [];
+        return extra > 0 ? ['Acima do objetivo final: ' + f(extra)] : [];
       }
       var out = [];
       if (!r.depois && !m.encerrada) {
         var diferenca = M.arred(m,Math.abs(r.dif));
-        if (diferenca) out.push((r.dif < 0 ? 'Abaixo do esperado: ' : 'Acima do esperado: ') + f(diferenca) + '.');
+        if (diferenca) out.push((r.dif < 0 ? 'Abaixo do esperado: ' : 'Acima do esperado: ') + f(diferenca));
       }
-      if (projecaoVisivel(m, r)) out.push('Projeção no ritmo atual: ' + f(r.projecao) + ', ' + pctProjecao(m, r) + '% do objetivo.');
-      out.push('Restante para o objetivo final: ' + f(Math.max(0,r.falta)) + '.');
+      out.push('Restante para o objetivo final: ' + f(Math.max(0,r.falta)));
+      if (projecaoVisivel(m, r)) out.push('Projeção no ritmo atual: ' + f(r.projecao) + ' (' + pctProjecao(m, r) + '% do objetivo)');
       return out;
     }
 
@@ -170,8 +170,8 @@
         principal = '<span class="forte">' + (m.aval ? 'Resultado da avaliação' : 'Avaliação em ' + data(m.fim)) + '</span>';
       }
       var itens = frases().filter(Boolean);
-      if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) itens.push('Valor inicial: ' + f(m.vIni) + '.');
-      if (r.parada) itens.push('Sem atualização há ' + r.diasSemAtualizar + (r.diasSemAtualizar === 1 ? ' dia.' : ' dias.'));
+      if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) itens.push('Valor inicial: ' + f(m.vIni));
+      if (r.parada) itens.push('Sem atualização há ' + r.diasSemAtualizar + (r.diasSemAtualizar === 1 ? ' dia' : ' dias'));
       var linhas = feedback(itens);
       return '<section class="det-resumo" aria-label="' + titulo + '"><h3 class="det-titulo">' + titulo + '</h3>' +
         '<div class="det-topo"><div class="det-valor">' + principal + '</div>' + (r.temBarra ? '' : M.selo(r)) + '</div>' +
@@ -190,7 +190,7 @@
       var rot = M.situacaoDia(d);
       var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
 
-      var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + (m.fmt === 'r' ? M.numBR(d.realizado-d.alvo,2,2) : f(d.realizado-d.alvo)) + '.' : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
+      var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + (m.fmt === 'r' ? M.numBR(d.realizado-d.alvo,2,2) : f(d.realizado-d.alvo)) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
       return '<section class="det-dia" aria-label="Objetivo do dia"><h3 class="det-titulo">Objetivo do dia</h3>' +
         '<div class="det-topo"><div class="det-valor"><span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + ' no dia</span></div></div>' +
         '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
@@ -228,7 +228,7 @@
       if (o.ctx.admin) {
         var libera = M.addDias(m.fim, -6);
         if (m.aval && !st.alterarAval) html += '<div><button type="button" class="btn-link" id="alterarAval">Alterar avaliação</button></div>';
-        else if (!m.aval && M.hoje() < libera) html += '<p class="det-frase sub">O resultado pode ser registrado a partir de ' + data(libera) + '.</p>';
+        else if (!m.aval && M.hoje() < libera) html += '<p class="det-frase sub">O resultado pode ser registrado a partir de ' + data(libera) + '</p>';
         else {
           html += '<div class="coluna gap8"><label class="campo" style="max-width:480px">Comentário (opcional)<input id="avObs" type="text" maxlength="200" value="' + esc(m.aval && m.aval.obs || '') + '"></label>' +
             '<div class="linha gap8" style="flex-wrap:wrap">' + [['nao', M.SIT.nao.label], ['parcial', M.SIT.parcial.label], ['atingida', M.SIT.atingida.label], ['superada', M.SIT.superada.label]].map(function (op) {

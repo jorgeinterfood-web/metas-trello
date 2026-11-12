@@ -224,7 +224,7 @@
     return ITENS.filter(function (it) { return it.meta.ini === p.a && it.meta.fim === p.b; });
   }
   function telaVazia() {
-    var html = '<div class="vazio"><p class="forte">Nenhuma meta em ' + esc(nomePeriodo().toLowerCase()) + '.</p>';
+    var html = '<div class="vazio"><p class="forte">Nenhuma meta em ' + esc(nomePeriodo().toLowerCase()) + '</p>';
     var rep = CTX.admin ? repetiveis() : [];
     var a = anterior(), nomeAnt = nomeDe(a.y, a.m).toLowerCase();
     if (S.repetir && S.repetir.andando) html += '<p>Criando ' + S.repetir.feitas + ' de ' + S.repetir.total + ' metas…</p>';
