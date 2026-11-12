@@ -7,7 +7,7 @@
   function ajustar() { t.sizeTo('#app').catch(function () {}); }
 
   function carregar() {
-    return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('id', 'name', 'members', 'badges'), M.contexto(t)]).then(function (res) {
+    return Promise.all([M.ler(t, 'card'), t.card('id', 'name', 'members', 'badges'), M.contexto(t)]).then(function (res) {
       if (!res[0]) { app.innerHTML = ''; ajustar(); return; }
       return M.prepararCard(t,res[1],res[0]).then(function () { M.detalhe(app, { t: t, escopo: 'card', meta: res[0], card: res[1], ctx: res[2], ajustar: ajustar }); });
     }).catch(function (e) {

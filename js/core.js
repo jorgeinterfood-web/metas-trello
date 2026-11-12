@@ -241,7 +241,7 @@
     if (meta.tipo !== 'q' || meta.dir === 'down' || meta.fmt === 'p' || meta.encerrada || d < meta.ini || d > meta.fim) return null;
     var modo = meta.ritmo === 'corridos' ? 'corridos' : 'uteis';
     if (modo === 'uteis' && !diaUtil(d)) return null;
-    var base = meta.vIni;
+    var base = meta.histCortado && Number.isFinite(meta.histBase) ? meta.histBase : meta.vIni;
     (meta.hist || []).forEach(function (e) { if (e[0] < d) base = e[1]; });
     var n = contarDias(d, meta.fim, modo);
     var alvo = n ? arredCima(meta, Math.max(0, meta.alvo - base) / n) : 0;
@@ -300,10 +300,15 @@
         r.diasRestantes = d > meta.fim ? 0 : contarDias(d < meta.ini ? meta.ini : d, meta.fim, modo);
         r.mostrarDia = meta.dir !== 'down' && meta.fmt !== 'p';
         r.diaria = diaria(meta, d);
-        // Projeção linear pelo ritmo realizado até agora
-        // Só a partir de um terço do período: antes disso a projeção oscila demais
+        // Projeção linear pelo ritmo realizado até agora.
+        // Só a partir de um terço do período: antes disso a projeção oscila demais.
+        // Se já houve registro hoje, o dia de hoje entra na conta dos dias decorridos.
         if (r.depois || meta.encerrada) r.projecao = cur;
-        else if (total && passados / total >= 1 / 3) r.projecao = meta.vIni + (cur - meta.vIni) * total / passados;
+        else if (total && meta.fmt !== 'p') {
+          var decorridos = passados + (r.registrouHoje && !r.antes && (modo === 'corridos' || diaUtil(d)) ? 1 : 0);
+          decorridos = Math.min(decorridos, total);
+          if (decorridos && decorridos / total >= 1 / 3) r.projecao = Math.max(0, meta.vIni + (cur - meta.vIni) * total / decorridos);
+        }
       }
       var atingiu = meta.tipo === 'e' ? r.etapas > 0 && r.feitas >= r.etapas : r.falta <= 0;
       r.pct = percentualExibido(pct, atingiu);
@@ -420,26 +425,101 @@
     });
   }
 
+  // Etapas: com autorização, lê só a checklist Etapas pela API REST.
+  // Sem autorização, usa a contagem nativa do cartão (todas as checklists), que não exige token.
   function prepararCard(t, card, meta) {
     if (meta.tipo !== 'e') return Promise.resolve(card);
+    var b = card.badges || {};
+    var nativos = Number.isFinite(b.checkItems) ? { checkItems: b.checkItems, checkItemsChecked: b.checkItemsChecked || 0 } : null;
+    function usarNativos() { card.badges = nativos; card.etapasNativas = true; delete card.etapasErro; return card; }
     return autorizado(t).then(function (ok) {
-      if (!ok) throw falha('Autorize o acesso ao Trello para carregar as etapas.');
+      if (!ok) {
+        if (nativos) return null;
+        throw falha('Autorize o acesso ao Trello para carregar as etapas.');
+      }
       return rest(t, 'GET', '/cards/' + card.id + '/checklists', {checkItem_fields:'name,state'});
     }).then(function (cls) {
+      if (cls === null) return usarNativos();
       var lista = meta.checklistId ? cls.filter(function (c) { return c.id === meta.checklistId; }) : cls.filter(function (c) { return c.name === 'Etapas'; });
       if (!lista.length && !meta.checklistId && cls.length === 1) lista = cls;
       if (lista.length !== 1) throw falha('Mantenha uma única checklist chamada Etapas no cartão.');
       var itens = lista[0].checkItems || [];
       card.badges = { checkItems: itens.length, checkItemsChecked: itens.filter(function (i) { return i.state === 'complete'; }).length };
-      delete card.etapasErro; return card;
-    }).catch(function (e) { card.etapasErro = erroUsuario(e); card.badges = {checkItems:0,checkItemsChecked:0}; return card; });
+      delete card.etapasErro; delete card.etapasNativas; return card;
+    }).catch(function (e) {
+      if (nativos && !(e && e.usuario)) return usarNativos();
+      card.etapasErro = erroUsuario(e); card.badges = {checkItems:0,checkItemsChecked:0}; return card;
+    });
   }
+
+  // ---------- Armazenamento ----------
+  // O Trello guarda até 4096 caracteres por cartão. Desde a versão 18 (v: 2) o histórico
+  // fica compacto: cada registro é [dias desde o início, valor, índice da pessoa, observação?]
+  // e as pessoas ficam uma vez só em hp ([id, primeiro nome]). Na tela, o histórico continua
+  // no formato completo [data, valor, id, nome, observação].
+  function clonar(x) { return JSON.parse(JSON.stringify(x)); }
+  function decodificar(m) {
+    if (!m || !m.h) return m;
+    var c = clonar(m), pessoas = c.hp || [];
+    var hist = c.h.map(function (r) {
+      var p = pessoas[r[2]] || ['', ''];
+      return [addDias(c.ini, r[0]), r[1], p[0], p[1], r[3] || ''];
+    });
+    // Registros gravados por uma aba ainda na versão antiga entram depois dos compactos
+    c.hist = hist.concat(Array.isArray(m.hist) ? m.hist : []);
+    delete c.h; delete c.hp;
+    return c;
+  }
+  function codificar(meta) {
+    var c = clonar(meta), pessoas = [], idx = {};
+    c.h = (c.hist || []).map(function (e) {
+      var chave = (e[2] || '') + '|' + (e[3] || '');
+      if (!(chave in idx)) { idx[chave] = pessoas.length; pessoas.push([e[2] || '', e[3] || '']); }
+      var r = [diasEntre(c.ini, e[0]), e[1], idx[chave]];
+      if (e[4]) r.push(e[4]);
+      return r;
+    });
+    c.hp = pessoas; c.v = 2;
+    delete c.hist;
+    return c;
+  }
+  function tamanho(x) { return JSON.stringify(x).length; }
+  // Quando o histórico não cabe: primeiro junta os registros de um mesmo dia (dias anteriores
+  // a hoje, do mais antigo ao mais recente), mantendo o total do fim do dia. Se ainda não couber,
+  // retira os dias mais antigos e guarda o último valor retirado em histBase.
+  // Altera meta.hist, meta.histBase e meta.histCortado. Devolve a versão compacta para gravar.
+  function caber(meta) {
+    var enc = codificar(meta);
+    if (tamanho(enc) <= LIMITE) return enc;
+    var h = meta.hist || [], d = hoje(), dias = [];
+    h.forEach(function (e) { if (e[0] < d && dias.indexOf(e[0]) < 0) dias.push(e[0]); });
+    for (var i = 0; i < dias.length; i++) {
+      var dia = dias[i], doDia = h.filter(function (e) { return e[0] === dia; });
+      if (doDia.length > 1) {
+        var ult = doDia[doDia.length - 1], juntou = false;
+        h = h.filter(function (e) { if (e[0] !== dia) return true; if (juntou) return false; juntou = true; return true; })
+          .map(function (e) { return e[0] === dia ? [dia, ult[1], ult[2], ult[3], ''] : e; });
+        meta.hist = h;
+        enc = codificar(meta);
+        if (tamanho(enc) <= LIMITE) return enc;
+      }
+    }
+    while (h.length > 1) {
+      var tirado = h.shift();
+      meta.hist = h; meta.histBase = tirado[1]; meta.histCortado = true;
+      enc = codificar(meta);
+      if (tamanho(enc) <= LIMITE) return enc;
+    }
+    throw falha('Esta meta atingiu o limite de armazenamento. Crie outra meta para continuar sem apagar os registros existentes.', 'HISTORY');
+  }
+  // Lê a meta de um cartão já no formato completo
+  function ler(t, escopo) { return t.get(escopo, 'shared', CHAVE).then(decodificar); }
 
   // Todas as metas do quadro, em qualquer lista (cartões abertos)
   function carregarMetas(t) {
-    return t.cards('id', 'name', 'idList', 'members', 'badges', 'url').then(function (cards) {
+    return t.cards('id', 'name', 'desc', 'idList', 'members', 'badges', 'url').then(function (cards) {
       return Promise.all(cards.map(function (c) {
-        return t.get(c.id, 'shared', CHAVE).then(function (m) { return m ? prepararCard(t,c,m).then(function () { return {card:c,meta:m}; }) : null; });
+        return ler(t, c.id).then(function (m) { return m ? prepararCard(t,c,m).then(function () { return {card:c,meta:m}; }) : null; });
       }));
     }).then(function (lista) { return lista.filter(Boolean); });
   }
@@ -447,21 +527,23 @@
   function salvarMeta(t, escopo, meta) {
     function gravar() {
       if (t.memberCanWriteToModel && !t.memberCanWriteToModel(escopo === 'card' ? 'card' : 'board')) return Promise.reject(falha('Você não tem permissão para alterar este cartão.'));
-      return Promise.all([t.get(escopo, 'shared', CHAVE), contexto(t)]).then(function (dados) {
+      return Promise.all([ler(t, escopo), contexto(t)]).then(function (dados) {
         var atual = dados[0], ctx = dados[1];
         if (!ctx.admin) {
           if (!atual || !atual.dono || atual.dono.id !== ctx.eu.id || atual.quem === 'admin' || !periodoAberto(atual) || atual.tipo !== 'q') throw falha('Você não tem permissão para alterar esta meta.');
-          var protegido = function (x) { var c=JSON.parse(JSON.stringify(x)); delete c.hist; delete c.diaria; delete c.rev; delete c.v; return JSON.stringify(c); };
+          var protegido = function (x) { var c=JSON.parse(JSON.stringify(x)); delete c.hist; delete c.histBase; delete c.histCortado; delete c.diaria; delete c.rev; delete c.v; return JSON.stringify(c); };
           if (protegido(atual) !== protegido(meta)) throw falha('Somente administradores podem editar a configuração da meta.');
         }
         if ((atual && atual.rev || '') !== (meta.rev || '')) throw falha('Esta meta mudou em outra tela. Atualize os dados antes de salvar.', 'CONFLICT');
         var novo = JSON.parse(JSON.stringify(meta));
-        novo.v = 1; novo.rev = Date.now().toString(36) + Math.random().toString(36).slice(2,10);
-        if (JSON.stringify(novo).length > LIMITE) throw falha('Esta meta atingiu o limite de armazenamento. Crie outra meta para continuar sem apagar os registros existentes.', 'HISTORY');
-        return t.set(escopo, 'shared', CHAVE, novo).then(function () {
+        novo.rev = Date.now().toString(36) + Math.random().toString(36).slice(2,10);
+        var gravar = caber(novo);
+        return t.set(escopo, 'shared', CHAVE, gravar).then(function () {
           return t.get(escopo, 'shared', CHAVE).then(function (checagem) {
             if (!checagem || checagem.rev !== novo.rev) throw falha('Outra gravação ocorreu ao mesmo tempo. Atualize e confira o histórico.', 'CONFLICT');
-            meta.rev = novo.rev; meta.v = novo.v;
+            // A tela passa a mostrar o histórico como ficou gravado
+            meta.rev = novo.rev; meta.v = 2; meta.hist = novo.hist;
+            if (novo.histCortado) { meta.histCortado = true; meta.histBase = novo.histBase; }
           });
         });
       });
@@ -503,7 +585,7 @@
   // ---------- API REST (criar e mover cartões) ----------
   function chaveConfigurada() { return CFG.appKey && CFG.appKey.indexOf('COLE_AQUI') < 0; }
   function api(t) { return t.getRestApi(); }
-  // Confere se há token e se ele ainda vale (a autorização vence em 30 dias)
+  // Confere se há token e se ele ainda vale (a autorização não vence; só deixa de valer se for revogada)
   function autorizado(t) {
     if (!chaveConfigurada()) return Promise.resolve(false);
     return api(t).isAuthorized().then(function (ok) {
@@ -512,7 +594,7 @@
     }).catch(function () { return false; });
   }
   function autorizar(t) {
-    return api(t).authorize({ scope: 'read,write', expiration: '30days' });
+    return api(t).authorize({ scope: 'read,write', expiration: 'never' });
   }
   function rest(t, metodo, caminho, params) {
     return api(t).getToken().then(function (token) {
@@ -532,6 +614,12 @@
         });
     });
   }
+  // Marcador temporário que evita cartão duplicado se a criação for interrompida.
+  // Depois que a meta é gravada no cartão, ele não serve mais e sai da descrição.
+  function ehMarcador(desc) { return /^metas-(criar|repetir):/.test(String(desc || '')); }
+  function limparMarcador(t, cardId) { return rest(t, 'PUT', '/cards/' + cardId, { desc: '' }).catch(function () {}); }
+  // Cartões da lista, com descrição, para achar um marcador sem baixar o quadro inteiro
+  function cartoesDaLista(t, listaId) { return rest(t, 'GET', '/lists/' + listaId + '/cards', { fields: 'id,name,desc' }); }
   function garantirLista(t, nome, pos) {
     return t.lists('id', 'name').then(function (ls) {
       var achou = ls.filter(function (l) { return l.name.trim() === nome; })[0];
@@ -578,7 +666,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    prepararCard: prepararCard, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, ler: ler, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

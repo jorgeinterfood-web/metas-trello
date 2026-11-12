@@ -226,6 +226,7 @@ html[data-color-mode="dark"] .avatar { color: #1D2125; }
 .hist-linha .dif-mais, .hist-linha .dif-menos { white-space: nowrap; }
 .leg-linha { display: inline-block; width: 16px; height: 3px; border-radius: 2px; }
 .leg-trac { display: inline-block; width: 16px; border-top: 2px dashed var(--sub); }
+.leg-proj { display: inline-block; width: 16px; border-top: 2px dotted currentColor; }
 .det-rodape { padding-top: 16px; border-top: 1px solid var(--borda); }
 .det-confirma { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 

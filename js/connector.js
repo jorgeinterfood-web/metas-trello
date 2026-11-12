@@ -16,7 +16,7 @@
   function selo(t, montar) {
     return {
       dynamic: function () {
-        return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('id','badges')]).then(function (res) {
+        return Promise.all([M.ler(t, 'card'), t.card('id','badges')]).then(function (res) {
           var m = res[0];
           if (!m) return { text: '' };
           return M.prepararCard(t,res[1],m).then(function(){

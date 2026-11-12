@@ -1,28 +1,47 @@
-# Power-Up Metas, versão 17
+# Power-Up Metas, versão 18
 
-## Atualizar a versão 16
+## Atualizar a versão 17
 
-Substitua os arquivos correspondentes no GitHub, mantendo os demais arquivos,
-config.js e ícones. Cada arquivo incluído está completo. Não há nova-meta.html.
-Após publicar, recarregue o Trello e reabra cartões e painel. As referências
-passaram a ?v=17.
+Substitua no GitHub os arquivos deste pacote, mantendo config.js e os ícones.
+Cada arquivo incluído está completo. As referências passaram a ?v=18.
+Publique todos de uma vez e peça para quem estiver com o Trello aberto recarregar
+a página: uma aba ainda na versão 17 lê o histórico novo como vazio.
 
 ## Ajustes
 
-- No bloco Percentual atual, a linha principal mostra somente o valor atual.
-- Quando o valor atual é igual ao objetivo, a frase repetida abaixo da barra
-  desaparece. No exemplo de 100% para objetivo de 100%, ficam o valor 100% e a
-  tag Completo.
-- Quando os valores diferem, o objetivo aparece uma única vez no texto de
-  apoio, como Objetivo mínimo ou Objetivo máximo. O restante em pontos
-  percentuais continua disponível quando o objetivo ainda não foi alcançado.
-- O traço vertical indicava o objetivo percentual. Esse marcador foi retirado
-  das barras. O preenchimento continua representando o percentual atual.
+- Histórico compacto. Cada registro ocupava cerca de 64 caracteres e cabiam uns
+  50 por meta. Agora a data é guardada como dias desde o início e a pessoa como
+  índice: cabem perto de 200. Perto do limite, os registros de um mesmo dia
+  anterior a hoje são juntados no total do fim do dia; só em último caso os dias
+  mais antigos saem do histórico, sem mudar o valor atual nem o objetivo do dia.
+  As metas existentes são convertidas sozinhas no próximo registro.
+- Etapas sem autorização. Quem não autorizou passa a ver a contagem nativa do
+  cartão, em vez de "Etapas indisponíveis". Essa contagem soma todas as
+  checklists do cartão; nos cartões criados pelo Power-Up só existe a Etapas.
+- Descrição dos cartões. O marcador usado para evitar cartão duplicado
+  ("metas-criar:…" ou "metas-repetir:…") sai da descrição assim que a meta é
+  gravada. Os cartões antigos são limpos quando um admin autorizado abre o painel.
+  Criar e repetir metas passaram a ler só a lista Metas, não o quadro inteiro.
+  Metas repetidas guardam o cartão de origem, e é isso que impede duplicação.
+- Projeção. Em metas de dinheiro e quantidade, a partir de um terço do período,
+  o resumo mostra quanto a meta fecha no ritmo atual e quanto isso representa do
+  objetivo. O gráfico prolonga a linha pontilhada de hoje até o fim do período.
+- Autorização sem vencimento. A autorização do Trello deixou de vencer a cada
+  30 dias. Quem autorizou na versão 17 autoriza mais uma vez quando o token
+  antigo vencer, e a partir daí não precisa mais.
+
+## Atenção sobre a autorização
+
+O token fica guardado no navegador de cada pessoa e dá leitura e escrita no
+Trello dela enquanto não for revogado. Em computador compartilhado, a pessoa
+deve revogar o acesso do Power-Up Metas na página de aplicativos da conta do
+Trello quando deixar de usar a máquina.
 
 ## Validação
 
-Sintaxe dos JavaScripts e testes com Trello simulado: percentuais iguais,
-abaixo e acima dos objetivos mínimo e máximo, acessibilidade da barra,
-cálculos, registros, permissões, conflitos, formulários, painel e tags.
-A conferência visual no Trello continua pendente. Nenhuma alteração remota
-foi realizada.
+Sintaxe dos JavaScripts e testes com Trello simulado: compactação com 163
+registros (3.018 caracteres), caso extremo com corte, leitura de metas antigas,
+migração no registro, convivência com aba na versão 17, objetivo do dia
+inalterado após compactar, Etapas com e sem autorização, projeção em metas de
+aumento e de redução, ausência de projeção em percentual. A conferência visual
+no Trello continua pendente. Nenhuma alteração remota foi realizada.

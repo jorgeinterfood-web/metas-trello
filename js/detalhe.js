@@ -10,6 +10,15 @@
     return Math.max(n * p, minimo);
   }
   function data(s) { return s.slice(0, 4) === M.hoje().slice(0, 4) ? M.dataBR(s) : M.dataBRCompleta(s); }
+  // A projeção aparece em metas de valor acumulado ou de redução, durante o período e antes de atingir o objetivo
+  function projecaoVisivel(meta, r) {
+    return meta.tipo === 'q' && !r.semRitmo && Number.isFinite(r.projecao) && !r.antes && !r.depois && !meta.encerrada && r.sit !== 'hit';
+  }
+  function pctProjecao(meta, r) {
+    var den = meta.dir === 'down' ? meta.vIni - meta.alvo : meta.alvo - meta.vIni;
+    var num = meta.dir === 'down' ? meta.vIni - r.projecao : r.projecao - meta.vIni;
+    return den > 0 ? Math.max(0, Math.round(num / den * 100)) : 0;
+  }
 
   // Gráfico de evolução. W é a largura real em pixels, para o texto não esticar.
   function grafico(meta, r, W) {
@@ -39,8 +48,10 @@
       var ult = real[real.length - 1];
       if (ult && ult[0] < xHoje) real.push([xHoje, ult[1]]);
     }
+    // Projeção: segue do valor de hoje até o fim do período
+    var proj = xHoje !== null && real.length && projecaoVisivel(meta, r) ? [[xHoje, real[real.length - 1][1]], [dias, r.projecao]] : null;
 
-    var vals = esp.map(function (p) { return p[1]; }).concat(real.map(function (p) { return p[1]; })).concat([meta.alvo]);
+    var vals = esp.map(function (p) { return p[1]; }).concat(real.map(function (p) { return p[1]; })).concat([meta.alvo]).concat(proj ? [r.projecao] : []);
     var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
     if (mx === mn) mx = mn + 1;
     var minimo = M.casasDe(meta) === 0 || meta.fmt === 'r' ? 1 : Math.pow(10, -M.casasDe(meta));
@@ -70,11 +81,12 @@
     var bolas = real.slice(meta.histCortado ? 0 : 1, ordem.length + (meta.histCortado ? 0 : 1)).map(function (p, k) {
       return '<circle cx="' + X(p[0]).toFixed(1) + '" cy="' + Y(p[1]).toFixed(1) + '" r="3.5" style="fill:' + cor + '"><title>' + M.dataBR(ordem[k]) + ': ' + esc(M.fmtValor(meta, p[1])) + '</title></circle>';
     }).join('');
-    var desc = 'Evolução de ' + M.fmtValor(meta, meta.vIni) + ' a ' + M.fmtValor(meta, M.valorAtual(meta)) + ' entre ' + M.dataBR(meta.ini) + ' e ' + M.dataBR(meta.fim) + '. Objetivo: ' + M.fmtValor(meta, meta.alvo) + '.';
+    var desc = 'Evolução de ' + M.fmtValor(meta, meta.vIni) + ' a ' + M.fmtValor(meta, M.valorAtual(meta)) + ' entre ' + M.dataBR(meta.ini) + ' e ' + M.dataBR(meta.fim) + '. Objetivo: ' + M.fmtValor(meta, meta.alvo) + '.' + (proj ? ' Projeção: ' + M.fmtValor(meta, r.projecao) + '.' : '');
 
     return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(desc) + '" style="display:block;max-width:100%">' +
       grade + linhaAlvo + linhaHoje +
       (esp.length ? '<polyline points="' + pts(esp) + '" fill="none" style="stroke:var(--sub)" stroke-width="1.5" stroke-dasharray="4 4" stroke-linejoin="round"/>' : '') +
+      (proj ? '<polyline points="' + pts(proj) + '" fill="none" style="stroke:' + cor + '" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"><title>' + esc('Projeção: ' + M.fmtValor(meta, r.projecao)) + '</title></polyline>' : '') +
       '<polyline points="' + pts(real) + '" fill="none" style="stroke:' + cor + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + bolas +
       '<text x="' + ml + '" y="' + (H - 4) + '" text-anchor="start" font-size="11" style="fill:var(--sub)">' + M.dataBR(meta.ini) + '</text>' +
       '<text x="' + (ml + pw) + '" y="' + (H - 4) + '" text-anchor="end" font-size="11" style="fill:var(--sub)">' + M.dataBR(meta.fim) + '</text></svg>';
@@ -131,6 +143,7 @@
         var diferenca = M.arred(m,Math.abs(r.dif));
         if (diferenca) out.push((r.dif < 0 ? 'Abaixo do esperado: ' : 'Acima do esperado: ') + f(diferenca) + '.');
       }
+      if (projecaoVisivel(m, r)) out.push('Projeção no ritmo atual: ' + f(r.projecao) + ', ' + pctProjecao(m, r) + '% do objetivo.');
       out.push('Restante para o objetivo final: ' + f(Math.max(0,r.falta)) + '.');
       return out;
     }
@@ -230,7 +243,8 @@
       if (meta.tipo !== 'q') return '';
       var h = meta.hist || [];
       var graf = h.length ? '<div id="graf"></div><div class="linha peq sub gap16"><span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR[D.r.info.cls] + ')"></span>Realizado</span>' +
-        '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>' + (ehTaxa() ? 'Objetivo' : 'Ritmo esperado') + '</span></div>' : '<p class="det-frase sub">O gráfico aparece a partir do primeiro registro.</p>';
+        '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>' + (ehTaxa() ? 'Objetivo' : 'Ritmo esperado') + '</span>' +
+        (projecaoVisivel(meta, D.r) && meta.ini <= M.hoje() ? '<span class="linha"><span aria-hidden="true" class="leg-proj" style="color:var(' + COR[D.r.info.cls] + ')"></span>Projeção</span>' : '') + '</div>' : '<p class="det-frase sub">O gráfico aparece a partir do primeiro registro.</p>';
       var linhas = [];
       for (var i = h.length - 1; i >= 0 && (st.todos || linhas.length < 8); i--) {
         var e = h[i], ant = i > 0 ? h[i - 1][1] : (meta.histBase !== undefined ? meta.histBase : meta.vIni), dif = e[1] - ant;
@@ -286,7 +300,7 @@
 
     function ligar() {
       var $ = function (id) { return el.querySelector('#' + id); };
-      if ($('atualizarDados')) $('atualizarDados').onclick = function(){Promise.all([o.t.get(o.escopo,'shared',M.CHAVE),M.contexto(o.t)]).then(function(v){if(!v[0])throw new Error('A meta não está mais disponível.');meta=v[0];o.ctx=v[1];return M.prepararCard(o.t,o.card,meta);}).then(function(){if(o.aoSalvar)o.aoSalvar(meta);st.msg={texto:'Dados atualizados. Confira o valor antes de registrar.'};render();}).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();});};
+      if ($('atualizarDados')) $('atualizarDados').onclick = function(){Promise.all([M.ler(o.t,o.escopo),M.contexto(o.t)]).then(function(v){if(!v[0])throw new Error('A meta não está mais disponível.');meta=v[0];o.ctx=v[1];return M.prepararCard(o.t,o.card,meta);}).then(function(){if(o.aoSalvar)o.aoSalvar(meta);st.msg={texto:'Dados atualizados. Confira o valor antes de registrar.'};render();}).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();});};
       if ($('verHist')) $('verHist').onclick = function () { st.todos = !st.todos; render(); };
       var fr = $('fAtualizar');
       if (fr) {

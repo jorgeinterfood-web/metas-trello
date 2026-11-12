@@ -281,7 +281,7 @@
         var novo = S.novo; S.op = S.op || 'metas-criar:'+Date.now().toString(36)+Math.random().toString(36).slice(2); if(S.metaPendente) meta=S.metaPendente;
         p = auth.then(function () { return M.garantirLista(t, M.CFG.listaMetas, 'top'); }).then(function (lista) {
           if (S.novo) return S.novo;
-          return t.board('id').then(function(b){return M.rest(t,'GET','/boards/'+b.id+'/cards',{fields:'id,name,desc'});}).then(function(cs){var existente=cs.filter(function(c){return c.desc===S.op;})[0];if(existente)return existente;return M.rest(t, 'POST', '/cards', {desc:S.op, idList: lista.id, name: titulo + ' · ' + meta.dono.fullName, idMembers: meta.dono.id, start: M.dataCartao(meta.ini,false), due: M.dataCartao(meta.fim,true), pos: 'bottom' });});
+          return M.cartoesDaLista(t, lista.id).then(function(cs){var existente=cs.filter(function(c){return c.desc===S.op;})[0];if(existente)return existente;return M.rest(t, 'POST', '/cards', {desc:S.op, idList: lista.id, name: titulo + ' · ' + meta.dono.fullName, idMembers: meta.dono.id, start: M.dataCartao(meta.ini,false), due: M.dataCartao(meta.fim,true), pos: 'bottom' });});
         }).then(function (card) {
           novo = S.novo = card; S.metaPendente=meta;
           if (S.metaSalva) {meta=S.metaPendente;return;}
@@ -293,7 +293,12 @@
             return etapas.slice(S.etapasFeitas).reduce(function (pr, nome) { return pr.then(function () { return M.rest(t, 'POST', '/checklists/' + cl.id + '/checkItems', { name: nome }).then(function () { S.etapasFeitas++; }); }); }, Promise.resolve());
           });
         }).then(function () {
-          if (meta.checklistId) return M.salvarMeta(t,novo.id,meta).then(concluir);
+          return meta.checklistId ? M.salvarMeta(t,novo.id,meta) : null;
+        }).then(function () {
+          // A meta já está gravada: o marcador da descrição não é mais necessário
+          return M.limparMarcador(t, novo.id);
+        }).then(function () {
+          novo.desc = '';
           return concluir();
           function concluir() {
           novo.badges = { checkItems: etapas.length, checkItemsChecked: 0 };

@@ -31,12 +31,28 @@
       CTX = res[0];
       ITENS = res[1].map(recalcular);
       if (!CTX.admin && ITENS.some(function (it) { return it.meta.dono && it.meta.dono.id === CTX.eu.id; })) S.pessoa = CTX.eu.id;
-      M.autorizado(t).then(function (ok) { S.auth = ok; });
+      M.autorizado(t).then(function (ok) { S.auth = ok; if (ok && CTX.admin) limparMarcadoresAntigos(); });
       return abrirPorArgumento();
     }).then(render).catch(function (e) {
       app.innerHTML = '<div class="painel-corpo"><p class="erro">Não foi possível carregar as metas. ' + esc(M.erroUsuario(e)) + '</p><div><button class="btn" id="tentar">Tentar de novo</button></div></div>';
       document.getElementById('tentar').onclick = function () { carregar(); };
     });
+  }
+  // Cartões de meta criados até a versão 17 ficaram com o marcador na descrição.
+  // Com a meta já gravada, o marcador não tem mais função: sai em segundo plano.
+  function limparMarcadoresAntigos() {
+    // Metas repetidas guardam a origem antes, para o Repetir continuar sem duplicar.
+    ITENS.filter(function (it) { return M.ehMarcador(it.card.desc); }).reduce(function (pr, it) {
+      return pr.then(function () {
+        var m = /^metas-repetir:([^:]+):/.exec(it.card.desc);
+        var antes = Promise.resolve();
+        if (m && !it.meta.origem) {
+          var nova = JSON.parse(JSON.stringify(it.meta)); nova.origem = m[1];
+          antes = M.salvarMeta(t, it.card.id, nova).then(function () { it.meta = nova; recalcular(it); });
+        }
+        return antes.then(function () { return M.limparMarcador(t, it.card.id).then(function () { it.card.desc = ''; }); });
+      }).catch(function () { /* Fica para a próxima abertura do painel. */ });
+    }, Promise.resolve());
   }
   function recalcular(it) { it.r = M.avaliar(it.meta, it.card.badges); if(it.card.etapasErro){it.r.sit='andamento';it.r.info=M.SIT.andamento;it.r.rotulo='Etapas indisponíveis';} return it; }
   function achar(id) { return ITENS.filter(function (it) { return it.card.id === id; })[0]; }
@@ -233,16 +249,26 @@
     render();
     var start = M.parse(p.a); start.setHours(12, 0, 0, 0);
     var due = M.parse(p.b); due.setHours(18, 0, 0, 0);
-    return M.garantirLista(t, M.CFG.listaMetas, 'top').then(function (listaMetas) {
+    var listaMetas, naLista = [];
+    return M.garantirLista(t, M.CFG.listaMetas, 'top').then(function (l) {
+      listaMetas = l;
+      // Uma leitura só da lista Metas, para retomar uma repetição interrompida sem duplicar
+      return M.cartoesDaLista(t, l.id).then(function (cs) { naLista = cs || []; });
+    }).then(function () {
       return lista.reduce(function (pr, it) {
         return pr.then(function () {
           var v = it.meta, nova = JSON.parse(JSON.stringify(v)), novoCard;
+          // Já repetida neste período: a meta nova guarda o cartão de origem
+          var jaFeita = ITENS.some(function (x) { return x.meta.origem === it.card.id && x.meta.ini === p.a && x.meta.fim === p.b; });
+          if (jaFeita) { S.repetir.feitas++; render(); return null; }
           nova.ini = p.a; nova.fim = p.b; nova.hist = []; delete nova.diaria; nova.aval = null; nova.encerrada = false; delete nova.encerradaEm; nova.criadaEm = M.hoje();
           delete nova.rev; delete nova.checklistId; delete nova.histBase; delete nova.histCortado;
+          nova.origem = it.card.id;
           if (v.tipo === 'q' && v.fmt === 'p') nova.vIni = M.valorAtual(v); // taxa começa de onde parou
           var marcador='metas-repetir:'+it.card.id+':'+p.a+':'+p.b;
-          return t.board('id').then(function(b){return M.rest(t,'GET','/boards/'+b.id+'/cards',{fields:'id,name,desc'});}).then(function(cs){var anterior=cs.filter(function(c){return c.desc===marcador;})[0];if(anterior)return anterior;return M.rest(t, 'POST', '/cards', {desc:marcador, idList: listaMetas.id, name: tituloCurto(it) + ' · ' + v.dono.fullName, idMembers: v.dono.id, start: M.dataCartao(p.a,false), due: M.dataCartao(p.b,true), pos: 'bottom' });})
-            .then(function(c){novoCard=c;return t.get(c.id,'shared',M.CHAVE).then(function(existe){if(existe){nova=existe;return;}return M.salvarMetaNova(t,c.id,nova);});})
+          var anterior = naLista.filter(function (c) { return c.desc === marcador; })[0];
+          return (anterior ? Promise.resolve(anterior) : M.rest(t, 'POST', '/cards', {desc:marcador, idList: listaMetas.id, name: tituloCurto(it) + ' · ' + v.dono.fullName, idMembers: v.dono.id, start: M.dataCartao(p.a,false), due: M.dataCartao(p.b,true), pos: 'bottom' }))
+            .then(function(c){novoCard=c;return M.ler(t,c.id).then(function(existe){if(existe){nova=existe;return;}return M.salvarMetaNova(t,c.id,nova);});})
             .then(function () {
               if (v.tipo !== 'e') return null;
               return M.rest(t, 'GET', '/cards/' + it.card.id + '/checklists', { fields: 'name', checkItem_fields: 'name' }).then(function (cls) {
@@ -253,6 +279,7 @@
                 });
               });
             })
+            .then(function () { return M.limparMarcador(t, novoCard.id); })
             .then(function () { S.repetir.feitas++; render(); });
         });
       }, Promise.resolve());
