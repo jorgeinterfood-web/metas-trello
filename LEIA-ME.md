@@ -1,4 +1,20 @@
-# Power-Up Metas, versão 19
+# Power-Up Metas, versão 20
+
+## Atualizar a versão 19
+
+Substitua no GitHub os arquivos deste pacote: metas.css, index.html, meta.html e
+painel.html. Os demais ficam como na versão 19. As referências passaram a ?v=20.
+Se a versão 19 ainda não foi publicada, publique primeiro os arquivos dela e
+depois estes.
+
+## Ajuste
+
+- A linha do período passou a ter o mesmo tamanho e peso dos títulos das seções,
+  como Etapas concluídas e Progresso geral: 14 px, seminegrito.
+
+---
+
+# Versão 19
 
 ## Atualizar a versão 17 ou 18
 
