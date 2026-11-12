@@ -431,3 +431,7 @@ details.mais summary:hover { text-decoration: underline; }
   min-width: var(--metas-tag-largura);
   margin-left: auto;
 }
+
+/* v22: rótulo e valor na mesma linha nos blocos de resumo; o complemento (de R$ …) fica sem negrito. */
+#app .det-linha { margin: 0; }
+#app .det-linha .sub { font-weight: 400; }

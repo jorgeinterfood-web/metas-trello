@@ -160,22 +160,23 @@
       if (m.tipo === 'q') {
         titulo = ehTaxa() ? 'Percentual atual' : 'Progresso geral';
         principal = '<span class="forte num">' + esc(f(r.atual)) + '</span>';
-        if (!ehTaxa()) principal += ' <span class="sub">' + (m.dir === 'down' ? 'objetivo: ' : 'de ') + esc(f(m.alvo)) + '</span>';
+        if (!ehTaxa()) principal += ' <span class="sub">' + (m.dir === 'down' ? '(objetivo: ' + esc(f(m.alvo)) + ')' : 'de ' + esc(f(m.alvo))) + '</span>';
 
       } else if (m.tipo === 'e') {
         titulo = 'Etapas concluídas';
-        principal = '<span class="forte num">' + r.feitas + ' de ' + r.etapas + '</span> <span class="sub">' + (r.etapas === 1 ? 'etapa' : 'etapas') + '</span>';
+        principal = '<span class="forte num">' + r.feitas + ' de ' + r.etapas + '</span>';
 
       } else {
         titulo = 'Avaliação da meta';
-        principal = '<span class="forte">' + (m.aval ? 'Resultado da avaliação' : 'Avaliação em ' + data(m.fim)) + '</span>';
+        principal = '<span class="forte">' + (m.aval ? 'registrada' : 'em ' + data(m.fim)) + '</span>';
       }
       var itens = frases().filter(Boolean);
       if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) itens.push('Valor inicial: ' + f(m.vIni));
       if (r.parada) itens.push('Sem atualização há ' + r.diasSemAtualizar + (r.diasSemAtualizar === 1 ? ' dia' : ' dias'));
       var linhas = feedback(itens);
-      return '<section class="det-resumo" aria-label="' + titulo + '"><h3 class="det-titulo">' + titulo + '</h3>' +
-        '<div class="det-topo"><div class="det-valor">' + principal + '</div>' + (r.temBarra ? '' : M.selo(r)) + '</div>' +
+      // Rótulo e valor na mesma linha, no formato da linha do período
+      return '<section class="det-resumo" aria-label="' + titulo + '">' +
+        '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">' + titulo + ': ' + principal + '</h3>' + (r.temBarra ? '' : M.selo(r)) + '</div>' +
         (r.temBarra ? '<div class="det-barra">' + M.barra(r, { grossa: true, label: titulo, texto: ehTaxa() ? f(r.atual) + (r.atual === m.alvo ? '' : '. Objetivo ' + (m.dir === 'down' ? 'máximo: ' : 'mínimo: ') + f(m.alvo)) : undefined }) + '<span class="det-status selo sit-' + r.info.cls + '">' + esc(M.textoBadge(m,r)) + '</span></div>' : '') +
         linhas + '</section>';
     }
@@ -192,8 +193,8 @@
       var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
 
       var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + (m.fmt === 'r' ? M.numBR(d.realizado-d.alvo,2,2) : f(d.realizado-d.alvo)) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
-      return '<section class="det-dia" aria-label="Objetivo do dia"><h3 class="det-titulo">Objetivo do dia</h3>' +
-        '<div class="det-topo"><div class="det-valor"><span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + ' no dia</span></div></div>' +
+      return '<section class="det-dia" aria-label="Objetivo do dia">' +
+        '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">Objetivo do dia: <span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + '</span></h3></div>' +
         '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
         (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '</section>';
     }

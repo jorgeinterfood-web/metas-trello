@@ -1,4 +1,26 @@
-# Power-Up Metas, versão 21
+# Power-Up Metas, versão 22
+
+## Atualizar a versão 21
+
+Substitua no GitHub os arquivos deste pacote: metas.css, detalhe.js, index.html,
+meta.html e painel.html. Os demais ficam como na versão 21. As referências
+passaram a ?v=22.
+
+## Ajuste
+
+- Os blocos de resumo passaram a ter rótulo e valor na mesma linha, no formato
+  da linha do período:
+  Progresso geral: R$ 85.560,00 de R$ 300.000,00
+  Percentual atual: 85%
+  Etapas concluídas: 1 de 4
+  Objetivo do dia: R$ 3.200,00 de R$ 15.909,09
+  Metas de redução: Progresso geral: 65 devoluções (objetivo: 20 devoluções)
+- O complemento (de R$ …, objetivo) fica sem negrito. Evolução e Histórico
+  continuam como títulos.
+
+---
+
+# Versão 21
 
 ## Atualizar a versão 20
 
