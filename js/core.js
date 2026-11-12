@@ -52,13 +52,45 @@
   var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
   // ---------- Valores ----------
-  function numBR(v, casas) {
-    return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: casas || 0, maximumFractionDigits: casas === undefined ? 2 : casas });
+  // max e min são o número máximo e mínimo de casas decimais
+  function numBR(v, max, min) {
+    var mx = max === undefined ? 2 : max, mn = min === undefined ? 0 : min;
+    if (mn > mx) mn = mx;
+    return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: mn, maximumFractionDigits: mx });
+  }
+  // Casas decimais da meta: dinheiro tem 2; número e percentual seguem o que foi digitado no alvo
+  function casasDe(meta) {
+    if (meta.casas !== undefined && meta.casas !== null) return meta.casas;
+    if (meta.fmt === 'r') return 2;
+    var frac = function (x) { return Math.abs(x - Math.round(x)) > 0.0001; };
+    return frac(meta.alvo) || frac(meta.vIni) ? 2 : 0;
   }
   function fmtValor(meta, v) {
-    if (meta.fmt === 'r') return 'R$ ' + numBR(v, Math.round(v) === v ? 0 : 2);
-    if (meta.fmt === 'p') return numBR(v) + '%';
-    return numBR(v) + (meta.unit ? ' ' + meta.unit : '');
+    if (meta.fmt === 'r') {
+      var inteiro = Math.abs(v - Math.round(v)) < 0.005;
+      return 'R$ ' + (inteiro ? numBR(Math.round(v), 0) : numBR(v, 2, 2));
+    }
+    if (meta.fmt === 'p') return numBR(v, casasDe(meta)) + '%';
+    return numBR(v, casasDe(meta)) + (meta.unit ? ' ' + meta.unit : '');
+  }
+  // Rótulo curto para o eixo do gráfico
+  function rotuloEixo(meta, v) {
+    var a = Math.abs(v);
+    if (meta.fmt === 'r') {
+      if (a >= 1e6) return 'R$ ' + numBR(v / 1e6, 1) + ' mi';
+      if (a >= 1e4) return 'R$ ' + numBR(v / 1e3, a >= 1e5 ? 0 : 1) + ' mil';
+      return 'R$ ' + numBR(v, 0);
+    }
+    if (meta.fmt === 'p') return numBR(v, casasDe(meta)) + '%';
+    return numBR(v, casasDe(meta));
+  }
+  function arredCima(meta, v) {
+    var c = meta.fmt === 'r' ? 0 : casasDe(meta), f = Math.pow(10, c);
+    return Math.ceil(v * f - 1e-9) / f;
+  }
+  function arred(meta, v) {
+    var c = meta.fmt === 'r' ? 0 : casasDe(meta), f = Math.pow(10, c);
+    return Math.round(v * f) / f;
   }
   function lerNumero(txt) {
     if (txt === null || txt === undefined) return NaN;
@@ -68,11 +100,54 @@
     return s === '' ? NaN : Number(s);
   }
 
+  // Máscara de digitação: pontos de milhar automáticos, vírgula para os decimais, sem letras
+  function formatarDigitado(txt, casas) {
+    var s = String(txt).replace(/[^0-9,]/g, '');
+    var i = s.indexOf(','), inteiro, dec = null;
+    if (i >= 0 && casas > 0) {
+      inteiro = s.slice(0, i);
+      dec = s.slice(i + 1).replace(/,/g, '').slice(0, casas);
+    } else inteiro = s.replace(/,/g, '');
+    inteiro = inteiro.replace(/^0+(?=\d)/, '');
+    if (inteiro === '' && dec !== null) inteiro = '0';
+    inteiro = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    return dec === null ? inteiro : inteiro + ',' + dec;
+  }
+  // casas pode ser um número ou uma função que devolve o número
+  function mascarar(input, casas) {
+    var quantas = function () { return typeof casas === 'function' ? casas() : casas; };
+    input.addEventListener('input', function () {
+      var antes = input.value, pos = input.selectionStart;
+      var novo = formatarDigitado(antes, quantas());
+      if (novo === antes) return;
+      var chaves = pos === null || pos === undefined ? null : antes.slice(0, pos).replace(/[^0-9,]/g, '').length;
+      input.value = novo;
+      if (chaves !== null) {
+        var n = 0, p = 0;
+        while (p < novo.length && n < chaves) { if (/[0-9,]/.test(novo.charAt(p))) n++; p++; }
+        try { input.setSelectionRange(p, p); } catch (e) {}
+      }
+    });
+    input.addEventListener('paste', function (ev) {
+      var cb = ev.clipboardData || window.clipboardData;
+      if (!cb) return;
+      var n = lerNumero(cb.getData('text'));
+      if (isNaN(n)) return;
+      ev.preventDefault();
+      input.value = formatarDigitado(numBR(n, quantas()), quantas());
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+  }
+  function decimaisDigitados(txt) {
+    var i = String(txt).indexOf(',');
+    return i < 0 ? 0 : String(txt).length - i - 1;
+  }
+
   // ---------- Situação ----------
   var SIT = {
     ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
     risk: { label: 'Em risco', cls: 'risk', badge: 'yellow' },
-    late: { label: 'Atrasada', cls: 'late', badge: 'red' },
+    late: { label: 'Não atingida', cls: 'late', badge: 'red' },
     hit: { label: 'Atingida', cls: 'hit', badge: 'blue' },
     wait: { label: 'Aguardando avaliação', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
@@ -82,7 +157,7 @@
     superada: { label: 'Superada', cls: 'hit', badge: 'blue' }
   };
   var IMP = { 1: 'Normal', 2: 'Alta', 3: 'Muito alta' };
-  var TIPO = { q: 'Quantitativa', e: 'Etapas', a: 'Avaliação' };
+  var TIPO = { q: 'Valor', e: 'Etapas', a: 'Avaliação' };
 
   function valorAtual(meta) {
     var h = meta.hist || [];
@@ -100,7 +175,9 @@
     var modo = meta.ritmo === 'corridos' ? 'corridos' : 'uteis';
     var total = contarDias(meta.ini, meta.fim, modo);
     var passados = d < meta.ini ? 0 : contarDias(meta.ini, d > meta.fim ? meta.fim : d, modo);
-    r.esperado = total ? Math.round(passados / total * 100) : 100;
+    var frac = total ? passados / total : 1;
+    r.total = total; r.passados = passados;
+    r.esperado = Math.round(frac * 100);
     r.antes = d < meta.ini;
     r.depois = d > meta.fim;
 
@@ -113,16 +190,26 @@
         var t = (badges && badges.checkItems) || 0, f = (badges && badges.checkItemsChecked) || 0;
         pct = t ? f / t * 100 : 0;
         r.feitas = f; r.etapas = t;
+        r.difEtapas = Math.round(f - t * frac);
       } else {
         var cur = valorAtual(meta), den;
         r.atual = cur;
         if (meta.dir === 'down') { den = meta.vIni - meta.alvo; pct = den > 0 ? (meta.vIni - cur) / den * 100 : (cur <= meta.alvo ? 100 : 0); }
         else { den = meta.alvo - meta.vIni; pct = den > 0 ? (cur - meta.vIni) / den * 100 : (cur >= meta.alvo ? 100 : 0); }
-        r.valorEsperado = meta.vIni + (meta.alvo - meta.vIni) * r.esperado / 100;
-        var restanteDias = d >= meta.fim ? 0 : contarDias(addDias(d < meta.ini ? addDias(meta.ini, -1) : d, 1), meta.fim, modo);
-        r.diasRestantes = restanteDias;
+        r.valorEsperado = meta.vIni + (meta.alvo - meta.vIni) * frac;
+        r.dif = meta.dir === 'down' ? r.valorEsperado - cur : cur - r.valorEsperado; // positivo: à frente
         r.falta = meta.dir === 'down' ? cur - meta.alvo : meta.alvo - cur;
-        r.porDia = restanteDias && r.falta > 0 ? r.falta / restanteDias : 0;
+        // Meta do dia: o que falta dividido pelos dias que ainda restam.
+        // Se já houve registro hoje, a conta recomeça amanhã.
+        r.registrouHoje = (meta.hist || []).some(function (e) { return e[0] === d; });
+        var comeco = d < meta.ini ? meta.ini : (r.registrouHoje ? addDias(d, 1) : d);
+        r.diasRestantes = d > meta.fim || comeco > meta.fim ? 0 : contarDias(comeco, meta.fim, modo);
+        r.porDia = r.diasRestantes && r.falta > 0 ? r.falta / r.diasRestantes : 0;
+        r.porDiaArred = arredCima(meta, r.porDia);
+        r.mostrarDia = meta.dir !== 'down' && meta.fmt !== 'p';
+        // Projeção linear pelo ritmo realizado até agora
+        if (r.depois) r.projecao = cur;
+        else if (passados > 0 && total) r.projecao = meta.vIni + (cur - meta.vIni) * total / passados;
       }
       pct = Math.max(0, Math.round(pct));
       r.pct = pct; r.fill = Math.min(pct, 100); r.temBarra = true;
@@ -133,7 +220,7 @@
       else if (pct < r.esperado - 15) r.sit = 'risk';
       else r.sit = 'ok';
     }
-    // Sem atualização e lembrete (só metas quantitativas em andamento)
+    // Sem atualização e lembrete (só metas de valor em andamento)
     r.parada = false; r.pendente = false;
     if (meta.tipo === 'q' && !meta.encerrada && !r.antes && !r.depois && r.sit !== 'hit') {
       var ult = ultimaAtualizacao(meta), dias = diasEntre(ult, d);
@@ -146,21 +233,42 @@
       } else if (meta.lembrete === '15') r.pendente = dias >= 15;
     }
     r.info = SIT[r.sit];
+    r.rotulo = r.sit === 'future' ? 'Começa em ' + dataBR(meta.ini) : r.info.label;
     return r;
   }
 
-  function textoDiff(r) {
+  // Quanto a meta está à frente ou atrás do esperado, na unidade da própria meta
+  function textoDiff(meta, r) {
     if (!r.temBarra || r.antes || r.sit === 'hit') return '';
-    if (r.diff === 0) return 'no ponto esperado';
-    var n = Math.abs(r.diff);
-    return n + (n === 1 ? ' ponto ' : ' pontos ') + (r.diff > 0 ? 'à frente' : 'atrás');
+    if (meta.tipo === 'e') {
+      var n = r.difEtapas || 0;
+      if (!n) return 'no ritmo esperado';
+      var a = Math.abs(n);
+      return a + (a === 1 ? ' etapa ' : ' etapas ') + (n > 0 ? 'à frente' : 'atrás') + ' do esperado';
+    }
+    var q = arred(meta, Math.abs(r.dif));
+    if (q === 0) return 'no ritmo esperado';
+    return fmtValor(meta, q) + (r.dif > 0 ? ' à frente' : ' atrás') + ' do esperado';
   }
+  function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < -15 ? 'dif-menos' : 'dif-neutro'); }
   function textoBadge(r) {
-    if (!r.temBarra) return r.info.label;
-    return r.pct + '% · ' + r.info.label;
+    if (!r.temBarra) return r.rotulo;
+    return r.pct + '% · ' + r.rotulo;
+  }
+  function textoMetaDia(meta, r) {
+    return 'Meta do dia: ' + fmtValor(meta, r.porDiaArred);
+  }
+  function temMetaDia(meta, r) {
+    return meta.tipo === 'q' && r.mostrarDia && !meta.encerrada && !r.antes && !r.depois && r.sit !== 'hit' && r.porDia > 0;
   }
 
   // ---------- Contexto e dados ----------
+  function aplicarTema(t) {
+    try {
+      var th = t.getContext().theme;
+      if (th === 'dark' || th === 'light') document.documentElement.setAttribute('data-color-mode', th);
+    } catch (e) {}
+  }
   function contexto(t) {
     return Promise.all([t.member('id', 'fullName', 'initials'), t.board('id', 'name', 'members', 'memberships')])
       .then(function (res) {
@@ -258,20 +366,31 @@
       '<div class="barra-zona" style="width:' + r.esperado + '%"></div>' +
       '<div class="barra-fill sit-' + (opts.cor || r.info.cls) + '" style="width:' + r.fill + '%"></div></div>';
   }
-  function selo(r) { return '<span class="selo sit-' + r.info.cls + '">' + esc(r.info.label) + '</span>'; }
+  function selo(r) { return '<span class="selo sit-' + r.info.cls + '">' + esc(r.rotulo || r.info.label) + '</span>'; }
   function avatar(m, tam) {
     var ini = (m.initials || (m.fullName || '?').split(' ').map(function (p) { return p[0]; }).slice(0, 2).join('')).toUpperCase();
     return '<span class="avatar" style="width:' + (tam || 28) + 'px;height:' + (tam || 28) + 'px" title="' + esc(m.fullName) + '">' + esc(ini) + '</span>';
+  }
+  // Ícone de importância: só aparece para Alta e Muito alta
+  function iconeImp(imp) {
+    if (!imp || imp < 2) return '';
+    var nome = 'Importância ' + IMP[imp].toLowerCase();
+    var cor = imp === 3 ? 'var(--late)' : 'var(--imp-alta)';
+    var tracos = imp === 3 ? '<path d="M5 10l5-5 5 5M5 16l5-5 5 5"/>' : '<path d="M5 13l5-5 5 5"/>';
+    return '<span class="imp" title="' + nome + '" role="img" aria-label="' + nome + '">' +
+      '<svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="stroke:' + cor + '" aria-hidden="true">' + tracos + '</svg></span>';
   }
 
   window.Metas = {
     CFG: CFG, SIT: SIT, IMP: IMP, TIPO: TIPO, MESES: MESES,
     iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
-    numBR: numBR, fmtValor: fmtValor, lerNumero: lerNumero,
-    valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar, textoDiff: textoDiff, textoBadge: textoBadge,
-    contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, noPeriodo: noPeriodo,
+    numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
+    lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
+    valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
+    textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
+    aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
-    esc: esc, barra: barra, selo: selo, avatar: avatar, CHAVE: CHAVE
+    esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };
 })();

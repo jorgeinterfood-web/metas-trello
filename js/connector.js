@@ -7,8 +7,23 @@
   function abrirPainel(t) {
     return t.modal({ url: './painel.html', fullscreen: true, title: 'Metas' });
   }
-  function abrirFormulario(t, args, titulo) {
-    return t.modal({ url: './nova-meta.html', args: args, title: titulo, height: 760 });
+  // Editar e transformar em meta abrem o painel direto no formulário
+  function abrirFormulario(t, cardId, modo, titulo) {
+    return t.modal({ url: './painel.html', fullscreen: true, title: titulo, args: { view: 'form', modo: modo, cardId: cardId } });
+  }
+
+  // Cada selo é recalculado a cada refresh, com os dados mais novos do cartão
+  function selo(t, montar) {
+    return {
+      dynamic: function () {
+        return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('badges')]).then(function (res) {
+          var m = res[0];
+          if (!m) return { text: '' };
+          var r = M.avaliar(m, res[1].badges);
+          return montar(m, r) || { text: '' };
+        });
+      }
+    };
   }
 
   TrelloPowerUp.initialize({
@@ -19,26 +34,17 @@
     'card-badges': function (t) {
       return t.get('card', 'shared', M.CHAVE).then(function (meta) {
         if (!meta) return [];
-        return [{
-          dynamic: function () {
-            return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('badges')]).then(function (res) {
-              var m = res[0];
-              if (!m) return { text: '' };
-              var r = M.avaliar(m, res[1].badges);
-              return { text: M.textoBadge(r), color: r.info.badge, refresh: 300 };
-            });
-          }
-        }, {
-          dynamic: function () {
-            return Promise.all([t.get('card', 'shared', M.CHAVE), t.card('badges')]).then(function (res) {
-              var m = res[0];
-              if (!m) return { text: '' };
-              var r = M.avaliar(m, res[1].badges);
-              if (r.pendente || r.parada) return { text: 'Atualizar progresso', color: 'orange', refresh: 300 };
-              return { text: '', refresh: 300 };
-            });
-          }
-        }];
+        return [
+          selo(t, function (m, r) { return { text: M.textoBadge(r), color: r.info.badge, refresh: 300 }; }),
+          selo(t, function (m, r) {
+            if (M.temMetaDia(m, r)) return { text: M.textoMetaDia(m, r), color: 'purple', refresh: 300 };
+            return null;
+          }),
+          selo(t, function (m, r) {
+            if (r.pendente || r.parada) return { text: 'Atualizar valor', color: 'orange', refresh: 300 };
+            return null;
+          })
+        ];
       });
     },
 
@@ -58,9 +64,9 @@
         if (!res[0]) return [];
         var cardId = t.getContext().card;
         if (res[1]) {
-          return [{ icon: ICONE.light, text: 'Editar meta', callback: function (tt) { return abrirFormulario(tt, { cardId: cardId, modo: 'editar' }, 'Editar meta'); } }];
+          return [{ icon: ICONE.light, text: 'Editar meta', callback: function (tt) { return abrirFormulario(tt, cardId, 'editar', 'Editar meta'); } }];
         }
-        return [{ icon: ICONE.light, text: 'Transformar em meta', callback: function (tt) { return abrirFormulario(tt, { cardId: cardId, modo: 'converter' }, 'Transformar em meta'); } }];
+        return [{ icon: ICONE.light, text: 'Transformar em meta', callback: function (tt) { return abrirFormulario(tt, cardId, 'converter', 'Transformar em meta'); } }];
       });
     }
   }, {
