@@ -16,7 +16,7 @@
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
   var ICO = { esq: icone('<path d="M15 6l-6 6 6 6"/>'), dir: icone('<path d="M9 6l6 6-6 6"/>'), mais: icone('<path d="M12 5v14M5 12h14"/>') };
-  var CHIPS = [['ok','No ritmo'],['ahead','Adiantado'],['risk','Atrasado'],['abaixo','Fora do objetivo'],['late','Não atingido'],['hit','Atingido'],['future','A iniciar'],['wait','A avaliar'],['parcial','Parcial'],['andamento','Sem etapas']];
+  var CHIPS = [['ok',M.SIT.ok.label],['ahead','Adiantado'],['risk',M.SIT.risk.label],['abaixo',M.SIT.abaixo.label],['late',M.SIT.late.label],['hit',M.SIT.hit.label],['future',M.SIT.future.label],['wait',M.SIT.wait.label],['parcial',M.SIT.parcial.label],['andamento','Sem etapas']];
   function grupo(it) { var v=it.r.sit; if(v==='ok' && it.r.rotulo==='Adiantado') return 'ahead'; return {noalvo:'hit',atingida:'hit',superada:'hit',nao:'late'}[v] || v; }
 
   function carregar() {
@@ -97,7 +97,7 @@
     if (m.tipo === 'a' && r.sit === 'wait' && r.depois) { motivos.push('Avaliação pendente desde ' + M.dataBR(m.fim)); peso = Math.max(peso, 2); }
     if (r.parada) { motivos.push('Sem atualização há ' + r.diasSemAtualizar + ' dias'); peso = Math.max(peso, 1); }
     if (!motivos.length) return null;
-    return { it: it, texto: M.separar(motivos), peso: peso };
+    return { it: it, texto: motivos.join('. '), peso: peso };
   }
 
   // ---------- topo ----------
@@ -128,18 +128,19 @@
     var p = periodo();
     var reais = itens.filter(function (it) { return it.meta.ini === p.a && it.meta.fim === p.b && it.meta.tipo === 'q' && it.meta.fmt === 'r' && it.meta.dir !== 'down'; });
     if (!reais.length) return '';
-    var soma = 0, alvo = 0, proj = 0, todasComProj = true;
-    reais.forEach(function (it) { soma += it.r.atual - it.meta.vIni; alvo += it.meta.alvo - it.meta.vIni; if (it.r.projecao === undefined) todasComProj = false; else proj += it.r.projecao - it.meta.vIni; });
-    var fmt = { fmt: 'r' }, somaEsperada = reais.reduce(function(n,it){return n + it.r.valorEsperado-it.meta.vIni;},0), esp = alvo ? somaEsperada/alvo*100 : 0, pct = alvo ? M.percentualExibido(soma / alvo * 100, soma >= alvo) : 0;
-    var r = { pct: pct, fill: Math.min(pct, 100), esperado: esp, info: { cls: pct >= 100 ? 'hit' : (pct >= esp ? 'ok' : 'risk') }, antes: esp === 0, depois: esp === 100 };
-    var frase = '';
-    if (todasComProj && ehAtual()) {
-      var pp = alvo ? Math.round(proj / alvo * 100) : 0;
-      frase = '<p class="det-frase">Projeção de avanço no período: <span class="forte">' + esc(M.fmtValor(fmt, proj)) + '</span>, ' + pp + '% do objetivo.</p>';
-    } else if (ehAtual()) frase = '<p class="det-frase sub">A projeção aparece depois de um terço do período.</p>';
-    return '<section class="bloco"><div class="det-topo"><div class="det-valor"><span class="grande num">' + esc(M.fmtValor(fmt, soma)) + '</span><span class="sub">de ' + esc(M.fmtValor(fmt, alvo)) + ' no progresso financeiro do período</span></div></div>' +
-      '<div class="det-barra">' + M.barra(r, { grossa: true, label: 'Soma das metas de dinheiro' }) + '<span class="forte num det-pct">' + M.numBR(pct, 1) + '%</span></div>' + frase + '</section>';
+    var soma = 0, alvo = 0, esperado = 0;
+    reais.forEach(function(it){ soma += it.r.atual-it.meta.vIni; alvo += it.meta.alvo-it.meta.vIni; esperado += it.r.valorEsperado-it.meta.vIni; });
+    var h=M.hoje(), atingiu=soma>=alvo;
+    var sit=h<p.a ? 'future' : (atingiu ? 'hit' : (h>p.b ? 'late' : (M.arred({fmt:'r'},soma-esperado)<0 ? 'risk':'ok')));
+    var rr={temBarra:true,pct:alvo ? M.percentualExibido(soma/alvo*100,atingiu) : 0,fill:alvo ? Math.max(0,Math.min(100,soma/alvo*100)):0,info:M.SIT[sit],rotulo:M.SIT[sit].label};
+    if(sit==='ok' && M.arred({fmt:'r'},soma-esperado)>0)rr.rotulo='Adiantado';
+    var dinheiro={fmt:'r'};
+    return '<section class="bloco resumo-financeiro"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
+      '<div class="financeiro-valores"><p>Realizado: <span class="forte num">' + esc(M.fmtValor(dinheiro,soma)) + '</span></p><p>Objetivo: <span class="forte num">' + esc(M.fmtValor(dinheiro,alvo)) + '</span></p></div>' +
+      '<div class="det-barra">' + M.barra(rr,{grossa:true,label:'Progresso financeiro da equipe'}) + '<span class="det-status selo sit-' + rr.info.cls + '">' + esc(M.textoBadge({tipo:'q',fmt:'r'},rr)) + '</span></div>' +
+      (reais.some(function(it){return it.meta.vIni!==0;}) ? '<p class="ajuda">Os valores mostram o avanço a partir dos valores iniciais.</p>':'') + '</section>';
   }
+
   function blocoAtencao(itens) {
     var lista = itens.map(atencao).filter(Boolean).sort(function (a, b) {
       return (b.it.meta.imp || 1) - (a.it.meta.imp || 1) || b.peso - a.peso || a.it.r.pct - b.it.r.pct;
@@ -174,7 +175,7 @@
       '<span class="cel-titulo">' + imp(it) + '<span class="trunca" title="' + esc(tituloCurto(it)) + '">' + esc(tituloCurto(it)) + '</span></span>' +
       '<span>' + (r.temBarra ? M.barra(r, { label: tituloCurto(it) }) : '') + '</span>' +
       '<span class="sub num trunca">' + esc(valorTexto(it)) + '</span>' +
-      '<span class="cel-selo">' + M.selo(r) + '</span></button>';
+      '<span class="cel-selo"><span class="selo sit-' + r.info.cls + '">' + esc(M.textoBadge(it.meta,r)) + '</span>' + '</span></button>';
   }
   function blocoPessoas(itens) {
     var filtrados = itens.filter(function (it) {

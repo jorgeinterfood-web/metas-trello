@@ -338,3 +338,27 @@ details.mais summary:hover { text-decoration: underline; }
 @media (max-width: 480px) {
   #app .registro-linha { grid-template-columns: minmax(0, 1fr) max-content; }
 }
+
+/* v13: situação e porcentagem na ponta da barra; campos compactos. */
+#app .det-barra {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 16px;
+}
+#app .det-barra .barra { width: 100%; min-width: 0; }
+#app .det-status { white-space: nowrap; max-width: none; }
+#app label.registro-label {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--texto);
+}
+#app .registro-linha { grid-template-columns: minmax(0, 200px) max-content; }
+.financeiro-valores { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 32px; }
+.financeiro-valores p { margin: 0; font-size: 14px; line-height: 20px; }
+@media (max-width: 480px) {
+  #app .registro-linha { grid-template-columns: minmax(0, 200px) max-content; }
+  #app .det-barra { gap: 12px; }
+  #app .det-status { max-width: 160px; white-space: normal; }
+}

@@ -209,13 +209,13 @@
   var SIT = {
     ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
     risk: { label: 'Atrasado', cls: 'risk', badge: 'yellow' },
-    late: { label: 'Prazo encerrado', cls: 'late', badge: 'red' },
+    late: { label: 'Não atingido', cls: 'late', badge: 'red' },
     hit: { label: 'Atingido', cls: 'hit', badge: 'blue' },
-    noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
+    noalvo: { label: 'Atingido', cls: 'hit', badge: 'blue' },
     andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
-    abaixo: { label: 'Fora do objetivo', cls: 'risk', badge: 'yellow' },
+    abaixo: { label: 'Pendente', cls: 'risk', badge: 'yellow' },
     wait: { label: 'A avaliar', cls: 'neutral', badge: 'light-gray' },
-    future: { label: 'Ainda não começou', cls: 'neutral', badge: 'light-gray' },
+    future: { label: 'A iniciar', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingido', cls: 'late', badge: 'red' },
     parcial: { label: 'Parcial', cls: 'risk', badge: 'yellow' },
     atingida: { label: 'Atingido', cls: 'hit', badge: 'blue' },
@@ -334,8 +334,8 @@
     r.info = SIT[r.sit];
     r.rotulo = r.sit === 'future' ? 'A iniciar' : r.info.label;
     if (!total && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem dias úteis';
-    if (r.sit === 'late' && meta.encerrada) r.rotulo = 'Encerrado sem atingir';
-    if (meta.tipo === 'q' && meta.fmt === 'p' && r.sit === 'hit') r.rotulo = 'No objetivo';
+
+
     if (r.sit === 'ok' && (meta.tipo === 'e' ? r.difEtapas > 0 : arred(meta, r.dif) > 0)) r.rotulo = 'Adiantado';
     if (meta.tipo === 'e' && !r.etapas && !r.antes && !r.depois && !meta.encerrada) r.rotulo = 'Sem etapas';
     return r;
@@ -361,18 +361,17 @@
   }
   function classeDiff(r) { return r.diff > 0 ? 'dif-mais' : (r.diff < 0 ? 'dif-menos' : 'dif-neutro'); }
   function separar(partes) {
-    return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(' ● ');
+    return partes.filter(Boolean).map(function (p) { return String(p).trim().replace(/\.$/, ''); }).join(': ');
   }
   function situacaoDia(d) { return d.superou ? 'Superado' : (d.atingiu ? 'Atingido' : 'Em andamento'); }
   function textoBadge(meta, r) {
-    if (!r.temBarra) return r.rotulo;
-    var valor = meta.tipo === 'e' ? r.feitas + ' de ' + r.etapas : (r.semRitmo ? fmtValor(meta,r.atual) : numBR(r.pct,1) + '%');
+    if (!r.temBarra || r.rotulo === 'Etapas indisponíveis') return r.rotulo;
+    var valor = r.semRitmo ? fmtValor(meta,r.atual) : numBR(r.pct,1) + '%';
     return separar([r.rotulo, valor]);
   }
+  function textoProgressoDia(d) { return separar([situacaoDia(d), numBR(d.pct,1) + '%']); }
   function textoMetaDia(meta, r) {
-    var d = r.diaria;
-    if (!d) return '';
-    return separar(['Dia: ' + situacaoDia(d), d.atingiu ? '' : faltam(meta,d.falta) + ' ' + fmtValor(meta,d.falta)]);
+    return r.diaria ? textoProgressoDia(r.diaria) + ' no dia' : '';
   }
   function temMetaDia(meta, r) {
     return !!r.diaria;
@@ -563,7 +562,7 @@
   window.Metas = {
     CFG: CFG, unidade: unidade, pluralUnidade: pluralUnidade, erroUsuario: erroUsuario, validarValor: validarValor, periodoAberto: periodoAberto, singular: singular, faltam: faltam, SIT: SIT, IMP: IMP, TIPO: TIPO, FORMATO: FORMATO, MESES: MESES, pontos: pontos,
     formatarCentavos: formatarCentavos, mascararDinheiro: mascararDinheiro, mascararValor: mascararValor,
-    separar: separar, situacaoDia: situacaoDia, dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
+    textoProgressoDia: textoProgressoDia, separar: separar, situacaoDia: situacaoDia, dataCartao: dataCartao, iso: iso, parse: parse, hoje: hoje, addDias: addDias, diasEntre: diasEntre, dataBR: dataBR, dataBRCompleta: dataBRCompleta,
     contarDias: contarDias, diaUtil: diaUtil, inicioMes: inicioMes, fimMes: fimMes,
     numBR: numBR, casasDe: casasDe, fmtValor: fmtValor, rotuloEixo: rotuloEixo, arred: arred, arredCima: arredCima,
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
