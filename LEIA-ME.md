@@ -1,43 +1,45 @@
-# Metas para Trello v36
+# Metas para Trello v37
 
 ## Atualizar a versão anterior
 
-Copie o conteúdo desta pasta para a raiz do repositório, substituindo os arquivos de mesmo nome. Mantenha os demais arquivos da v35, inclusive fonts/. Não envie a pasta metas-trello-v36 como uma subpasta do site.
+Copie o conteúdo desta pasta para a raiz do repositório, substituindo os arquivos de mesmo nome. Mantenha os demais arquivos da v36. Esta é uma atualização da v36, não um pacote completo.
 
-As três páginas passam a usar ?v=36 em todas as referências locais de CSS e JavaScript.
+As três páginas passam a usar ?v=37 nas referências locais de CSS e JavaScript.
 
 ## O que mudou
 
-- Textos auxiliares do resumo, em lista ou linha única, com 12 px, entrelinha de 16 px, peso regular e cor secundária.
-- Informações extras removidas debaixo das barras de Objetivo do dia, Percentual atual e Etapas concluídas. As informações principais e os indicadores das barras permanecem.
-- Espaço entre rótulos e campos aumentado de 4 para 8 px no formulário e no registro, incluindo Data.
-- Hover dos botões neutros com contorno usa os fundos e bordas medidos nos prints: fundo #E2E4E6 e borda #C3C6C8 no claro; fundo #3C3D3F e borda #515254 no escuro. A cor do texto permanece secundária.
-- Encerrar meta vira botão neutro com contorno e 36 px de altura, como Subtrair. A confirmação de encerramento permanece.
-- A projeção financeira da equipe passa para a legenda abaixo do gráfico, ao lado da linha pontilhada de Projeção, com valor e percentual.
-- Legendas dos gráficos do cartão e da equipe com mais 4 px de afastamento da base, além do intervalo já existente.
+- No histórico, o valor acumulado e a variação, como “6 clientes −1 cliente”, passam a usar 12 px, entrelinha de 16 px e peso regular, como as datas e os autores.
+- Tags dentro do cartão e do painel usam cores próprias, medidas nas referências enviadas, em vez dos tons genéricos de avisos e seleção.
+- A paleta das tags fica separada da paleta de mensagens, gráficos e valores do histórico.
 
-## Cores das tags
+## Referências das tags
 
-As cores das tags não foram alteradas nesta versão. A v35 usa tokens genéricos de sucesso, aviso e seleção, que podem produzir tons diferentes dos indicadores nativos do Trello. Para definir a correspondência desejada, use recortes das etiquetas nativas, com texto e fundo visíveis, nos temas claro e escuro.
+Azul, amarelo, vermelho e verde medidos nos ZIPs claros e escuros. Cinza baseado nos recortes nativos de Etapa: Criação enviados anteriormente.
+
+| Cor | Claro: fundo / texto | Escuro: fundo / texto |
+|---|---|---|
+| Azul | #CFE1FD / #123263 | #123263 / #CFE1FD |
+| Amarelo | #F5E989 / #533F04 | #533F04 / #F5E989 |
+| Vermelho | #FFD5D2 / #5D1F1A | #5D1F1A / #FFD5D2 |
+| Verde | #D3F1A7 / #37471F | #37471F / #D3F1A7 |
+| Cinza | #DDDEE1 / #505258 | #4B4D51 / #A9ABAF |
+
+A cor de cada situação segue o mapeamento existente: azul para andamento/no objetivo, amarelo para atraso/atenção, vermelho para não atingido, verde para completo/superado e cinza para sem avaliação. Os selos da frente do cartão continuam sendo desenhados pelo próprio Trello.
 
 ## Validação
 
-- Sintaxe de todos os arquivos JavaScript verificada com Node.
-- Detalhe, painel e formulário montados com Trello simulado nos temas claro e escuro, sem erros JavaScript.
-- Navegação entre painel e detalhe e troca do tipo da meta verificadas.
-- Conferidos o botão Encerrar meta, sua confirmação e o cancelamento dessa confirmação.
-- Conferida a ausência de textos extras no objetivo do dia, no percentual atual e em etapas concluídas.
-- Conferida a projeção junto à legenda do gráfico da equipe.
-- Tamanho, peso, cores e espaçamentos conferidos por cálculo de estilos. Hover simulado para conferir fundo e borda nos dois temas.
-- Campos mantidos com 36 px, inclusive sob estilos simulados do hospedeiro.
-- A comparação visual final e os estados interativos dentro do Trello continuam pendentes; o Chromium deste ambiente não permite as capturas necessárias.
+- Detalhe, painel e formulário montados em simulação, nos temas claro e escuro, sem erros JavaScript.
+- Tamanho, peso e família conferidos por cálculo de estilos nas seis combinações de tela e tema.
+- Todos os textos do histórico conferidos em 12 px e peso regular nos dois temas.
+- Fundo e texto das cinco cores de tags conferidos nos dois temas.
+- Conferido que tokens genéricos de avisos não substituem as cores das tags e continuam funcionando nas mensagens.
+- Pacote e referências ?v=37 conferidos.
+- A comparação visual final dentro do Trello continua pendente, pois o navegador de capturas está bloqueado neste ambiente.
 - Nenhuma alteração remota foi realizada.
 
 ## Arquivos deste pacote
 
 - css/metas.css
-- js/detalhe.js
-- js/painel.js
 - index.html
 - meta.html
 - painel.html

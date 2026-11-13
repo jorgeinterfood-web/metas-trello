@@ -16,6 +16,12 @@
   --hit: #1868DB; --hit-fundo: var(--ds-background-selected, #E9F2FE); --hit-texto: var(--ds-text-selected, #1868DB);
   --aviso-texto: var(--ds-text-warning, #9E4C00); --imp-alta: #E56910;
   --sombra-seg: 0 1px 1px #1E1F2140;
+  /* Tags: fundo e texto medidos nas referências nativas, sem tokens de avisos. */
+  --ds-metas-tag-success-bg: #D3F1A7; --ds-metas-tag-success-text: #37471F;
+  --ds-metas-tag-warning-bg: #F5E989; --ds-metas-tag-warning-text: #533F04;
+  --ds-metas-tag-danger-bg: #FFD5D2; --ds-metas-tag-danger-text: #5D1F1A;
+  --ds-metas-tag-info-bg: #CFE1FD; --ds-metas-tag-info-text: #123263;
+  --ds-metas-tag-neutral-bg: #DDDEE1; --ds-metas-tag-neutral-text: #505258;
 }
 html[data-color-mode="dark"] {
   color-scheme: dark;
@@ -32,6 +38,11 @@ html[data-color-mode="dark"] {
   --hit: #669DF1; --hit-fundo: var(--ds-background-selected, #1C2B42); --hit-texto: var(--ds-text-selected, #669DF1);
   --aviso-texto: var(--ds-text-warning, #FBC828); --imp-alta: #F38A3F;
   --sombra-seg: none;
+  --ds-metas-tag-success-bg: #37471F; --ds-metas-tag-success-text: #D3F1A7;
+  --ds-metas-tag-warning-bg: #533F04; --ds-metas-tag-warning-text: #F5E989;
+  --ds-metas-tag-danger-bg: #5D1F1A; --ds-metas-tag-danger-text: #FFD5D2;
+  --ds-metas-tag-info-bg: #123263; --ds-metas-tag-info-text: #CFE1FD;
+  --ds-metas-tag-neutral-bg: #4B4D51; --ds-metas-tag-neutral-text: #A9ABAF;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-color-mode]) {
@@ -49,6 +60,11 @@ html[data-color-mode="dark"] {
     --hit: #669DF1; --hit-fundo: var(--ds-background-selected, #1C2B42); --hit-texto: var(--ds-text-selected, #669DF1);
     --aviso-texto: var(--ds-text-warning, #FBC828); --imp-alta: #F38A3F;
     --sombra-seg: none;
+    --ds-metas-tag-success-bg: #37471F; --ds-metas-tag-success-text: #D3F1A7;
+    --ds-metas-tag-warning-bg: #533F04; --ds-metas-tag-warning-text: #F5E989;
+    --ds-metas-tag-danger-bg: #5D1F1A; --ds-metas-tag-danger-text: #FFD5D2;
+    --ds-metas-tag-info-bg: #123263; --ds-metas-tag-info-text: #CFE1FD;
+    --ds-metas-tag-neutral-bg: #4B4D51; --ds-metas-tag-neutral-text: #A9ABAF;
   }
 }
 
@@ -176,11 +192,11 @@ a { color: var(--azul-texto); }
 
 /* Selos */
 .selo { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px; line-height: 16px; font-weight: 600; white-space: nowrap; }
-.selo.sit-ok { background: var(--ok-fundo); color: var(--ok-texto); }
-.selo.sit-risk { background: var(--risk-fundo); color: var(--risk-texto); }
-.selo.sit-late { background: var(--late-fundo); color: var(--late-texto); }
-.selo.sit-hit { background: var(--hit-fundo); color: var(--hit-texto); }
-.selo.sit-neutral { background: var(--fundo-cinza); color: var(--sub); }
+.selo.sit-ok { background: var(--ds-metas-tag-success-bg); color: var(--ds-metas-tag-success-text); }
+.selo.sit-risk { background: var(--ds-metas-tag-warning-bg); color: var(--ds-metas-tag-warning-text); }
+.selo.sit-late { background: var(--ds-metas-tag-danger-bg); color: var(--ds-metas-tag-danger-text); }
+.selo.sit-hit { background: var(--ds-metas-tag-info-bg); color: var(--ds-metas-tag-info-text); }
+.selo.sit-neutral { background: var(--ds-metas-tag-neutral-bg); color: var(--ds-metas-tag-neutral-text); }
 .dif-mais { color: var(--ok-texto); } .dif-menos { color: var(--risk-texto); }
 .parada { color: var(--aviso-texto); font-weight: 600; }
 .avatar { border-radius: 50%; background: var(--azul); color: #FFFFFF; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; flex: none; }
@@ -518,8 +534,7 @@ html[data-color-mode="dark"] .avatar { color: #1F1F21; }
 
 /* v35: equivalentes usam o mesmo papel em todas as telas. Valores não herdam
    o negrito do título que os contém; metadados e gráficos partilham a escala. */
-#app .det-linha .forte, #app .financeiro-linha .forte,
-#app .hist-linha .num > .forte { font: var(--ds-metas-font-body); }
+#app .det-linha .forte, #app .financeiro-linha .forte { font: var(--ds-metas-font-body); }
 #app .det-cabeca, #app .registro-pe { font: var(--ds-metas-font-meta); color: var(--sub); }
 #app .hist-linha > .sub { font: var(--ds-metas-font-meta); color: var(--sub); }
 #app .graf-texto { font: var(--ds-metas-font-meta); fill: var(--sub); }
@@ -533,3 +548,6 @@ html[data-color-mode="dark"] .avatar { color: #1F1F21; }
 #app .legenda-grafico { flex-wrap: wrap; gap: 8px 16px; margin-top: 4px; }
 #app .legenda-grafico :is(.leg-linha, .leg-trac, .leg-proj) { flex: none; }
 #app .det-rodape > .btn { height: var(--ctrl); }
+
+/* v37: valores e variações do histórico na mesma escala das datas e dos autores. */
+#app .hist-linha > .num, #app .hist-linha .num > .forte { font: var(--ds-metas-font-meta); }
