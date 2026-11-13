@@ -1,45 +1,27 @@
-# Power-Up Metas, versão 25
+# Power-Up Metas, restauração da versão 22
 
-## Atualizar a versão 24
+Este pacote volta o Power-Up para a versão 22, antes dos clientes (versões 24
+e 25). Traz todos os arquivos da aplicação, menos o config.js, que continua o
+mesmo.
 
-Substitua no GitHub os arquivos deste pacote: core.js, detalhe.js, form.js,
-meta.js, painel.js, index.html, meta.html e painel.html. O metas.css e os demais
-ficam como na versão 24. As referências passaram a ?v=25.
+## Como publicar
 
-## Concentração
+1. Substitua no GitHub todos os arquivos deste pacote, de uma vez.
+2. Mantenha o js/config.js.
+3. Pode apagar o js/tempo.js, se ainda estiver no repositório.
+4. Peça para quem estiver com o Trello aberto recarregar a página.
 
-- Em metas de dinheiro e quantidade com clientes informados, o resumo mostra os
-  3 maiores clientes e quanto eles representam do realizado:
-  Maiores clientes: Carrefour, Mambo e Pão de Açúcar (62% do realizado)
-  Com um cliente só, aparece Maior cliente.
+As referências usam ?v=22-restauracao-2, diferente de todas as versões
+anteriores, para o navegador não reaproveitar arquivos guardados da 24 ou da 25.
 
-## Meta de clientes atendidos
+## Se a versão 24 ou 25 chegou a ser usada
 
-- Novo tipo Clientes no formulário, entre Quantidade e Percentual. Pede só o
-  responsável, o período, o objetivo (número inteiro) e a contagem de dias.
-- A meta conta sozinha os clientes distintos com valor positivo no período, nas
-  metas de dinheiro e quantidade do mesmo responsável. Grafias equivalentes
-  contam uma vez; um cliente cuja soma volta a zero por devolução sai da contagem.
-- Não tem registro manual. No verso do cartão, no lugar do registro, aparece a
-  lista dos clientes contados.
-- A contagem é gravada: depois de cada registro nas metas do responsável; ao
-  abrir o cartão da meta; ao abrir ou atualizar o painel. Grava quem é o
-  responsável ou admin. O selo na frente do cartão mostra o último valor gravado.
-- Metas de clientes atendidos não entram na aba Clientes, para não contar o
-  mesmo cliente duas vezes.
-
-## Ajuste
-
-- Em metas de quantidade, a unidade aparece só no objetivo: "4 de 10 clientes",
-  em vez de "4 clientes de 10 clientes". O mesmo vale para o objetivo do dia.
+- Registros feitos com cliente continuam gravados. A versão 22 mostra um número
+  depois do nome de quem registrou no histórico e preserva o cliente ao gravar.
+- Metas criadas com o tipo Clientes passam a aparecer como metas de quantidade
+  comuns, com registro manual, e deixam de ser contadas sozinhas.
 
 ## Validação
 
-Sintaxe dos JavaScripts e testes com Trello simulado: contagem de clientes
-distintos entre metas de dinheiro e quantidade do responsável, grafias
-equivalentes, saída de cliente zerado por devolução, gravação depois de
-registro, ao abrir o cartão e ao carregar o painel, exclusão da aba Clientes;
-formulário do tipo Clientes com objetivo inteiro, sem valor inicial e com
-atualização pelo responsável; concentração; testes anteriores de clientes,
-compactação, migração, Etapas e projeção. A conferência visual no Trello
-continua pendente. Nenhuma alteração remota foi realizada.
+O código é idêntico, arquivo por arquivo, ao da versão 22. Só mudaram as
+referências de cache das três páginas e este arquivo.

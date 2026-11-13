@@ -4,17 +4,14 @@
   var t = TrelloPowerUp.iframe({ appKey: M.chaveConfigurada() ? M.CFG.appKey : undefined, appName: M.CFG.appName });
   var app = document.getElementById('app');
   var agora = M.parse(M.hoje());
-  var S = { view: 'home', aba: 'metas', abertos: {}, renomear: null, cardId: null, form: null, origem: null, escala: 'mes', y: agora.getFullYear(), m: agora.getMonth(), pessoa: '', sit: '', scroll: 0, auth: false, repetir: null };
+  var S = { view: 'home', cardId: null, form: null, origem: null, escala: 'mes', y: agora.getFullYear(), m: agora.getMonth(), pessoa: '', sit: '', scroll: 0, auth: false, repetir: null };
   var CTX = null, ITENS = [], atualizando = false, aviso = '';
   function atualizar(manual) {
     if (atualizando || S.view === 'form') return Promise.resolve();
     var campo = document.getElementById('valor');
-    var cli = document.getElementById('cliente'), foco = document.activeElement;
-    if (S.renomear && S.renomear.andando) return Promise.resolve();
-    if (!manual && foco && /^(INPUT|SELECT)$/.test(foco.tagName) && S.aba === 'clientes') return Promise.resolve();
-    if ((campo && campo.value) || (cli && cli.value) || document.getElementById('obs') || document.getElementById('avObs')) { if (manual) { aviso = 'Conclua ou limpe o registro antes de atualizar.';var a=document.getElementById('avisoPainel');if(a)a.textContent=aviso; } return Promise.resolve(); }
+    if ((campo && campo.value) || document.getElementById('obs') || document.getElementById('avObs')) { if (manual) { aviso = 'Conclua ou limpe o registro antes de atualizar.';var a=document.getElementById('avisoPainel');if(a)a.textContent=aviso; } return Promise.resolve(); }
     atualizando = true;
-    return Promise.all([M.contexto(t),M.carregarMetas(t)]).then(function(r){CTX=r[0];ITENS=r[1].map(recalcular);aviso='';render();sincronizarTodos();}).catch(function(e){aviso=M.erroUsuario(e);var a=document.getElementById('avisoPainel');if(a)a.textContent=aviso;}).then(function(){atualizando=false;});
+    return Promise.all([M.contexto(t),M.carregarMetas(t)]).then(function(r){CTX=r[0];ITENS=r[1].map(recalcular);aviso='';render();}).catch(function(e){aviso=M.erroUsuario(e);var a=document.getElementById('avisoPainel');if(a)a.textContent=aviso;}).then(function(){atualizando=false;});
   }
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
@@ -36,7 +33,7 @@
       if (!CTX.admin && ITENS.some(function (it) { return it.meta.dono && it.meta.dono.id === CTX.eu.id; })) S.pessoa = CTX.eu.id;
       M.autorizado(t).then(function (ok) { S.auth = ok; if (ok && CTX.admin) limparMarcadoresAntigos(); });
       return abrirPorArgumento();
-    }).then(function () { render(); sincronizarTodos(); }).catch(function (e) {
+    }).then(render).catch(function (e) {
       app.innerHTML = '<div class="painel-corpo"><p class="erro">Não foi possível carregar as metas. ' + esc(M.erroUsuario(e)) + '</p><div><button class="btn" id="tentar">Tentar de novo</button></div></div>';
       document.getElementById('tentar').onclick = function () { carregar(); };
     });
@@ -56,31 +53,6 @@
         return antes.then(function () { return M.limparMarcador(t, it.card.id).then(function () { it.card.desc = ''; }); });
       }).catch(function () { /* Fica para a próxima abertura do painel. */ });
     }, Promise.resolve());
-  }
-  // ---------- clientes atendidos ----------
-  function todasDoPainel() { return ITENS.map(function (it) { return { id: it.card.id, meta: it.meta }; }); }
-  function aplicarAtendidos(feitas) {
-    feitas.forEach(function (x) { var it = achar(x.id); if (it) { it.meta = x.meta; recalcular(it); } });
-  }
-  // Ao carregar o painel, grava a contagem das metas de clientes atendidos que mudaram,
-  // quando quem abriu pode gravar (admin ou o próprio responsável)
-  var sincronizando = false;
-  function sincronizarTodos() {
-    if (sincronizando || !CTX) return;
-    var todas = todasDoPainel();
-    var alvos = todas.filter(function (x) { return x.meta.auto === 'clientes' && !x.meta.encerrada && x.meta.dono && (CTX.admin || x.meta.dono.id === CTX.eu.id); });
-    if (!alvos.length) return;
-    sincronizando = true;
-    var mudou = false;
-    alvos.reduce(function (pr, x) {
-      return pr.then(function () {
-        return M.sincronizarAtendidos(t, x.id, x.meta, todas, CTX.eu).then(function (novo) { if (novo) { x.meta = novo; aplicarAtendidos([x]); mudou = true; } });
-      });
-    }, Promise.resolve()).then(function () {
-      sincronizando = false;
-      var foco = document.activeElement;
-      if (mudou && S.view === 'home' && !(foco && /^(INPUT|SELECT|TEXTAREA)$/.test(foco.tagName))) render();
-    });
   }
   function recalcular(it) { it.r = M.avaliar(it.meta, it.card.badges); if(it.card.etapasErro){it.r.sit='andamento';it.r.info=M.SIT.andamento;it.r.rotulo='Etapas indisponíveis';} return it; }
   function achar(id) { return ITENS.filter(function (it) { return it.card.id === id; })[0]; }
@@ -154,8 +126,6 @@
   function topo() {
     if (S.view === 'home') {
       return '<div class="painel-topo"><div class="painel-topo-in"><div class="linha gap8 periodo-controles">' +
-        '<div class="seg seg-peq aba-seg" role="group" aria-label="Mostrar">' +
-        '<button type="button" data-aba="metas" aria-pressed="' + (S.aba === 'metas') + '">Metas</button><button type="button" data-aba="clientes" aria-pressed="' + (S.aba === 'clientes') + '">Clientes</button></div>' +
         '<button class="btn btn-icone" id="ant" aria-label="' + (S.escala === 'tri' ? 'Trimestre anterior' : 'Mês anterior') + '">' + ICO.esq + '</button>' +
         '<span class="periodo-nome">' + esc(nomePeriodo()) + '</span>' +
         '<button class="btn btn-icone" id="prox" aria-label="' + (S.escala === 'tri' ? 'Próximo trimestre' : 'Próximo mês') + '">' + ICO.dir + '</button>' +
@@ -170,7 +140,7 @@
       titulo = it ? tituloCurto(it) : 'Meta';
       direita = '<div class="linha gap8">' + (CTX.admin ? '<button class="btn" id="editarMeta">Editar meta</button>' : '') + '<button class="btn" id="abrirCartao">Abrir cartão</button></div>';
     } else titulo = S.form.modo === 'criar' ? 'Nova meta' : (S.form.modo === 'editar' ? 'Editar meta' : 'Transformar em meta');
-    var voltar = S.view === 'form' && S.origem === 'cartao' ? 'Fechar' : (S.view === 'form' && S.form.de === 'detalhe' ? 'Voltar à meta' : (S.aba === 'clientes' ? 'Voltar para clientes' : 'Voltar para a equipe'));
+    var voltar = S.view === 'form' && S.origem === 'cartao' ? 'Fechar' : (S.view === 'form' && S.form.de === 'detalhe' ? 'Voltar à meta' : 'Voltar para a equipe');
     return '<div class="painel-topo"><div class="painel-topo-in estreito"><div class="linha gap12" style="min-width:0"><button class="btn linha gap4" id="voltar">' + ICO.esq + esc(voltar) + '</button>' +
       '<h2 class="painel-titulo">' + esc(titulo) + '</h2></div>' + direita + '</div></div>';
   }
@@ -273,137 +243,6 @@
     return resumoReais(itens) + blocoAtencao(itens) + blocoPessoas(itens) + repetirBloco;
   }
 
-  // ---------- tela de clientes ----------
-  // Junta, por cliente, o que cada registro somou nas metas de dinheiro e quantidade,
-  // contando só os registros feitos entre a e b. Agrupa grafias equivalentes.
-  function clientesEntre(a, b) {
-    var porChave = {}, lista = [], semCliente = 0, totalReais = 0;
-    ITENS.forEach(function (it) {
-      var m = it.meta;
-      if (!M.aceitaCliente(m)) return;
-      if (S.pessoa && !(m.dono && m.dono.id === S.pessoa)) return;
-      M.registrosComDelta(m).forEach(function (r) {
-        if (r.data < a || r.data > b) return;
-        if (m.fmt === 'r') totalReais += r.delta;
-        if (!r.cliente) { if (m.fmt === 'r') semCliente += r.delta; return; }
-        var k = M.normCliente(r.cliente), c = porChave[k];
-        if (!c) { c = porChave[k] = { chave: k, grafias: {}, reais: 0, n: 0, metas: {}, donos: {}, ultimo: '' }; lista.push(c); }
-        c.grafias[r.cliente] = (c.grafias[r.cliente] || 0) + 1;
-        c.n++;
-        if (m.fmt === 'r') c.reais += r.delta;
-        if (r.data > c.ultimo) c.ultimo = r.data;
-        var mm = c.metas[it.card.id] = c.metas[it.card.id] || { it: it, v: 0 };
-        mm.v += r.delta;
-        var d = m.dono || { id: '?', fullName: 'Sem responsável' };
-        var dd = c.donos[d.id] = c.donos[d.id] || { nome: d.fullName, peso: 0 };
-        dd.peso += m.fmt === 'r' ? r.delta : 0.000001 * r.delta;
-      });
-    });
-    // Nome exibido: a grafia mais usada no quadro inteiro, mesmo com filtro de pessoa
-    var oficial = {};
-    M.nomesDeClientes(ITENS.map(function (x) { return x.meta; })).forEach(function (n) { oficial[M.normCliente(n)] = n; });
-    lista.forEach(function (c) {
-      c.nome = oficial[c.chave] || Object.keys(c.grafias).sort(function (x, y) { return c.grafias[y] - c.grafias[x]; })[0];
-      c.pessoas = Object.keys(c.donos).map(function (k) { return c.donos[k]; }).sort(function (x, y) { return y.peso - x.peso; }).map(function (d) { return d.nome; });
-    });
-    lista.sort(function (x, y) { return y.reais - x.reais || y.n - x.n || x.nome.localeCompare(y.nome, 'pt-BR'); });
-    return { lista: lista, semCliente: M.arred({ fmt: 'r' }, semCliente), totalReais: M.arred({ fmt: 'r' }, totalReais) };
-  }
-  var REAIS = { fmt: 'r' };
-  function nomesPessoas(l) { return l.length <= 2 ? l.join(' e ') : l.slice(0, 2).join(', ') + ' e mais ' + (l.length - 2); }
-  function filtroPessoaClientes() {
-    var donos = {};
-    ITENS.forEach(function (it) { if (M.aceitaCliente(it.meta) && it.meta.dono) donos[it.meta.dono.id] = it.meta.dono; });
-    var lista = Object.keys(donos).map(function (k) { return donos[k]; }).sort(function (a, b) { return a.fullName.localeCompare(b.fullName, 'pt-BR'); });
-    return '<label class="filtro-pessoa">Pessoa<select id="fPessoa"><option value="">Todas</option>' + lista.map(function (d) {
-      return '<option value="' + esc(d.id) + '"' + (S.pessoa === d.id ? ' selected' : '') + '>' + esc(d.fullName) + '</option>';
-    }).join('') + '</select></label>';
-  }
-  function blocoParados(atual) {
-    var p = periodo(), a = anterior(), pa = limitesDe(a.y, a.m), h = M.hoje();
-    if (h < p.a) return '';
-    var nomeAnt = nomeDe(a.y, a.m).toLowerCase(), noAtual = {};
-    atual.lista.forEach(function (c) { noAtual[c.chave] = true; });
-    var parados = clientesEntre(pa.a, pa.b).lista.filter(function (c) { return !noAtual[c.chave]; });
-    var cab = '<h3 class="subtitulo">Clientes parados</h3><p class="ajuda">Com registro em ' + esc(nomeAnt) + ' e nenhum em ' + esc(nomePeriodo().toLowerCase()) + '</p>';
-    if (!parados.length) return '<section class="bloco">' + cab + '<p class="det-frase sub">Nenhum cliente parado</p></section>';
-    var linhas = parados.map(function (c) {
-      return '<div class="linha-tab cliente-linha parado"><span class="cel-titulo"><span class="trunca" title="' + esc(c.nome) + '">' + esc(c.nome) + '</span></span>' +
-        '<span class="sub trunca" title="' + esc(c.pessoas.join(', ')) + '">' + esc(nomesPessoas(c.pessoas)) + '</span>' +
-        '<span class="sub num">Último em ' + M.dataBR(c.ultimo) + '</span>' +
-        '<span class="num cel-num">' + (c.reais ? esc(M.fmtValor(REAIS, c.reais)) : '') + '</span></div>';
-    }).join('');
-    return '<section class="bloco">' + cab + '<div class="tab">' + linhas + '</div></section>';
-  }
-  function detalheCliente(c, i) {
-    var metas = Object.keys(c.metas).map(function (k) { return c.metas[k]; }).sort(function (x, y) {
-      return (x.it.meta.dono ? x.it.meta.dono.fullName : '').localeCompare(y.it.meta.dono ? y.it.meta.dono.fullName : '', 'pt-BR');
-    });
-    var html = '<ul class="cliente-metas">' + metas.map(function (mm) {
-      var m = mm.it.meta;
-      return '<li><button type="button" class="btn-link" data-card="' + esc(mm.it.card.id) + '">' + esc(tituloCurto(mm.it)) + '</button>' +
-        '<span class="sub"> · ' + esc(m.dono ? m.dono.fullName : 'Sem responsável') + ': </span><span class="num forte">' + esc(M.fmtValor(m, mm.v)) + '</span></li>';
-    }).join('') + '</ul>';
-    if (CTX.admin) {
-      var r = S.renomear;
-      if (r && r.chave === c.chave && r.confirmar) {
-        html += '<div class="det-confirma"><span>' + (r.junta ? 'Juntar ' + esc(c.nome) + ' com ' + esc(r.alvo) : 'Renomear ' + esc(c.nome) + ' para ' + esc(r.alvo)) + ' em ' + r.total + (r.total === 1 ? ' meta?' : ' metas?') + '</span>' +
-          '<span class="linha gap8"><button type="button" class="btn btn-primario" id="renSim">' + (r.junta ? 'Juntar' : 'Renomear') + '</button><button type="button" class="btn btn-texto" id="renNao">Cancelar</button></span></div>';
-      } else if (r && r.chave === c.chave && r.andando) {
-        html += '<p class="det-frase sub">Atualizando ' + r.feitas + ' de ' + r.total + ' metas…</p>';
-      } else {
-        html += '<div class="cliente-acoes"><label class="campo">Renomear ou juntar com outro cliente<input id="ren-' + i + '" type="text" maxlength="60" autocomplete="off" list="listaClientesPainel" placeholder="Nome do cliente"></label>' +
-          '<button type="button" class="btn" data-renomear="' + i + '">Aplicar</button></div>' +
-          (r && r.chave === c.chave && r.erro ? '<p class="erro">' + esc(r.erro) + '</p>' : '');
-      }
-    }
-    return html;
-  }
-  function telaClientes() {
-    var p = periodo(), atual = clientesEntre(p.a, p.b);
-    S.listaClientes = atual.lista;
-    var filtros = '<div class="filtros"><span></span>' + filtroPessoaClientes() + '</div>';
-    var cab = '<h3 class="subtitulo">Clientes em ' + esc(nomePeriodo().toLowerCase()) + '</h3>';
-    var corpo;
-    if (!atual.lista.length) {
-      corpo = '<p class="det-frase sub">Nenhum registro com cliente neste período. O cliente é informado ao registrar valores em metas de dinheiro e quantidade.</p>';
-    } else {
-      corpo = '<div class="tab">' + atual.lista.map(function (c, i) {
-        return '<details class="cliente" data-chave="' + esc(c.chave) + '"' + (S.abertos[c.chave] ? ' open' : '') + '>' +
-          '<summary class="linha-tab cliente-linha"><span class="cel-titulo"><span class="ico-abrir">' + ICO.dir + '</span><span class="trunca" title="' + esc(c.nome) + '">' + esc(c.nome) + '</span></span>' +
-          '<span class="sub trunca" title="' + esc(c.pessoas.join(', ')) + '">' + esc(nomesPessoas(c.pessoas)) + '</span>' +
-          '<span class="sub num">' + c.n + (c.n === 1 ? ' registro' : ' registros') + '</span>' +
-          '<span class="num forte cel-num">' + (c.reais ? esc(M.fmtValor(REAIS, c.reais)) : '') + '</span></summary>' +
-          '<div class="cliente-corpo">' + detalheCliente(c, i) + '</div></details>';
-      }).join('') + '</div>';
-      if (atual.semCliente > 0) corpo += '<p class="ajuda">Registrado sem cliente: ' + esc(M.fmtValor(REAIS, atual.semCliente)) + ' de ' + esc(M.fmtValor(REAIS, atual.totalReais)) + '</p>';
-    }
-    var dl = CTX.admin ? '<datalist id="listaClientesPainel">' + M.nomesDeClientes(ITENS.map(function (x) { return x.meta; })).map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('') + '</datalist>' : '';
-    return filtros + blocoParados(atual) + '<section class="bloco">' + cab + corpo + '</section>' + dl;
-  }
-  // Troca o cliente em todas as metas do quadro, em todos os períodos
-  function metasComCliente(chave) {
-    return ITENS.filter(function (it) { return (it.meta.hist || []).some(function (e) { return e[5] && M.normCliente(e[5]) === chave; }); });
-  }
-  function renomearCliente() {
-    var r = S.renomear, alvos = metasComCliente(r.chave);
-    r.confirmar = false; r.andando = true; r.feitas = 0; r.total = alvos.length;
-    render();
-    return alvos.reduce(function (pr, it) {
-      return pr.then(function () {
-        var nova = JSON.parse(JSON.stringify(it.meta));
-        nova.hist.forEach(function (e) { if (e[5] && M.normCliente(e[5]) === r.chave) e[5] = r.alvo; });
-        return M.salvarMeta(t, it.card.id, nova).then(function () { it.meta = nova; recalcular(it); r.feitas++; render(); });
-      });
-    }, Promise.resolve()).then(function () {
-      S.abertos[M.normCliente(r.alvo)] = true;
-      S.renomear = null; aviso = ''; render();
-    }).catch(function (e) {
-      S.renomear = { chave: r.chave, erro: 'Parou em ' + r.feitas + ' de ' + r.total + ' metas. ' + M.erroUsuario(e) };
-      render();
-    });
-  }
-
   function repetir() {
     var lista = repetiveis(), p = periodo();
     S.repetir = { andando: true, feitas: 0, total: lista.length };
@@ -474,16 +313,13 @@
     if (S.view === 'detalhe' && !achar(S.cardId)) S.view = 'home';
     app.innerHTML = topo() + '<p id="avisoPainel" role="status" class="aviso-painel">' + esc(aviso) + '</p>' + '<div class="painel-corpo' + (S.view === 'home' ? '' : ' estreito') + '" id="corpo"></div>';
     var corpo = document.getElementById('corpo');
-    if (S.view === 'home') corpo.innerHTML = S.aba === 'clientes' ? telaClientes() : telaEquipe();
+    if (S.view === 'home') corpo.innerHTML = telaEquipe();
     else if (S.view === 'detalhe') {
       var it = achar(S.cardId);
       M.detalhe(corpo, {
         t: t, escopo: S.cardId, meta: it.meta, card: it.card, ctx: CTX,
         aoSalvar: function (meta) { it.meta = meta; recalcular(it); },
-        abrirCartao: function () { t.showCard(S.cardId); },
-        clientes: function () { return Promise.resolve(M.nomesDeClientes(ITENS.map(function (x) { return x.meta; }))); },
-        todas: function () { return Promise.resolve(todasDoPainel()); },
-        aoAtendidos: aplicarAtendidos
+        abrirCartao: function () { t.showCard(S.cardId); }
       });
     } else {
       M.formulario(corpo, {
@@ -521,23 +357,6 @@
     if ($('editarMeta')) $('editarMeta').onclick = function () { abrirFormulario('editar', S.cardId, 'detalhe'); };
     app.querySelectorAll('[data-card]').forEach(function (b) { b.onclick = function () { irPara('detalhe', { cardId: b.getAttribute('data-card') }); }; });
     app.querySelectorAll('[data-sit]').forEach(function (b) { b.onclick = manter(function () { S.sit = b.getAttribute('data-sit'); }); });
-    app.querySelectorAll('[data-aba]').forEach(function (b) { b.onclick = function () { S.aba = b.getAttribute('data-aba'); S.renomear = null; render(); }; });
-    app.querySelectorAll('details.cliente').forEach(function (d) {
-      d.addEventListener('toggle', function () { S.abertos[d.getAttribute('data-chave')] = d.open; });
-    });
-    app.querySelectorAll('[data-renomear]').forEach(function (b) {
-      b.onclick = function () {
-        var i = +b.getAttribute('data-renomear'), c = S.listaClientes[i], campo = $('ren-' + i);
-        var todos = M.nomesDeClientes(ITENS.map(function (x) { return x.meta; })).filter(function (n) { return M.normCliente(n) !== c.chave; });
-        var alvo = M.canonico(campo ? campo.value : '', todos);
-        if (!alvo) { S.renomear = { chave: c.chave, erro: 'Digite o nome do cliente.' }; render(); return; }
-        if (alvo === c.nome) { S.renomear = { chave: c.chave, erro: 'O nome é o mesmo.' }; render(); return; }
-        S.renomear = { chave: c.chave, alvo: alvo, junta: todos.indexOf(alvo) >= 0, confirmar: true, total: metasComCliente(c.chave).length };
-        render();
-      };
-    });
-    if ($('renNao')) $('renNao').onclick = function () { S.renomear = null; render(); };
-    if ($('renSim')) $('renSim').onclick = function () { renomearCliente(); };
     var fp = $('fPessoa');
     if (fp) fp.onchange = manter(function () { S.pessoa = fp.value; });
     if ($('repetirExistentes')) $('repetirExistentes').onclick = function(){if(S.repetir && S.repetir.andando)return;M.autorizar(t).then(function(){S.auth=true;return repetir();}).catch(function(e){aviso=M.erroUsuario(e);render();});};
