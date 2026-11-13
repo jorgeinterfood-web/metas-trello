@@ -264,11 +264,11 @@
       for (var i = h.length - 1; i >= 0 && (st.todos || linhas.length < 8); i--) {
         var e = h[i], ant = i > 0 ? h[i - 1][1] : (meta.histBase !== undefined ? meta.histBase : meta.vIni), dif = e[1] - ant;
         var tdif = ehTaxa() ? M.pontos(meta, dif) : f(Math.abs(dif));
-        linhas.push('<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
-          '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (dif < 0 ? 'hist-negativo' : 'hist-positivo') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
+        linhas.push('<div class="hist-linha hist-registro"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
+          '<span class="num hist-valor">' + esc(f(e[1])) + '</span><span class="num hist-delta ' + (dif < 0 ? 'hist-negativo' : 'hist-positivo') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span>' +
           '<span class="sub hist-quem">' + esc(e[3] || '') + (e[5] ? ' · lançado em ' + M.dataBR(e[5]) : '') + (e[4] ? '. ' + esc(e[4]) : '') + '</span></div>');
       }
-      var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
+      var hist = h.length ? '<div class="hist hist-registros">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
       return '<div class="det-grade"><section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Evolução</h3>' + graf + '</section>' +
         '<section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Histórico</h3>'  + hist + '</section></div>';
     }

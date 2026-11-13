@@ -9,6 +9,8 @@
   --trilho: var(--ds-background-neutral, #DDDEE1); --zona: #B3B9C4;
   --azul: var(--ds-background-brand-bold, #1868DB); --azul-texto: var(--ds-link, #1868DB); --azul-fundo: var(--ds-background-selected, #E9F2FE); --azul-hover: var(--ds-background-brand-bold-hovered, #1558BC); --azul-sobre: var(--ds-text-inverse, #FFFFFF);
   --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #F0F1F2);
+  --ds-metas-field-bg: #FFFFFF; --ds-metas-field-hover: #F8F8F8; --ds-metas-select-hover: #DCDDDD; --ds-metas-date-border: #DCDDDD;
+  --ds-metas-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23505258' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --botao-contorno-hover: #E2E4E6; --borda-botao-hover: #C3C6C8;
   --ok: #6A9A23; --ok-fundo: var(--ds-background-success, #BAF3DB); --ok-texto: var(--ds-text-success, #216E4E);
   --risk: #E2B203; --risk-fundo: var(--ds-background-warning, #F5E989); --risk-texto: var(--ds-text-warning, #7F5F01);
@@ -31,6 +33,8 @@ html[data-color-mode="dark"] {
   --trilho: var(--ds-background-neutral, #3C3D40); --zona: #596773;
   --azul: var(--ds-background-brand-bold, #669DF1); --azul-texto: var(--ds-link, #669DF1); --azul-fundo: var(--ds-background-selected, #1C2B42); --azul-hover: var(--ds-background-brand-bold-hovered, #8FB8F6); --azul-sobre: var(--ds-text-inverse, #1F1F21);
   --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #303134);
+  --ds-metas-field-bg: #242528; --ds-metas-field-hover: #2B2C2F; --ds-metas-select-hover: #3C3D40; --ds-metas-date-border: #3C3D40;
+  --ds-metas-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23A9ABAF' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --botao-contorno-hover: #3C3D3F; --borda-botao-hover: #515254;
   --ok: #82B536; --ok-fundo: var(--ds-background-success, #164B35); --ok-texto: var(--ds-text-success, #7EE2B8);
   --risk: #EED12B; --risk-fundo: var(--ds-background-warning, #533F04); --risk-texto: var(--ds-text-warning, #EED12B);
@@ -53,7 +57,9 @@ html[data-color-mode="dark"] {
     --trilho: var(--ds-background-neutral, #3C3D40); --zona: #596773;
     --azul: var(--ds-background-brand-bold, #669DF1); --azul-texto: var(--ds-link, #669DF1); --azul-fundo: var(--ds-background-selected, #1C2B42); --azul-hover: var(--ds-background-brand-bold-hovered, #8FB8F6); --azul-sobre: var(--ds-text-inverse, #1F1F21);
     --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #303134);
-    --botao-contorno-hover: #3C3D3F; --borda-botao-hover: #515254;
+    --ds-metas-field-bg: #242528; --ds-metas-field-hover: #2B2C2F; --ds-metas-select-hover: #3C3D40; --ds-metas-date-border: #3C3D40;
+  --ds-metas-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23A9ABAF' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --botao-contorno-hover: #3C3D3F; --borda-botao-hover: #515254;
     --ok: #82B536; --ok-fundo: var(--ds-background-success, #164B35); --ok-texto: var(--ds-text-success, #7EE2B8);
     --risk: #EED12B; --risk-fundo: var(--ds-background-warning, #533F04); --risk-texto: var(--ds-text-warning, #EED12B);
     --late: #F87168; --late-fundo: var(--ds-background-danger, #5D1F1A); --late-texto: var(--ds-text-danger, #FD9891);
@@ -554,3 +560,51 @@ html[data-color-mode="dark"] .avatar { color: #1F1F21; }
 
 /* v38: descrição da alteração na mesma escala de data e autor. */
 #app .det-alteracoes .hist-linha { font: var(--ds-metas-font-meta); }
+
+/* v39: campos editáveis e seletores têm hovers distintos, como os equivalentes nativos. */
+#app .campo > input, #app .campo textarea, #app input.campo-solto {
+  background-color: var(--ds-metas-field-bg); padding-inline: 12px;
+}
+#app .campo > input:not([type="date"]):enabled:hover,
+#app .campo textarea:enabled:hover,
+#app input.campo-solto:not([type="date"]):enabled:hover,
+#app .campo-prefixo:has(input:enabled):hover { background-color: var(--ds-metas-field-hover); }
+#app .campo-prefixo { background-color: var(--ds-metas-field-bg); }
+#app .campo-prefixo > span { padding-inline: 12px; font: var(--ds-metas-font-body); }
+#app .campo-prefixo input, #app .campo .campo-prefixo input { padding-inline: 12px; background: transparent; }
+#app .campo-prefixo > span + input { padding-left: 0; }
+#app .campo select, #app .filtro-pessoa select {
+  background-color: var(--ds-metas-field-bg); color: var(--sub); font: var(--ds-metas-font-body);
+  appearance: none; background-image: var(--ds-metas-select-arrow); background-repeat: no-repeat;
+  background-position: right 8px center; padding-right: 32px;
+}
+#app .campo select:enabled:hover, #app .filtro-pessoa select:enabled:hover {
+  background-color: var(--ds-metas-select-hover);
+}
+/* Datas são seletores: texto de controle e borda discreta, mantendo o calendário do navegador. */
+#app .campo > input[type="date"], #app input.campo-solto[type="date"] {
+  background-color: var(--ds-metas-field-bg); border-color: var(--ds-metas-date-border);
+  color: var(--sub); font: var(--ds-metas-font-control); padding-inline: 12px;
+}
+#app .campo > input[type="date"]:enabled:hover, #app input.campo-solto[type="date"]:enabled:hover {
+  background-color: var(--ds-metas-select-hover);
+}
+/* Uma grade compartilhada dá à variação sua própria coluna, dimensionada pelo conteúdo. */
+#app .hist-registros {
+  display: grid; grid-template-columns: 44px max-content minmax(max-content, 1fr) minmax(0, 1fr);
+  column-gap: 12px;
+}
+#app .hist-registro {
+  grid-column: 1 / -1; grid-template-columns: subgrid; column-gap: 12px; row-gap: 4px;
+  font: var(--ds-metas-font-meta);
+}
+#app .hist-registro > .hist-valor, #app .hist-registro > .hist-delta { white-space: nowrap; text-align: left; }
+#app .hist-registro > .hist-quem { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  #app .hist-registros { grid-template-columns: 44px max-content minmax(0, 1fr); }
+  #app .hist-registro > .hist-quem { grid-column: 2 / -1; }
+}
+
+#app .campo > input[type="date"][aria-invalid="true"], #app input.campo-solto[type="date"][aria-invalid="true"] {
+  border-color: var(--late); box-shadow: 0 0 0 1px var(--late);
+}
