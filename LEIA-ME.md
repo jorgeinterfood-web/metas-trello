@@ -1,33 +1,36 @@
-# Power-Up Metas, versão 33
+# Power-Up Metas, versão 34
 
-## Atualizar a versão 32
+## Atualizar a versão 33
 
 Substitua no GitHub os arquivos deste pacote: css/metas.css, js/core.js,
-js/connector.js, index.html, meta.html e painel.html. Adicione os arquivos
-novos: css/metas-shadcn.css, js/configuracoes.js, configuracoes.html e a pasta
-fonts (com os dois arquivos da fonte Inter e a licença). Os demais ficam como
-na versão 32. As referências passaram a ?v=33.
+js/connector.js, index.html, meta.html e painel.html. Mantenha a pasta fonts
+(se ela ainda não estiver no repositório, envie a deste pacote).
 
-## Seletor de visual
+Apague do repositório os arquivos da versão 33 que saíram: css/metas-shadcn.css,
+js/configuracoes.js e configuracoes.html. No portal de administração do
+Power-Up, a capacidade show-settings pode ser desmarcada.
 
-- Cada pessoa escolhe o visual do Metas em Configurações do Power-Up (menu de
-  Power-Ups do quadro): Trello, o atual, ou shadcn.
-- A escolha vale só para quem escolheu e em todos os quadros com o Metas.
-  Todo mundo começa no visual Trello.
-- As janelas do Metas que estiverem abertas mudam ao serem reabertas.
-- O visual shadcn segue o preset b37aFvF5c: estilo Nova, cores Zinc, gráfico
-  Indigo, fonte Inter e cantos de 7 px. Campos, botões e abas ficam com 32 px.
-- Os selos da frente do cartão são desenhados pelo Trello e não mudam.
+Os demais ficam como estão. As referências passaram a ?v=34.
+
+## O que mudou
+
+- Saem o visual shadcn e o seletor de visual da versão 33. O Metas volta a ter
+  um visual só, o do Trello.
+- Cores medidas no Trello atual, nos temas claro e escuro: textos, bordas,
+  fundos, azul dos botões e da seleção, e os selos de situação nas mesmas cores
+  das etiquetas e datas do Trello (amarelo de Etapa, vermelho de data vencida,
+  verde de etiqueta e azul de seleção).
+- Fonte Inter, base da fonte do Trello (Atlassian Sans), hospedada no próprio
+  repositório.
+- Botões neutros com contorno, como Add, Edit e Filter do Trello. Campos e
+  botões com canto de 4 px.
+- Selos com 24 px de altura e texto regular, como os do cartão.
 
 ## Validação
 
 Sintaxe dos JavaScripts, testes com Trello simulado e capturas no tema claro e
-escuro nos dois visuais (painel, detalhe, formulário, verso do cartão e
-configurações). O visual Trello ficou idêntico ao da versão 32 nas capturas. As
-alturas dos campos foram medidas com o estilo do Trello imitado por cima: 36 px
-no visual Trello e 32 px no shadcn. O teste teste-registro.js falha igual na
-versão 32, porque procura o campo de clientes que foi retirado.
-
-Ficou pendente a conferência no próprio Trello, principalmente se a opção
-Configurações aparece para quem não é admin do quadro. Nenhuma alteração remota
-foi realizada.
+escuro do painel, detalhe, formulário e verso do cartão. Campos e menus com
+36 px, medidos com o estilo do Trello imitado por cima. O teste
+teste-registro.js falha igual na versão 32, porque procura o campo de clientes
+que foi retirado. A conferência visual no próprio Trello continua pendente.
+Nenhuma alteração remota foi realizada.

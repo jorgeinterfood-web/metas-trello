@@ -1,49 +1,49 @@
-/* Cores no padrão Atlassian/Trello, uma versão para cada tema.
+/* Cores medidas no Trello atual (paleta Atlassian de 2025), uma versão para cada tema.
    O tema vem do Trello (data-color-mode, definido em core.js); sem isso, segue o sistema. */
 :root, html[data-color-mode="light"] {
   color-scheme: light;
-  --texto: #172B4D; --sub: #44546F; --fraco: #626F86;
-  --borda: #DCDFE4; --borda-campo: #8590A2;
-  --fundo: #FFFFFF; --fundo-baixo: #F7F8F9; --fundo-cinza: #F1F2F4;
-  --trilho: #E2E4E9; --zona: #B3B9C4;
-  --azul: #0C66E4; --azul-texto: #0055CC; --azul-fundo: #E9F2FF;
-  --botao: #091E420F; --botao-hover: #091E4224;
-  --ok: #22A06B; --ok-fundo: #DCFFF1; --ok-texto: #216E4E;
-  --risk: #E2B203; --risk-fundo: #FFF7D6; --risk-texto: #7F5F01;
-  --late: #C9372C; --late-fundo: #FFECEB; --late-texto: #AE2E24;
-  --hit: #1D7AFC; --hit-fundo: #E9F2FF; --hit-texto: #0055CC;
-  --aviso-texto: #A54800; --imp-alta: #E56910;
-  --sombra-seg: 0 1px 1px #091E4240;
+  --texto: #292A2E; --sub: #505258; --fraco: #6B6E76;
+  --borda: #DCDDDD; --borda-campo: #8C8F97;
+  --fundo: #FFFFFF; --fundo-baixo: #F8F8F8; --fundo-cinza: #F0F1F2;
+  --trilho: #DDDEE1; --zona: #B3B9C4;
+  --azul: #1868DB; --azul-texto: #1868DB; --azul-fundo: #E9F2FE; --azul-hover: #1558BC; --azul-sobre: #FFFFFF;
+  --botao: transparent; --botao-hover: #F0F1F2;
+  --ok: #6A9A23; --ok-fundo: #BAF3DB; --ok-texto: #216E4E;
+  --risk: #E2B203; --risk-fundo: #F5E989; --risk-texto: #7F5F01;
+  --late: #C9372C; --late-fundo: #FFD5D2; --late-texto: #AE2E24;
+  --hit: #1868DB; --hit-fundo: #E9F2FE; --hit-texto: #1868DB;
+  --aviso-texto: #9E4C00; --imp-alta: #E56910;
+  --sombra-seg: 0 1px 1px #1E1F2140;
 }
 html[data-color-mode="dark"] {
   color-scheme: dark;
-  --texto: #B6C2CF; --sub: #9FADBC; --fraco: #8C9BAB;
-  --borda: #A6C5E229; --borda-campo: #738496;
-  --fundo: #22272B; --fundo-baixo: #A1BDD90F; --fundo-cinza: #A1BDD91A;
-  --trilho: #A1BDD91F; --zona: #596773;
-  --azul: #579DFF; --azul-texto: #85B8FF; --azul-fundo: #1C2B41;
-  --botao: #A1BDD914; --botao-hover: #A6C5E229;
-  --ok: #4BCE97; --ok-fundo: #164B35; --ok-texto: #7EE2B8;
-  --risk: #F5CD47; --risk-fundo: #533F04; --risk-texto: #F8E6A0;
-  --late: #F87168; --late-fundo: #5D1F1A; --late-texto: #FFD5D2;
-  --hit: #579DFF; --hit-fundo: #09326C; --hit-texto: #CCE0FF;
-  --aviso-texto: #F5CD47; --imp-alta: #F38A3F;
+  --texto: #CECFD2; --sub: #A9ABAF; --fraco: #96999E;
+  --borda: #3C3D40; --borda-campo: #7E8188;
+  --fundo: #242528; --fundo-baixo: #2B2C2F; --fundo-cinza: #303134;
+  --trilho: #3C3D40; --zona: #596773;
+  --azul: #669DF1; --azul-texto: #669DF1; --azul-fundo: #1C2B42; --azul-hover: #8FB8F6; --azul-sobre: #1F1F21;
+  --botao: transparent; --botao-hover: #303134;
+  --ok: #82B536; --ok-fundo: #164B35; --ok-texto: #7EE2B8;
+  --risk: #EED12B; --risk-fundo: #533F04; --risk-texto: #EED12B;
+  --late: #F87168; --late-fundo: #5D1F1A; --late-texto: #FD9891;
+  --hit: #669DF1; --hit-fundo: #1C2B42; --hit-texto: #669DF1;
+  --aviso-texto: #FBC828; --imp-alta: #F38A3F;
   --sombra-seg: none;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-color-mode]) {
     color-scheme: dark;
-    --texto: #B6C2CF; --sub: #9FADBC; --fraco: #8C9BAB;
-    --borda: #A6C5E229; --borda-campo: #738496;
-    --fundo: #22272B; --fundo-baixo: #A1BDD90F; --fundo-cinza: #A1BDD91A;
-    --trilho: #A1BDD91F; --zona: #596773;
-    --azul: #579DFF; --azul-texto: #85B8FF; --azul-fundo: #1C2B41;
-    --botao: #A1BDD914; --botao-hover: #A6C5E229;
-    --ok: #4BCE97; --ok-fundo: #164B35; --ok-texto: #7EE2B8;
-    --risk: #F5CD47; --risk-fundo: #533F04; --risk-texto: #F8E6A0;
-    --late: #F87168; --late-fundo: #5D1F1A; --late-texto: #FFD5D2;
-    --hit: #579DFF; --hit-fundo: #09326C; --hit-texto: #CCE0FF;
-    --aviso-texto: #F5CD47; --imp-alta: #F38A3F;
+    --texto: #CECFD2; --sub: #A9ABAF; --fraco: #96999E;
+    --borda: #3C3D40; --borda-campo: #7E8188;
+    --fundo: #242528; --fundo-baixo: #2B2C2F; --fundo-cinza: #303134;
+    --trilho: #3C3D40; --zona: #596773;
+    --azul: #669DF1; --azul-texto: #669DF1; --azul-fundo: #1C2B42; --azul-hover: #8FB8F6; --azul-sobre: #1F1F21;
+    --botao: transparent; --botao-hover: #303134;
+    --ok: #82B536; --ok-fundo: #164B35; --ok-texto: #7EE2B8;
+    --risk: #EED12B; --risk-fundo: #533F04; --risk-texto: #EED12B;
+    --late: #F87168; --late-fundo: #5D1F1A; --late-texto: #FD9891;
+    --hit: #669DF1; --hit-fundo: #1C2B42; --hit-texto: #669DF1;
+    --aviso-texto: #FBC828; --imp-alta: #F38A3F;
     --sombra-seg: none;
   }
 }
@@ -484,5 +484,36 @@ details.mais summary:hover { text-decoration: underline; }
 /* v32: evolução da equipe dentro do bloco de progresso financeiro. */
 #app .fin-graf { margin-top: 8px; min-width: 0; }
 
-/* v33: configurações do Power-Up (visual escolhido por pessoa). */
-.config { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+/* v34: tipografia, botões e cantos iguais aos do Trello. A fonte do Trello (Atlassian Sans)
+   deriva da Inter Variable; a Inter vai junto no repositório, em fonts/, sob licença OFL. */
+@font-face {
+  font-family: "Inter Variable"; font-style: normal; font-display: swap; font-weight: 100 900;
+  src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter Variable"; font-style: normal; font-display: swap; font-weight: 100 900;
+  src: url("../fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+body { font-family: "Atlassian Sans", "Inter Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
+/* Botão neutro com contorno, como Add, Edit e Filter do Trello */
+#app .btn { border: 1px solid var(--borda); border-radius: 4px; background: var(--botao); color: var(--sub); }
+#app .btn:hover { background: var(--botao-hover); color: var(--texto); }
+#app .btn-primario, #app .btn-perigo { border-color: transparent; }
+#app .btn-primario { background: var(--azul); color: var(--azul-sobre); }
+#app .btn-primario:hover { background: var(--azul-hover); color: var(--azul-sobre); filter: none; }
+#app .btn-perigo { color: #FFFFFF; }
+html[data-color-mode="dark"] #app .btn-perigo { color: #1F1F21; }
+#app .btn-marcado { border-color: transparent; background: var(--azul-fundo); color: var(--azul-texto); }
+#app .btn-texto { border-color: transparent; background: transparent; }
+#app .nota .btn { border-color: transparent; color: inherit; }
+/* Campos com canto de 4 px, como os do Trello */
+#app .campo input, #app .campo select, #app .campo textarea, #app input.campo-solto,
+#app .campo-prefixo, #app .filtro-pessoa select, #app input.registro-data { border-radius: 4px; }
+#app .seg { border-radius: 6px; }
+#app .seg button { border-radius: 4px; }
+html[data-color-mode="dark"] #app .seg button[aria-pressed="true"] { background: #3C3D40; color: var(--texto); }
+html[data-color-mode="dark"] .avatar { color: #1F1F21; }
+/* Selos como os do cartão do Trello: 24 px de altura, texto regular, canto de 4 px */
+.selo { padding: 4px 8px; border-radius: 4px; font-weight: 400; }
