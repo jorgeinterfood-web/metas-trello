@@ -1,23 +1,33 @@
-# Power-Up Metas, versão 28
+# Power-Up Metas, versão 29
 
-## Atualizar a versão 27
+## Atualizar a versão 28
 
-Substitua no GitHub os arquivos deste pacote: metas.css, form.js, index.html,
-meta.html e painel.html. Os demais ficam como na versão 27. As referências
-passaram a ?v=28.
+Substitua no GitHub os arquivos deste pacote: core.js, detalhe.js, painel.js,
+index.html, meta.html e painel.html. Os demais ficam como na versão 28. As
+referências passaram a ?v=29.
 
-## Ajustes
+## Situações e cores
 
-- Os exemplos dentro dos campos voltaram: Título (Ex.: Faturamento do mês) e
-  Unidade (Ex.: clientes).
-- Importância, campos e menus têm sempre 36 px de altura. A regra agora fixa
-  também o box-sizing e as alturas mínima e máxima, que o estilo do Trello pode
-  alterar em select e input e que deixavam os menus mais altos que o bloco de
-  Importância.
+Cada cor tem um sentido só, como no Trello:
+- Azul, em andamento bem: No ritmo, Adiantado, No objetivo e o Em andamento do
+  objetivo do dia.
+- Amarelo, atenção: Atrasado e Abaixo do objetivo.
+- Vermelho: Não atingido.
+- Verde, concluído: Completo, inclusive no objetivo do dia.
+- Cinza, sem avaliação: A iniciar, Sem etapas, Sem dias úteis e Etapas
+  indisponíveis.
+
+Mudanças de rótulo:
+- Metas de Percentual que alcançam o objetivo durante o período mostram No
+  objetivo, porque ainda podem cair. Completo fica para o fim do período, e só
+  então o cartão é marcado como concluído.
+- Pendente passou a se chamar Abaixo do objetivo.
+- Os filtros do painel ganharam No objetivo e Abaixo do objetivo. A avaliar,
+  Parciais e Superados só aparecem se ainda existir alguma meta antiga do tipo
+  Avaliação no quadro.
 
 ## Validação
 
-Medição em navegador com um estilo que imita o do Trello alterando box-sizing,
-altura mínima e espaçamento de select e input: todos os campos, menus e blocos
-de opções do formulário ficaram com 36 px. A conferência visual no Trello
-continua pendente. Nenhuma alteração remota foi realizada.
+Sintaxe dos JavaScripts, testes com Trello simulado e captura do painel. A
+conferência visual no Trello continua pendente. Nenhuma alteração remota foi
+realizada.

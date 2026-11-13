@@ -248,20 +248,23 @@
   }
 
   // ---------- Situação ----------
+  // Cores com um sentido só, como no Trello: azul em andamento bem, amarelo em atenção,
+  // vermelho não atingido, verde concluído, cinza sem avaliação.
+  // As classes sit-ok (verde) e sit-hit (azul) seguem a cor, não o nome da situação.
   var SIT = {
-    ok: { label: 'No ritmo', cls: 'ok', badge: 'green' },
+    ok: { label: 'No ritmo', cls: 'hit', badge: 'blue' },
     risk: { label: 'Atrasado', cls: 'risk', badge: 'yellow' },
     late: { label: 'Não atingido', cls: 'late', badge: 'red' },
-    hit: { label: 'Completo', cls: 'hit', badge: 'blue' },
-    noalvo: { label: 'Completo', cls: 'hit', badge: 'blue' },
+    hit: { label: 'Completo', cls: 'ok', badge: 'green' },
+    noalvo: { label: 'No objetivo', cls: 'hit', badge: 'blue' },
     andamento: { label: 'Em andamento', cls: 'neutral', badge: 'light-gray' },
-    abaixo: { label: 'Pendente', cls: 'risk', badge: 'yellow' },
+    abaixo: { label: 'Abaixo do objetivo', cls: 'risk', badge: 'yellow' },
     wait: { label: 'A avaliar', cls: 'neutral', badge: 'light-gray' },
     future: { label: 'A iniciar', cls: 'neutral', badge: 'light-gray' },
     nao: { label: 'Não atingido', cls: 'late', badge: 'red' },
     parcial: { label: 'Parcial', cls: 'risk', badge: 'yellow' },
-    atingida: { label: 'Completo', cls: 'hit', badge: 'blue' },
-    superada: { label: 'Superado', cls: 'hit', badge: 'blue' }
+    atingida: { label: 'Completo', cls: 'ok', badge: 'green' },
+    superada: { label: 'Superado', cls: 'ok', badge: 'green' }
   };
   var IMP = { 1: 'Normal', 2: 'Alta', 3: 'Muito alta' };
   var TIPO = { q: 'Valor', e: 'Etapas', a: 'Avaliação' };

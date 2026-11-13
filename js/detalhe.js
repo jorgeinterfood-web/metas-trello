@@ -195,7 +195,7 @@
       var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + f(d.realizado-d.alvo) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
       return '<section class="det-dia" aria-label="Objetivo do dia">' +
         '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">Objetivo do dia: <span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + '</span></h3></div>' +
-        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
+        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'hit') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
         (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '</section>';
     }
 
@@ -352,7 +352,7 @@
     }
     function concluirCartao() {
       var r = M.avaliar(meta, o.card.badges);
-      return M.rest(o.t, 'PUT', '/cards/' + o.card.id, { dueComplete: r.sit === 'hit' || r.sit === 'noalvo' });
+      return M.rest(o.t, 'PUT', '/cards/' + o.card.id, { dueComplete: r.sit === 'hit' });
     }
     // Autoriza (a janela do Trello precisa partir do clique) e acerta o cartão
     function acaoCartao(lista) {
