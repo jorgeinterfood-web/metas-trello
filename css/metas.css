@@ -472,3 +472,11 @@ details.mais summary:hover { text-decoration: underline; }
 @media (max-width: 480px) {
   #app .registro-linha.com-data { grid-template-columns: minmax(0, 1fr) 140px; grid-template-areas: "label dlabel" "field dfield" "button button"; }
 }
+
+/* v31: o registro ocupa toda a largura do bloco em todos os tipos. O valor fica com o
+   espaço que sobra; a data mantém a largura que precisa; os botões, a do texto. */
+#app .registro-linha { grid-template-columns: minmax(0, 1fr) max-content; }
+#app .registro-linha.com-data { grid-template-columns: minmax(0, 1fr) 160px max-content; }
+@media (max-width: 480px) {
+  #app .registro-linha.com-data { grid-template-columns: minmax(0, 1fr) 140px; }
+}
