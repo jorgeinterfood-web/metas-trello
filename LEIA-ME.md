@@ -1,40 +1,44 @@
-# Metas para Trello v35
+# Metas para Trello v36
 
 ## Atualizar a versão anterior
 
-Copie o conteúdo desta pasta para a raiz do repositório, substituindo os arquivos de mesmo nome. Mantenha os demais arquivos da v34, inclusive a pasta `fonts`.
+Copie o conteúdo desta pasta para a raiz do repositório, substituindo os arquivos de mesmo nome. Mantenha os demais arquivos da v35, inclusive fonts/. Não envie a pasta metas-trello-v36 como uma subpasta do site.
 
-O pacote contém somente os arquivos alterados, as três páginas HTML e este LEIA-ME. Todas as referências locais de CSS e JavaScript nas três páginas usam `?v=35`.
+As três páginas passam a usar ?v=36 em todas as referências locais de CSS e JavaScript.
 
 ## O que mudou
 
-- Títulos de seção seguem o mesmo padrão no cartão e no painel: 14 px, entrelinha de 20 px e peso 600. Títulos de página têm papel próprio, de 20 px, entrelinha de 24 px e peso 600.
-- Rótulos de campo, incluindo Valor do registro e Data, usam 12 px, entrelinha de 16 px, peso 600 e cor secundária.
-- Valores, períodos e títulos das metas na lista usam 14 px e peso regular. Os valores junto aos títulos deixam de receber negrito por herança.
-- Botões e seletores de opções usam 14 px e peso 500. A seleção usa as mesmas cores nos dois temas.
-- Datas e autores do histórico, legendas e textos do gráfico usam o papel auxiliar, de 12 px e peso regular. A margem do gráfico considera a largura dos rótulos.
-- A Atlassian Sans é carregada pelo servidor oficial da Atlassian. A Inter local continua como reserva se a fonte oficial não carregar.
-- As cores usam primeiro os tokens nativos disponibilizados pelo Trello. Os valores da v34 continuam como reserva.
-- Os campos e menus mantêm 36 px de altura. O botão de ação destrutiva tem fundo próprio e o foco de teclado fica visível.
+- Textos auxiliares do resumo, em lista ou linha única, com 12 px, entrelinha de 16 px, peso regular e cor secundária.
+- Informações extras removidas debaixo das barras de Objetivo do dia, Percentual atual e Etapas concluídas. As informações principais e os indicadores das barras permanecem.
+- Espaço entre rótulos e campos aumentado de 4 para 8 px no formulário e no registro, incluindo Data.
+- Hover dos botões neutros com contorno usa os fundos e bordas medidos nos prints: fundo #E2E4E6 e borda #C3C6C8 no claro; fundo #3C3D3F e borda #515254 no escuro. A cor do texto permanece secundária.
+- Encerrar meta vira botão neutro com contorno e 36 px de altura, como Subtrair. A confirmação de encerramento permanece.
+- A projeção financeira da equipe passa para a legenda abaixo do gráfico, ao lado da linha pontilhada de Projeção, com valor e percentual.
+- Legendas dos gráficos do cartão e da equipe com mais 4 px de afastamento da base, além do intervalo já existente.
+
+## Cores das tags
+
+As cores das tags não foram alteradas nesta versão. A v35 usa tokens genéricos de sucesso, aviso e seleção, que podem produzir tons diferentes dos indicadores nativos do Trello. Para definir a correspondência desejada, use recortes das etiquetas nativas, com texto e fundo visíveis, nos temas claro e escuro.
 
 ## Validação
 
 - Sintaxe de todos os arquivos JavaScript verificada com Node.
-- Detalhe, painel e formulário montados com dados de teste e Trello simulado, nos temas claro e escuro, sem erros JavaScript.
-- Navegação entre painel e detalhe e troca do tipo de meta verificadas.
-- Tamanho, peso e família por função conferidos por cálculo de estilos nas seis combinações de tela e tema.
-- Prioridade dos tokens de cor recebidos do Trello verificada.
-- As regras de altura, tamanho e cor dos campos foram conferidas por cálculo de estilos, incluindo uma folha que altera os padrões de select e label.
-- O Chromium local foi bloqueado pelo ambiente. Não foi possível concluir capturas e testes de disposição em navegador. A comparação visual final, incluindo carregamento da fonte e estados interativos, precisa ser feita dentro do Trello.
+- Detalhe, painel e formulário montados com Trello simulado nos temas claro e escuro, sem erros JavaScript.
+- Navegação entre painel e detalhe e troca do tipo da meta verificadas.
+- Conferidos o botão Encerrar meta, sua confirmação e o cancelamento dessa confirmação.
+- Conferida a ausência de textos extras no objetivo do dia, no percentual atual e em etapas concluídas.
+- Conferida a projeção junto à legenda do gráfico da equipe.
+- Tamanho, peso, cores e espaçamentos conferidos por cálculo de estilos. Hover simulado para conferir fundo e borda nos dois temas.
+- Campos mantidos com 36 px, inclusive sob estilos simulados do hospedeiro.
+- A comparação visual final e os estados interativos dentro do Trello continuam pendentes; o Chromium deste ambiente não permite as capturas necessárias.
 - Nenhuma alteração remota foi realizada.
 
 ## Arquivos deste pacote
 
-- `css/metas.css`
-- `js/detalhe.js`
-- `index.html`
-- `meta.html`
-- `painel.html`
-- `LEIA-ME.md`
-
-As alterações são de apresentação. As regras de cálculo, armazenamento e permissões permanecem na implementação anterior.
+- css/metas.css
+- js/detalhe.js
+- js/painel.js
+- index.html
+- meta.html
+- painel.html
+- LEIA-ME.md

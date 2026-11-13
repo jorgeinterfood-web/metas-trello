@@ -162,8 +162,8 @@
 
     function feedback(itens) {
       itens = itens.filter(Boolean);
-      if (itens.length > 1) return '<ul class="det-feedback">' + itens.map(function(txt){return '<li>' + esc(txt) + '</li>';}).join('') + '</ul>';
-      return itens.length ? '<p class="det-frase">' + esc(itens[0]) + '</p>' : '';
+      if (itens.length > 1) return '<ul class="det-feedback det-feedback-texto">' + itens.map(function(txt){return '<li>' + esc(txt) + '</li>';}).join('') + '</ul>';
+      return itens.length ? '<p class="det-frase det-feedback-texto">' + esc(itens[0]) + '</p>' : '';
     }
 
     function resumo() {
@@ -184,7 +184,7 @@
       var itens = frases().filter(Boolean);
       if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) itens.push('Valor inicial: ' + f(m.vIni));
       if (r.parada) itens.push('Sem atualização há ' + r.diasSemAtualizar + (r.diasSemAtualizar === 1 ? ' dia' : ' dias'));
-      var linhas = feedback(itens);
+      var linhas = ehTaxa() || m.tipo === 'e' ? '' : feedback(itens);
       // Rótulo e valor na mesma linha, no formato da linha do período
       return '<section class="det-resumo" aria-label="' + titulo + '">' +
         '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">' + titulo + ': ' + principal + '</h3>' + (r.temBarra ? '' : M.selo(r)) + '</div>' +
@@ -203,11 +203,9 @@
       var rot = M.situacaoDia(d);
       var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
 
-      var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + f(d.realizado-d.alvo) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
       return '<section class="det-dia" aria-label="Objetivo do dia">' +
         '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">Objetivo do dia: <span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + '</span></h3></div>' +
-        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'hit') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
-        (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '</section>';
+        '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'hit') + '">' + esc(M.textoProgressoDia(d)) + '</span></div></section>';
     }
 
     function registro() {
@@ -259,7 +257,7 @@
     function evolucao() {
       if (meta.tipo !== 'q') return '';
       var h = meta.hist || [];
-      var graf = h.length ? '<div id="graf"></div><div class="linha peq sub gap16"><span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR[D.r.info.cls] + ')"></span>Realizado</span>' +
+      var graf = h.length ? '<div id="graf"></div><div class="linha peq sub gap16 legenda-grafico"><span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR[D.r.info.cls] + ')"></span>Realizado</span>' +
         '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>' + (ehTaxa() ? 'Objetivo' : 'Ritmo esperado') + '</span>' +
         (projecaoVisivel(meta, D.r) && meta.ini <= M.hoje() ? '<span class="linha"><span aria-hidden="true" class="leg-proj" style="color:var(' + COR[D.r.info.cls] + ')"></span>Projeção</span>' : '') + '</div>' : '<p class="det-frase sub">O gráfico aparece a partir do primeiro registro.</p>';
       var linhas = [];
@@ -290,7 +288,7 @@
       if (meta.encerrada) return '<div class="det-rodape"><button type="button" class="btn-link" id="reabrir">Reabrir meta</button></div>';
       if (st.confirmar) return '<div class="det-rodape det-confirma"><span>Encerrar a meta e mover o cartão para a lista ' + esc(M.CFG.listaEncerradas) + '?</span>' +
         '<span class="linha gap8"><button type="button" class="btn btn-perigo" id="encerrarSim"' + (st.ocupado ? ' disabled' : '') + '>Encerrar meta</button><button type="button" class="btn btn-texto" id="encerrarNao">Cancelar</button></span></div>';
-      return '<div class="det-rodape"><button type="button" class="btn-link sub" id="encerrar">Encerrar meta</button></div>';
+      return '<div class="det-rodape"><button type="button" class="btn" id="encerrar">Encerrar meta</button></div>';
     }
 
     function render() {

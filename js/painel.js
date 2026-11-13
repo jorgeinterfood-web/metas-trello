@@ -166,11 +166,11 @@
       rg = M.avaliar(equipe);
       rg.info = rr.info; rg.sit = sit;
       S.equipe = { meta: equipe, r: rg };
-      var proj = M.projecaoVisivel(equipe, rg) ? '<p class="det-frase">Projeção no ritmo atual: ' + esc(M.fmtValor(dinheiro, rg.projecao)) + ' (' + Math.max(0, Math.round(rg.projecao / (alvo || 1) * 100)) + '% do objetivo)</p>' : '';
-      grafico = proj + '<div id="grafEquipe" class="fin-graf"></div><div class="linha peq sub gap16">' +
+      var proj = M.projecaoVisivel(equipe, rg) ? 'Projeção: ' + esc(M.fmtValor(dinheiro, rg.projecao)) + ' (' + Math.max(0, Math.round(rg.projecao / (alvo || 1) * 100)) + '% do objetivo)' : '';
+      grafico = '<div id="grafEquipe" class="fin-graf"></div><div class="linha peq sub gap16 legenda-grafico">' +
         '<span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR_SIT[rr.info.cls] + ')"></span>Realizado</span>' +
         '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>Ritmo esperado</span>' +
-        (M.projecaoVisivel(equipe, rg) ? '<span class="linha"><span aria-hidden="true" class="leg-proj" style="color:var(' + COR_SIT[rr.info.cls] + ')"></span>Projeção</span>' : '') + '</div>';
+        (proj ? '<span class="linha"><span aria-hidden="true" class="leg-proj" style="color:var(' + COR_SIT[rr.info.cls] + ')"></span>' + proj + '</span>' : '') + '</div>';
     } else S.equipe = null;
     // Mesmo desenho dos outros blocos: título fora da caixa, conteúdo na caixa
     return '<section class="bloco"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
