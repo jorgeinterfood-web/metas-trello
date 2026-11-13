@@ -1,51 +1,65 @@
-/* Cores medidas no Trello atual (paleta Atlassian de 2025), uma versão para cada tema.
-   O tema vem do Trello (data-color-mode, definido em core.js); sem isso, segue o sistema. */
+/* Cores por função: os tokens fornecidos pelo Trello têm prioridade.
+   Os valores medidos nos prints são a reserva quando o token não está disponível.
+   O tema vem do Trello; fora dele, segue a preferência do sistema. */
 :root, html[data-color-mode="light"] {
   color-scheme: light;
-  --texto: #292A2E; --sub: #505258; --fraco: #6B6E76;
-  --borda: #DCDDDD; --borda-campo: #8C8F97;
-  --fundo: #FFFFFF; --fundo-baixo: #F8F8F8; --fundo-cinza: #F0F1F2;
-  --trilho: #DDDEE1; --zona: #B3B9C4;
-  --azul: #1868DB; --azul-texto: #1868DB; --azul-fundo: #E9F2FE; --azul-hover: #1558BC; --azul-sobre: #FFFFFF;
-  --botao: transparent; --botao-hover: #F0F1F2;
-  --ok: #6A9A23; --ok-fundo: #BAF3DB; --ok-texto: #216E4E;
-  --risk: #E2B203; --risk-fundo: #F5E989; --risk-texto: #7F5F01;
-  --late: #C9372C; --late-fundo: #FFD5D2; --late-texto: #AE2E24;
-  --hit: #1868DB; --hit-fundo: #E9F2FE; --hit-texto: #1868DB;
-  --aviso-texto: #9E4C00; --imp-alta: #E56910;
+  --texto: var(--ds-text, #292A2E); --sub: var(--ds-text-subtle, #505258); --fraco: var(--ds-text-subtlest, #6B6E76);
+  --borda: var(--ds-border, #DCDDDD); --borda-campo: var(--ds-border-input, #8C8F97);
+  --fundo: var(--ds-surface, #FFFFFF); --fundo-baixo: var(--ds-surface-sunken, #F8F8F8); --fundo-cinza: var(--ds-background-neutral, #F0F1F2);
+  --trilho: var(--ds-background-neutral, #DDDEE1); --zona: #B3B9C4;
+  --azul: var(--ds-background-brand-bold, #1868DB); --azul-texto: var(--ds-link, #1868DB); --azul-fundo: var(--ds-background-selected, #E9F2FE); --azul-hover: var(--ds-background-brand-bold-hovered, #1558BC); --azul-sobre: var(--ds-text-inverse, #FFFFFF);
+  --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #F0F1F2);
+  --ok: #6A9A23; --ok-fundo: var(--ds-background-success, #BAF3DB); --ok-texto: var(--ds-text-success, #216E4E);
+  --risk: #E2B203; --risk-fundo: var(--ds-background-warning, #F5E989); --risk-texto: var(--ds-text-warning, #7F5F01);
+  --late: #C9372C; --late-fundo: var(--ds-background-danger, #FFD5D2); --late-texto: var(--ds-text-danger, #AE2E24);
+  --hit: #1868DB; --hit-fundo: var(--ds-background-selected, #E9F2FE); --hit-texto: var(--ds-text-selected, #1868DB);
+  --aviso-texto: var(--ds-text-warning, #9E4C00); --imp-alta: #E56910;
   --sombra-seg: 0 1px 1px #1E1F2140;
 }
 html[data-color-mode="dark"] {
   color-scheme: dark;
-  --texto: #CECFD2; --sub: #A9ABAF; --fraco: #96999E;
-  --borda: #3C3D40; --borda-campo: #7E8188;
-  --fundo: #242528; --fundo-baixo: #2B2C2F; --fundo-cinza: #303134;
-  --trilho: #3C3D40; --zona: #596773;
-  --azul: #669DF1; --azul-texto: #669DF1; --azul-fundo: #1C2B42; --azul-hover: #8FB8F6; --azul-sobre: #1F1F21;
-  --botao: transparent; --botao-hover: #303134;
-  --ok: #82B536; --ok-fundo: #164B35; --ok-texto: #7EE2B8;
-  --risk: #EED12B; --risk-fundo: #533F04; --risk-texto: #EED12B;
-  --late: #F87168; --late-fundo: #5D1F1A; --late-texto: #FD9891;
-  --hit: #669DF1; --hit-fundo: #1C2B42; --hit-texto: #669DF1;
-  --aviso-texto: #FBC828; --imp-alta: #F38A3F;
+  --texto: var(--ds-text, #CECFD2); --sub: var(--ds-text-subtle, #A9ABAF); --fraco: var(--ds-text-subtlest, #96999E);
+  --borda: var(--ds-border, #3C3D40); --borda-campo: var(--ds-border-input, #7E8188);
+  --fundo: var(--ds-surface, #242528); --fundo-baixo: var(--ds-surface-sunken, #2B2C2F); --fundo-cinza: var(--ds-background-neutral, #303134);
+  --trilho: var(--ds-background-neutral, #3C3D40); --zona: #596773;
+  --azul: var(--ds-background-brand-bold, #669DF1); --azul-texto: var(--ds-link, #669DF1); --azul-fundo: var(--ds-background-selected, #1C2B42); --azul-hover: var(--ds-background-brand-bold-hovered, #8FB8F6); --azul-sobre: var(--ds-text-inverse, #1F1F21);
+  --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #303134);
+  --ok: #82B536; --ok-fundo: var(--ds-background-success, #164B35); --ok-texto: var(--ds-text-success, #7EE2B8);
+  --risk: #EED12B; --risk-fundo: var(--ds-background-warning, #533F04); --risk-texto: var(--ds-text-warning, #EED12B);
+  --late: #F87168; --late-fundo: var(--ds-background-danger, #5D1F1A); --late-texto: var(--ds-text-danger, #FD9891);
+  --hit: #669DF1; --hit-fundo: var(--ds-background-selected, #1C2B42); --hit-texto: var(--ds-text-selected, #669DF1);
+  --aviso-texto: var(--ds-text-warning, #FBC828); --imp-alta: #F38A3F;
   --sombra-seg: none;
 }
 @media (prefers-color-scheme: dark) {
   html:not([data-color-mode]) {
     color-scheme: dark;
-    --texto: #CECFD2; --sub: #A9ABAF; --fraco: #96999E;
-    --borda: #3C3D40; --borda-campo: #7E8188;
-    --fundo: #242528; --fundo-baixo: #2B2C2F; --fundo-cinza: #303134;
-    --trilho: #3C3D40; --zona: #596773;
-    --azul: #669DF1; --azul-texto: #669DF1; --azul-fundo: #1C2B42; --azul-hover: #8FB8F6; --azul-sobre: #1F1F21;
-    --botao: transparent; --botao-hover: #303134;
-    --ok: #82B536; --ok-fundo: #164B35; --ok-texto: #7EE2B8;
-    --risk: #EED12B; --risk-fundo: #533F04; --risk-texto: #EED12B;
-    --late: #F87168; --late-fundo: #5D1F1A; --late-texto: #FD9891;
-    --hit: #669DF1; --hit-fundo: #1C2B42; --hit-texto: #669DF1;
-    --aviso-texto: #FBC828; --imp-alta: #F38A3F;
+    --texto: var(--ds-text, #CECFD2); --sub: var(--ds-text-subtle, #A9ABAF); --fraco: var(--ds-text-subtlest, #96999E);
+    --borda: var(--ds-border, #3C3D40); --borda-campo: var(--ds-border-input, #7E8188);
+    --fundo: var(--ds-surface, #242528); --fundo-baixo: var(--ds-surface-sunken, #2B2C2F); --fundo-cinza: var(--ds-background-neutral, #303134);
+    --trilho: var(--ds-background-neutral, #3C3D40); --zona: #596773;
+    --azul: var(--ds-background-brand-bold, #669DF1); --azul-texto: var(--ds-link, #669DF1); --azul-fundo: var(--ds-background-selected, #1C2B42); --azul-hover: var(--ds-background-brand-bold-hovered, #8FB8F6); --azul-sobre: var(--ds-text-inverse, #1F1F21);
+    --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #303134);
+    --ok: #82B536; --ok-fundo: var(--ds-background-success, #164B35); --ok-texto: var(--ds-text-success, #7EE2B8);
+    --risk: #EED12B; --risk-fundo: var(--ds-background-warning, #533F04); --risk-texto: var(--ds-text-warning, #EED12B);
+    --late: #F87168; --late-fundo: var(--ds-background-danger, #5D1F1A); --late-texto: var(--ds-text-danger, #FD9891);
+    --hit: #669DF1; --hit-fundo: var(--ds-background-selected, #1C2B42); --hit-texto: var(--ds-text-selected, #669DF1);
+    --aviso-texto: var(--ds-text-warning, #FBC828); --imp-alta: #F38A3F;
     --sombra-seg: none;
   }
+}
+
+
+/* Papéis tipográficos: corpo/valor, rótulo de campo, seção e título de página.
+   A família oficial é carregada nas páginas; Inter permanece como reserva local. */
+:root {
+  --ds-metas-family: var(--ds-font-family-body, "Atlassian Sans", "Inter Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  --ds-metas-font-body: 400 14px/20px var(--ds-metas-family);
+  --ds-metas-font-label: 600 12px/16px var(--ds-metas-family);
+  --ds-metas-font-section: 600 14px/20px var(--ds-metas-family);
+  --ds-metas-font-page: 600 20px/24px var(--ds-metas-family);
+  --ds-metas-font-control: 500 14px/20px var(--ds-metas-family);
+  --ds-metas-font-meta: 400 12px/16px var(--ds-metas-family);
 }
 
 /* Blindagem contra o estilo padrão do Trello (power-up.min.css): margens, sombras, bordas e movimentos
@@ -63,7 +77,7 @@ html[data-color-mode="dark"] {
 
 * { box-sizing: border-box; }
 :root { --c2: 220px; --c3: 230px; --c4: 140px; --ctrl: 36px; }
-body { margin: 0; background: transparent; color: var(--texto); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif; font-size: 14px; line-height: 20px; }
+body { margin: 0; background: transparent; color: var(--texto); font: var(--ds-metas-font-body); }
 h1, h2, h3, p { margin: 0; }
 h1, h2, h3 { color: var(--texto); }
 a { color: var(--azul-texto); }
@@ -72,7 +86,7 @@ a { color: var(--azul-texto); }
 .oculto { display: none !important; }
 .invisivel { visibility: hidden; }
 .sub { color: var(--sub); }
-.peq { font-size: 12px; line-height: 16px; }
+.peq { font: var(--ds-metas-font-meta); }
 .forte { font-weight: 600; }
 .num { font-variant-numeric: tabular-nums; }
 .linha { display: flex; align-items: center; gap: 8px; }
@@ -83,43 +97,43 @@ a { color: var(--azul-texto); }
 
 /* Botões */
 #app button { margin: 0; }
-#app .btn { height: 32px; padding: 0 12px; border: none; border-radius: 3px; background: var(--botao); color: var(--texto); font: inherit; font-weight: 500; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+#app .btn { height: 32px; padding: 0 12px; border: 1px solid var(--borda); border-radius: 4px; background: var(--botao); color: var(--sub); font: var(--ds-metas-font-control); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
 #app .btn:hover { background: var(--botao-hover); }
-#app .btn-primario { background: var(--azul); color: var(--fundo); font-weight: 600; }
-#app .btn-primario:hover { background: var(--azul); filter: brightness(1.08); }
-#app .btn-perigo { background: var(--late); color: var(--fundo); }
-#app .btn-perigo:hover { background: var(--late); filter: brightness(1.08); }
+#app .btn-primario { background: var(--azul); color: var(--azul-sobre); border-color: transparent; }
+#app .btn-primario:hover { background: var(--azul-hover); color: var(--azul-sobre); }
+#app .btn-perigo { background: var(--ds-background-danger-bold, var(--late)); color: var(--azul-sobre); border-color: transparent; }
+#app .btn-perigo:hover { background: var(--ds-background-danger-bold-hovered, var(--late)); filter: none; }
 #app .btn-marcado { background: var(--azul-fundo); color: var(--azul-texto); }
 #app .btn-texto { background: transparent; }
 #app .btn-icone { width: 32px; padding: 0; }
-#app .btn[disabled] { opacity: .5; cursor: not-allowed; }
+#app .btn[disabled] { background: var(--ds-background-disabled, var(--fundo-cinza)); border-color: transparent; color: var(--ds-text-disabled, var(--fraco)); opacity: 1; cursor: not-allowed; }
 #app .btn-link { border: none; background: none; padding: 0; color: var(--azul-texto); font: inherit; cursor: pointer; }
 #app .btn-link:hover { text-decoration: underline; }
 #app .btn-link.sub { color: var(--sub); }
 
 /* Campos: todos com a mesma altura, para alinhar lado a lado */
 #app .campo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.rotulo, #app label.campo { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--sub); }
+.rotulo, #app label.campo { font: var(--ds-metas-font-label); color: var(--sub); }
 #app .campo input, #app .campo select, #app .campo textarea, #app input.campo-solto {
   width: 100%; height: var(--ctrl); margin: 0; padding: 0 8px; border: 1px solid var(--borda-campo); border-radius: 3px;
-  background: var(--fundo); color: var(--texto); font: inherit; font-size: 14px; font-weight: 400; box-shadow: none;
+  background: var(--fundo); color: var(--texto); font: var(--ds-metas-font-body); box-shadow: none;
 }
 #app .campo textarea { height: auto; min-height: 72px; padding: 8px; resize: vertical; }
 #app .campo input::placeholder, #app .campo textarea::placeholder, #app input.campo-solto::placeholder { color: var(--fraco); }
-#app .campo-texto { min-height: var(--ctrl); display: flex; align-items: center; font-size: 14px; font-weight: 400; color: var(--texto); }
+#app .campo-texto { min-height: var(--ctrl); display: flex; align-items: center; font: var(--ds-metas-font-body); color: var(--texto); }
 #app .campo [aria-invalid="true"], #app input.campo-solto[aria-invalid="true"] { border-color: var(--late); box-shadow: 0 0 0 1px var(--late); }
 #app .campo-prefixo { display: flex; align-items: center; height: var(--ctrl); border: 1px solid var(--borda-campo); border-radius: 3px; background: var(--fundo); }
 #app .campo-prefixo:focus-within { border-color: var(--azul); box-shadow: 0 0 0 1px var(--azul); }
 #app .campo-prefixo > span { padding: 0 8px; color: var(--sub); font-weight: 400; font-size: 14px; flex: none; }
 #app .campo-prefixo > span:empty { display: none; }
-#app .campo-prefixo input, #app .campo .campo-prefixo input { flex: 1; min-width: 0; width: auto; border: none; height: calc(var(--ctrl) - 2px); padding: 0 8px; box-shadow: none; background: transparent; color: var(--texto); font: inherit; font-size: 14px; font-weight: 400; }
+#app .campo-prefixo input, #app .campo .campo-prefixo input { flex: 1; min-width: 0; width: auto; border: none; height: calc(var(--ctrl) - 2px); padding: 0 8px; box-shadow: none; background: transparent; color: var(--texto); font: var(--ds-metas-font-body); }
 #app .campo-prefixo > span + input { padding-left: 0; }
 #app .campo-prefixo input:focus { outline: none; }
 #app .campo-prefixo:has([aria-invalid="true"]) { border-color: var(--late); box-shadow: 0 0 0 1px var(--late); }
 #app .campo-prefixo input[aria-invalid="true"] { box-shadow: none; }
-.ajuda { font-size: 12px; line-height: 16px; color: var(--sub); font-weight: 400; }
+.ajuda { font: var(--ds-metas-font-meta); color: var(--sub); }
 .ajuda:empty { display: none; }
-.erro-campo { font-size: 12px; line-height: 16px; font-weight: 400; color: var(--late-texto); }
+.erro-campo { font: var(--ds-metas-font-meta); color: var(--late-texto); }
 .erro-texto { color: var(--late-texto); font-weight: 600; }
 .erro, .aviso, .sucesso { padding: 8px 12px; border-radius: 3px; }
 .erro { color: var(--late-texto); background: var(--late-fundo); }
@@ -129,10 +143,9 @@ a { color: var(--azul-texto); }
 
 /* Segmentado: 36px de altura total, igual aos campos */
 #app .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; padding: 2px; height: var(--ctrl); border-radius: 4px; background: var(--fundo-cinza); }
-#app .seg button { height: 100%; padding: 0 8px; border: none; border-radius: 3px; background: transparent; color: var(--sub); font: inherit; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
+#app .seg button { height: 100%; padding: 0 8px; border: none; border-radius: 3px; background: transparent; color: var(--sub); font: var(--ds-metas-font-control); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
 #app .seg button:hover { color: var(--texto); }
-#app .seg button[aria-pressed="true"] { background: var(--fundo); color: var(--azul-texto); box-shadow: var(--sombra-seg); }
-html[data-color-mode="dark"] #app .seg button[aria-pressed="true"] { background: #38414A; color: #DEE4EA; }
+#app .seg button[aria-pressed="true"] { background: var(--azul-fundo); color: var(--azul-texto); box-shadow: none; }
 #app .seg-peq { display: inline-grid; height: 32px; }
 #app .seg-peq button { padding: 0 12px; }
 .imp { display: inline-flex; align-items: center; flex: none; }
@@ -140,7 +153,7 @@ html[data-color-mode="dark"] #app .seg button[aria-pressed="true"] { background:
 
 /* Chips de filtro */
 .chips { display: flex; gap: 8px; flex-wrap: wrap; }
-#app .chip { height: 32px; padding: 0 12px; border: 1px solid var(--borda); border-radius: 16px; background: transparent; color: var(--texto); font: inherit; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+#app .chip { height: 32px; padding: 0 12px; border: 1px solid var(--borda); border-radius: 16px; background: transparent; color: var(--sub); font: var(--ds-metas-font-control); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 #app .chip:hover { background: var(--botao); }
 #app .chip .num { color: var(--sub); }
 #app .chip[aria-pressed="true"] { border-color: var(--azul); background: var(--azul-fundo); color: var(--azul-texto); }
@@ -178,14 +191,14 @@ html[data-color-mode="dark"] .avatar { color: #1D2125; }
 .painel-topo-in { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .painel-topo-in.estreito { max-width: 960px; }
 .periodo-nome { min-width: 170px; text-align: center; font-weight: 600; }
-.painel-titulo { font-size: 16px; line-height: 24px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.painel-titulo { font: var(--ds-metas-font-page); color: var(--texto); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .painel-corpo { padding: 24px; display: flex; flex-direction: column; gap: 32px; max-width: 1200px; width: 100%; margin: 0 auto; flex: 1; }
 .painel-corpo.estreito { max-width: 960px; }
 .bloco { display: flex; flex-direction: column; gap: 12px; }
-.subtitulo { font-size: 16px; line-height: 24px; font-weight: 600; }
+.subtitulo { font: var(--ds-metas-font-section); color: var(--texto); }
 .filtros { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px 24px; }
-#app .filtro-pessoa { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--sub); }
-#app .filtro-pessoa select { height: 32px; margin: 0; padding: 0 8px; border: 1px solid var(--borda-campo); border-radius: 3px; background: var(--fundo); color: var(--texto); font: inherit; font-size: 14px; font-weight: 400; min-width: 180px; }
+#app .filtro-pessoa { display: flex; align-items: center; gap: 8px; font: var(--ds-metas-font-label); color: var(--sub); }
+#app .filtro-pessoa select { height: var(--ctrl); margin: 0; padding: 0 8px; border: 1px solid var(--borda-campo); border-radius: 3px; background: var(--fundo); color: var(--texto); font: var(--ds-metas-font-body); min-width: 180px; }
 
 /* Tabelas do painel: as colunas da direita têm largura fixa e alinham entre as linhas */
 .tab { border: 1px solid var(--borda); border-radius: 8px; overflow: hidden; }
@@ -194,7 +207,7 @@ html[data-color-mode="dark"] .avatar { color: #1D2125; }
 #app .linha-tab.atencao { grid-template-columns: minmax(0, 1fr) var(--c2) calc(var(--c3) + var(--c4) + 16px); }
 #app .linha-tab.atencao + .linha-tab.atencao { border-top: 1px solid var(--borda); }
 #app .linha-tab.meta { grid-template-columns: minmax(0, 1fr) var(--c2) var(--c3) var(--c4); padding-left: 52px; }
-.cel-titulo { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; }
+.cel-titulo { display: flex; align-items: center; gap: 8px; min-width: 0; font: var(--ds-metas-font-body); color: var(--texto); }
 .cel-motivo { color: var(--texto); }
 .cel-selo { justify-self: end; }
 .pessoa { padding-bottom: 6px; }
@@ -211,7 +224,7 @@ html[data-color-mode="dark"] .avatar { color: #1D2125; }
 .det-barra { display: flex; align-items: center; gap: 12px; }
 .det-barra .barra { flex: 1; }
 .det-pct { width: 44px; text-align: right; flex: none; }
-.det-titulo { font-size: 14px; line-height: 20px; font-weight: 600; }
+.det-titulo { font: var(--ds-metas-font-section); color: var(--texto); }
 .registro { display: flex; flex-direction: column; gap: 8px; padding-top: 20px; border-top: 1px solid var(--borda); }
 .registro-linha { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
 #app .registro-linha .btn { height: var(--ctrl); }
@@ -348,12 +361,7 @@ details.mais summary:hover { text-decoration: underline; }
 }
 #app .det-barra .barra { width: 100%; min-width: 0; }
 #app .det-status { white-space: nowrap; max-width: none; }
-#app label.registro-label {
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
-  color: var(--texto);
-}
+#app label.registro-label { font: var(--ds-metas-font-label); color: var(--sub); }
 #app .registro-linha { grid-template-columns: minmax(0, 200px) max-content; }
 .financeiro-valores { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 32px; }
 .financeiro-valores p { margin: 0; font-size: 14px; line-height: 20px; }
@@ -377,8 +385,8 @@ details.mais summary:hover { text-decoration: underline; }
   font-variant-numeric: tabular-nums;
 }
 #app .det-barra { grid-template-columns: minmax(0, 1fr) var(--metas-tag-largura); }
-.det-periodo { margin: 0; color: var(--texto); font-size: 14px; line-height: 24px; }
-.det-periodo .forte { font-size: 16px; line-height: 24px; }
+.det-periodo { margin: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px; color: var(--sub); font: var(--ds-metas-font-body); }
+.det-periodo .forte { font: var(--ds-metas-font-body); }
 #app .registro-acoes { grid-area: button; display: flex; align-items: center; gap: 8px; }
 #app .registro-acoes .btn { height: var(--ctrl); width: auto; }
 .registro-previa { display: flex; flex-direction: column; gap: 4px; }
@@ -394,11 +402,8 @@ details.mais summary:hover { text-decoration: underline; }
 /* v15: período uniforme, subtrações vermelhas e tags mais compactas. */
 :root { --metas-tag-largura: 164px; }
 /* v20: período no mesmo tamanho e peso dos títulos das seções (.det-titulo). */
-#app .det-periodo, #app .det-periodo > span {
-  font-size: 14px;
-  line-height: 20px;
-  font-weight: 600;
-}
+#app .det-periodo, #app .det-periodo > span { font: var(--ds-metas-font-body); }
+#app .det-periodo > .rotulo { font: var(--ds-metas-font-label); color: var(--sub); }
 #app .hist-negativo { color: var(--late-texto); white-space: nowrap; }
 #app .hist-positivo { color: var(--ok-texto); white-space: nowrap; }
 .det-grade { container-type: inline-size; }
@@ -456,10 +461,10 @@ details.mais summary:hover { text-decoration: underline; }
 
 /* v28: Importância, campos e menus com a mesma altura, mesmo com o estilo do Trello por cima
    (ele pode trocar o box-sizing e a altura mínima de select e input). */
-#app .campo select, #app .campo input, #app .campo-prefixo, #app .seg {
+#app .campo select, #app .campo input, #app .campo-prefixo, #app .seg, #app .filtro-pessoa select {
   box-sizing: border-box; height: var(--ctrl); min-height: var(--ctrl); max-height: var(--ctrl);
 }
-#app .campo select, #app .campo > input { padding-top: 0; padding-bottom: 0; line-height: normal; }
+#app .campo select, #app .campo > input { padding-top: 0; padding-bottom: 0; line-height: 20px; }
 #app .campo .campo-prefixo input { min-height: 0; max-height: none; height: calc(var(--ctrl) - 2px); }
 
 /* v30: data do registro (admins), ao lado do valor. */
@@ -484,8 +489,7 @@ details.mais summary:hover { text-decoration: underline; }
 /* v32: evolução da equipe dentro do bloco de progresso financeiro. */
 #app .fin-graf { margin-top: 8px; min-width: 0; }
 
-/* v34: tipografia, botões e cantos iguais aos do Trello. A fonte do Trello (Atlassian Sans)
-   deriva da Inter Variable; a Inter vai junto no repositório, em fonts/, sob licença OFL. */
+/* Fonte de reserva local da v34, mantida para falhas no carregamento da fonte oficial. */
 @font-face {
   font-family: "Inter Variable"; font-style: normal; font-display: swap; font-weight: 100 900;
   src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
@@ -496,15 +500,6 @@ details.mais summary:hover { text-decoration: underline; }
   src: url("../fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-body { font-family: "Atlassian Sans", "Inter Variable", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Ubuntu, "Helvetica Neue", sans-serif; -webkit-font-smoothing: antialiased; }
-/* Botão neutro com contorno, como Add, Edit e Filter do Trello */
-#app .btn { border: 1px solid var(--borda); border-radius: 4px; background: var(--botao); color: var(--sub); }
-#app .btn:hover { background: var(--botao-hover); color: var(--texto); }
-#app .btn-primario, #app .btn-perigo { border-color: transparent; }
-#app .btn-primario { background: var(--azul); color: var(--azul-sobre); }
-#app .btn-primario:hover { background: var(--azul-hover); color: var(--azul-sobre); filter: none; }
-#app .btn-perigo { color: #FFFFFF; }
-html[data-color-mode="dark"] #app .btn-perigo { color: #1F1F21; }
 #app .btn-marcado { border-color: transparent; background: var(--azul-fundo); color: var(--azul-texto); }
 #app .btn-texto { border-color: transparent; background: transparent; }
 #app .nota .btn { border-color: transparent; color: inherit; }
@@ -513,7 +508,18 @@ html[data-color-mode="dark"] #app .btn-perigo { color: #1F1F21; }
 #app .campo-prefixo, #app .filtro-pessoa select, #app input.registro-data { border-radius: 4px; }
 #app .seg { border-radius: 6px; }
 #app .seg button { border-radius: 4px; }
-html[data-color-mode="dark"] #app .seg button[aria-pressed="true"] { background: #3C3D40; color: var(--texto); }
 html[data-color-mode="dark"] .avatar { color: #1F1F21; }
 /* Selos como os do cartão do Trello: 24 px de altura, texto regular, canto de 4 px */
 .selo { padding: 4px 8px; border-radius: 4px; font-weight: 400; }
+
+/* v35: equivalentes usam o mesmo papel em todas as telas. Valores não herdam
+   o negrito do título que os contém; metadados e gráficos partilham a escala. */
+#app .det-linha .forte, #app .financeiro-linha .forte,
+#app .hist-linha .num > .forte { font: var(--ds-metas-font-body); }
+#app .det-cabeca, #app .registro-pe { font: var(--ds-metas-font-meta); color: var(--sub); }
+#app .hist-linha > .sub { font: var(--ds-metas-font-meta); color: var(--sub); }
+#app .graf-texto { font: var(--ds-metas-font-meta); fill: var(--sub); }
+#app .seg button:disabled { color: var(--ds-text-disabled, var(--fraco)); cursor: not-allowed; }
+#app .seg button:disabled:hover { color: var(--ds-text-disabled, var(--fraco)); }
+#app .btn:disabled:hover { background: var(--ds-background-disabled, var(--fundo-cinza)); color: var(--ds-text-disabled, var(--fraco)); filter: none; }
+#app :is(button, input, select, textarea, summary, a):focus-visible { outline: 2px solid var(--ds-border-focused, var(--azul)); outline-offset: 2px; }

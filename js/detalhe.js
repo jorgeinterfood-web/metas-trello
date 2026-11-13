@@ -61,9 +61,16 @@
     for (tv = yMin; tv <= yMax + passo / 2 && ticks.length < 8; tv += passo) ticks.push(Math.round(tv * 1e6) / 1e6);
 
     var H = 180, mt = 18, mb = 22, mr = 4;
-    var maior = 0;
-    ticks.forEach(function (v) { maior = Math.max(maior, M.rotuloEixo(meta, v).length); });
-    var ml = Math.max(30, Math.round(maior * 6.4 + 10));
+    var maior = 0, medidor = document.createElement('canvas').getContext('2d');
+    if (medidor) {
+      var fonte = getComputedStyle(document.body).fontFamily;
+      medidor.font = '400 12px ' + fonte;
+    }
+    ticks.forEach(function (v) {
+      var texto = M.rotuloEixo(meta, v);
+      maior = Math.max(maior, medidor ? medidor.measureText(texto).width : texto.length * 7);
+    });
+    var ml = Math.max(30, Math.ceil(maior + 12));
     var pw = Math.max(120, W - ml - mr), ph = H - mt - mb;
     var X = function (x) { return ml + x / dias * pw; };
     var Y = function (v) { return mt + (yMax - v) / (yMax - yMin) * ph; };
@@ -72,12 +79,12 @@
 
     var grade = ticks.map(function (v) {
       return '<line x1="' + ml + '" y1="' + Y(v).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(v).toFixed(1) + '" style="stroke:var(--borda)" stroke-width="1"/>' +
-        '<text x="' + (ml - 8) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" font-size="11" style="fill:var(--sub)">' + esc(M.rotuloEixo(meta, v)) + '</text>';
+        '<text x="' + (ml - 8) + '" y="' + (Y(v) + 4).toFixed(1) + '" text-anchor="end" class="graf-texto">' + esc(M.rotuloEixo(meta, v)) + '</text>';
     }).join('');
     var linhaAlvo = r.semRitmo ? '<line x1="' + ml + '" y1="' + Y(meta.alvo).toFixed(1) + '" x2="' + (ml + pw) + '" y2="' + Y(meta.alvo).toFixed(1) + '" style="stroke:var(--sub)" stroke-width="1.5" stroke-dasharray="4 4"/>' : '';
     var linhaHoje = xHoje === null ? '' :
       '<line x1="' + X(xHoje).toFixed(1) + '" y1="' + mt + '" x2="' + X(xHoje).toFixed(1) + '" y2="' + (mt + ph) + '" style="stroke:var(--fraco)" stroke-width="1" stroke-dasharray="2 3"/>' +
-      '<text x="' + X(xHoje).toFixed(1) + '" y="' + (mt - 6) + '" text-anchor="middle" font-size="11" style="fill:var(--sub)">Hoje</text>';
+      '<text x="' + X(xHoje).toFixed(1) + '" y="' + (mt - 6) + '" text-anchor="middle" class="graf-texto">Hoje</text>';
     var bolas = real.slice(meta.histCortado ? 0 : 1, ordem.length + (meta.histCortado ? 0 : 1)).map(function (p, k) {
       return '<circle cx="' + X(p[0]).toFixed(1) + '" cy="' + Y(p[1]).toFixed(1) + '" r="3.5" style="fill:' + cor + '"><title>' + M.dataBR(ordem[k]) + ': ' + esc(M.fmtValor(meta, p[1])) + '</title></circle>';
     }).join('');
@@ -88,8 +95,8 @@
       (esp.length ? '<polyline points="' + pts(esp) + '" fill="none" style="stroke:var(--sub)" stroke-width="1.5" stroke-dasharray="4 4" stroke-linejoin="round"/>' : '') +
       (proj ? '<polyline points="' + pts(proj) + '" fill="none" style="stroke:' + cor + '" stroke-width="2" stroke-dasharray="1 5" stroke-linecap="round"><title>' + esc('Projeção: ' + M.fmtValor(meta, r.projecao)) + '</title></polyline>' : '') +
       '<polyline points="' + pts(real) + '" fill="none" style="stroke:' + cor + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + bolas +
-      '<text x="' + ml + '" y="' + (H - 4) + '" text-anchor="start" font-size="11" style="fill:var(--sub)">' + M.dataBR(meta.ini) + '</text>' +
-      '<text x="' + (ml + pw) + '" y="' + (H - 4) + '" text-anchor="end" font-size="11" style="fill:var(--sub)">' + M.dataBR(meta.fim) + '</text></svg>';
+      '<text x="' + ml + '" y="' + (H - 4) + '" text-anchor="start" class="graf-texto">' + M.dataBR(meta.ini) + '</text>' +
+      '<text x="' + (ml + pw) + '" y="' + (H - 4) + '" text-anchor="end" class="graf-texto">' + M.dataBR(meta.fim) + '</text></svg>';
   }
 
   // O painel usa o mesmo gráfico para a evolução da equipe
@@ -115,7 +122,7 @@
 
     function cabecalho() {
       var m=meta;
-      var html='<p class="det-periodo"><span>Período:</span> <span class="forte num">' + esc(data(m.ini)+' a '+data(m.fim)) + '</span></p>';
+      var html='<p class="det-periodo"><span class="rotulo">Período:</span> <span class="forte num">' + esc(data(m.ini)+' a '+data(m.fim)) + '</span></p>';
       if (m.encerrada) html+='<span class="forte">Encerrada</span>';
       // Importância fica à direita, como tag alinhada à tag de situação
       if ((m.imp || 1)>1) html+='<span class="selo sit-neutral det-imp">'+M.iconeImp(m.imp)+esc(M.IMP[m.imp])+'</span>';
