@@ -50,7 +50,7 @@
 
       '<div class="grade">' +
       '<label class="campo">Responsável<select id="dono"></select>' + erroCampo('dono') + '</label>' +
-      (modo === 'criar' ? '<label class="campo">Título<input id="titulo" type="text" maxlength="120">' + erroCampo('titulo') + '</label>' :
+      (modo === 'criar' ? '<label class="campo">Título<input id="titulo" type="text" placeholder="Ex.: Faturamento do mês" maxlength="120">' + erroCampo('titulo') + '</label>' :
         '<div class="campo"><span class="rotulo">Cartão</span><span class="campo-texto">' + esc(o.nomeCartao || '') + '</span></div>') +
       '<label class="campo">Período<select id="periodo">' + ops.map(function (x) { return '<option value="' + x.valor + '">' + esc(x.rot) + '</option>'; }).join('') + '<option value="livre">Outras datas</option></select></label>' +
       '</div>' +
@@ -62,12 +62,12 @@
       '<div class="grade" id="blocoQ">' +
       '<label class="campo"><span id="rotVIni">Valor inicial</span><span class="campo-prefixo"><span class="pre"></span><input id="vIni" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('vIni') + '</label>' +
       '<label class="campo">Objetivo<span class="campo-prefixo"><span class="pre"></span><input id="alvo" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('alvo') + '</label>' +
-      '<label class="campo" id="campoUnidade">Unidade<input id="unit" type="text" maxlength="30">' + erroCampo('unit') + '</label></div>' +
+      '<label class="campo" id="campoUnidade">Unidade<input id="unit" type="text" placeholder="Ex.: clientes" maxlength="30">' + erroCampo('unit') + '</label></div>' +
 
       '<div class="coluna gap8 oculto" id="blocoE"><span class="rotulo">Etapas</span><div id="etapas" class="coluna gap8"></div>' + erroCampo('etapas') +
       '<div class="linha gap12"><button type="button" class="btn" id="maisEtapa">Adicionar etapa</button></div></div>' +
 
-      '<label class="campo oculto" id="blocoA">Como a meta será avaliada<textarea id="crit" maxlength="400"></textarea>' + erroCampo('crit') + '</label>' +
+      '<label class="campo oculto" id="blocoA">Como a meta será avaliada<textarea id="crit" maxlength="400" placeholder="Ex.: responder orçamentos em até 4 horas úteis na maior parte dos pedidos do mês"></textarea>' + erroCampo('crit') + '</label>' +
 
       '<div class="grade"><div class="campo"><span class="rotulo" id="impL">Importância</span><div class="seg" role="group" aria-labelledby="impL">' +
       [1, 2, 3].map(function (n) { return '<button type="button" data-imp="' + n + '" aria-pressed="false">' + M.iconeImp(n) + M.IMP[n] + '</button>'; }).join('') + '</div></div>' +

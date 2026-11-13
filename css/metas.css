@@ -453,3 +453,11 @@ details.mais summary:hover { text-decoration: underline; }
 .nota-erro { background: var(--late-fundo); color: var(--late-texto); }
 #app .nota .btn { height: 32px; flex: none; color: inherit; }
 #app .nota-fechar { font-size: 18px; }
+
+/* v28: Importância, campos e menus com a mesma altura, mesmo com o estilo do Trello por cima
+   (ele pode trocar o box-sizing e a altura mínima de select e input). */
+#app .campo select, #app .campo input, #app .campo-prefixo, #app .seg {
+  box-sizing: border-box; height: var(--ctrl); min-height: var(--ctrl); max-height: var(--ctrl);
+}
+#app .campo select, #app .campo > input { padding-top: 0; padding-bottom: 0; line-height: normal; }
+#app .campo .campo-prefixo input { min-height: 0; max-height: none; height: calc(var(--ctrl) - 2px); }
