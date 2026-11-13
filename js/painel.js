@@ -160,12 +160,49 @@
     var rr={temBarra:true,pct:alvo ? M.percentualExibido(soma/alvo*100,atingiu) : 0,fill:alvo ? Math.max(0,Math.min(100,soma/alvo*100)):0,info:M.SIT[sit],rotulo:M.SIT[sit].label};
     if(sit==='ok' && M.arred({fmt:'r'},soma-esperado)>0)rr.rotulo='Adiantado';
     var dinheiro={fmt:'r'};
+    // Evolução da equipe: uma meta somada, com o realizado de cada dia de todas as metas
+    var equipe = metaEquipe(reais, p, alvo), rg = null, grafico = '';
+    if (equipe.hist.length) {
+      rg = M.avaliar(equipe);
+      rg.info = rr.info; rg.sit = sit;
+      S.equipe = { meta: equipe, r: rg };
+      var proj = M.projecaoVisivel(equipe, rg) ? '<p class="det-frase">Projeção no ritmo atual: ' + esc(M.fmtValor(dinheiro, rg.projecao)) + ' (' + Math.max(0, Math.round(rg.projecao / (alvo || 1) * 100)) + '% do objetivo)</p>' : '';
+      grafico = proj + '<div id="grafEquipe" class="fin-graf"></div><div class="linha peq sub gap16">' +
+        '<span class="linha"><span aria-hidden="true" class="leg-linha" style="background:var(' + COR_SIT[rr.info.cls] + ')"></span>Realizado</span>' +
+        '<span class="linha"><span aria-hidden="true" class="leg-trac"></span>Ritmo esperado</span>' +
+        (M.projecaoVisivel(equipe, rg) ? '<span class="linha"><span aria-hidden="true" class="leg-proj" style="color:var(' + COR_SIT[rr.info.cls] + ')"></span>Projeção</span>' : '') + '</div>';
+    } else S.equipe = null;
     // Mesmo desenho dos outros blocos: título fora da caixa, conteúdo na caixa
     return '<section class="bloco"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
       '<div class="tab financeiro-caixa"><p class="financeiro-linha"><span class="forte num">' + esc(M.fmtValor(dinheiro,soma)) + '</span> <span class="sub">de ' + esc(M.fmtValor(dinheiro,alvo)) + '</span></p>' +
-      '<div class="det-barra">' + M.barra(rr,{label:'Progresso financeiro da equipe'}) + '<span class="det-status selo sit-' + rr.info.cls + '">' + esc(M.textoBadge({tipo:'q',fmt:'r'},rr)) + '</span></div></div>' +
+      '<div class="det-barra">' + M.barra(rr,{label:'Progresso financeiro da equipe'}) + '<span class="det-status selo sit-' + rr.info.cls + '">' + esc(M.textoBadge({tipo:'q',fmt:'r'},rr)) + '</span></div>' + grafico + '</div>' +
       (reais.some(function(it){return it.meta.vIni!==0;}) ? '<p class="ajuda">Os valores mostram o avanço a partir dos valores iniciais.</p>':'') + '</section>';
   }
+
+  var COR_SIT = { ok: '--ok', risk: '--risk', late: '--late', hit: '--hit', neutral: '--sub' };
+  // Soma, dia a dia, quanto cada meta avançou desde o valor inicial
+  function metaEquipe(reais, p, alvo) {
+    var datas = [];
+    reais.forEach(function (it) { (it.meta.hist || []).forEach(function (e) { if (datas.indexOf(e[0]) < 0) datas.push(e[0]); }); });
+    datas.sort();
+    var hist = datas.map(function (d) {
+      var soma = 0;
+      reais.forEach(function (it) {
+        var v = it.meta.vIni;
+        (it.meta.hist || []).forEach(function (e) { if (e[0] <= d) v = e[1]; });
+        soma += v - it.meta.vIni;
+      });
+      return [d, Math.round(soma * 100) / 100, '', '', ''];
+    });
+    var corridos = reais.every(function (it) { return it.meta.ritmo === 'corridos'; });
+    return { tipo: 'q', fmt: 'r', casas: 2, vIni: 0, alvo: alvo, dir: 'up', ini: p.a, fim: p.b, ritmo: corridos ? 'corridos' : 'uteis', hist: hist };
+  }
+  function desenharEquipe() {
+    var g = document.getElementById('grafEquipe');
+    if (!g || !S.equipe) return;
+    g.innerHTML = M.grafico(S.equipe.meta, S.equipe.r, Math.max(280, Math.floor(g.clientWidth || 600)));
+  }
+  window.addEventListener('resize', function () { clearTimeout(desenharEquipe.t); desenharEquipe.t = setTimeout(desenharEquipe, 120); });
 
   function blocoAtencao(itens) {
     var lista = itens.map(atencao).filter(Boolean).sort(function (a, b) {
@@ -354,6 +391,7 @@
       });
     }
     ligar();
+    desenharEquipe();
     M.dimensionarTags(app);
   }
 

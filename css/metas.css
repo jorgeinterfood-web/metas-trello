@@ -480,3 +480,6 @@ details.mais summary:hover { text-decoration: underline; }
 @media (max-width: 480px) {
   #app .registro-linha.com-data { grid-template-columns: minmax(0, 1fr) 140px; }
 }
+
+/* v32: evolução da equipe dentro do bloco de progresso financeiro. */
+#app .fin-graf { margin-top: 8px; min-width: 0; }

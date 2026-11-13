@@ -92,6 +92,10 @@
       '<text x="' + (ml + pw) + '" y="' + (H - 4) + '" text-anchor="end" font-size="11" style="fill:var(--sub)">' + M.dataBR(meta.fim) + '</text></svg>';
   }
 
+  // O painel usa o mesmo gráfico para a evolução da equipe
+  M.grafico = grafico;
+  M.projecaoVisivel = projecaoVisivel;
+
   // o: { t, escopo, meta, card, ctx, aoSalvar, ajustar, abrirCartao }
   M.detalhe = function (el, o) {
     var st = { msg: o.msg ? deMsgInicial(o.msg) : null, ocupado: false, rascunho: '', data: '', todos: false, confirmar: false, alterarAval: false };

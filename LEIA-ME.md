@@ -1,21 +1,25 @@
-# Power-Up Metas, versão 31
+# Power-Up Metas, versão 32
 
-## Atualizar a versão 30
+## Atualizar a versão 31
 
-Substitua no GitHub os arquivos deste pacote: metas.css, index.html, meta.html
-e painel.html. Os demais ficam como na versão 30. As referências passaram a
-?v=31.
+Substitua no GitHub os arquivos deste pacote: metas.css, detalhe.js, painel.js,
+index.html, meta.html e painel.html. Os demais ficam como na versão 31. As
+referências passaram a ?v=32.
 
-## Ajuste
+## Evolução da equipe
 
-- O registro de valores ocupa toda a largura do bloco em todos os tipos de
-  meta, no verso do cartão e no painel. O campo de valor fica com o espaço que
-  sobra; a data mantém 160 px e os botões, a largura do texto. Antes, a meta de
-  percentual, que tem um botão só, terminava antes das linhas divisórias.
+- O bloco Progresso financeiro da equipe ganhou o mesmo gráfico do detalhe da
+  meta, com a soma de todas as metas financeiras do período: realizado dia a
+  dia, ritmo esperado e projeção até o fim do período, com a legenda embaixo.
+- Acima do gráfico, a linha "Projeção no ritmo atual", no mesmo formato do
+  detalhe da meta.
+- O realizado de cada dia é a soma do quanto cada meta avançou desde o seu
+  valor inicial. O gráfico aparece a partir do primeiro registro e respeita os
+  registros lançados com data anterior.
 
 ## Validação
 
-Medição em navegador nas larguras do verso do cartão e do painel, com meta
-financeira (Somar e Subtrair) e de percentual (Registrar): o último botão
-termina exatamente na borda do bloco nos quatro casos. A conferência visual no
-Trello continua pendente. Nenhuma alteração remota foi realizada.
+Sintaxe dos JavaScripts, testes com Trello simulado e capturas no tema claro e
+escuro com duas metas financeiras e registros em dias diferentes. A
+conferência visual no Trello continua pendente. Nenhuma alteração remota foi
+realizada.
