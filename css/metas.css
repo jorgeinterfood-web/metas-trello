@@ -435,3 +435,9 @@ details.mais summary:hover { text-decoration: underline; }
 /* v22: rótulo e valor na mesma linha nos blocos de resumo; o complemento (de R$ …) fica sem negrito. */
 #app .det-linha { margin: 0; }
 #app .det-linha .sub { font-weight: 400; }
+
+/* v26: progresso financeiro no desenho dos outros blocos; alterações da meta. */
+#app .financeiro-caixa { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; }
+#app .financeiro-linha { margin: 0; font-size: 14px; line-height: 20px; }
+#app .financeiro-linha .forte { font-weight: 600; }
+.det-alteracoes { padding-top: 20px; border-top: 1px solid var(--borda); }

@@ -260,6 +260,16 @@
         '<section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Histórico</h3>'  + hist + '</section></div>';
     }
 
+    // Mudanças na configuração da meta, da mais recente para a mais antiga
+    function alteracoes() {
+      var a = meta.alt || [];
+      if (!a.length) return '';
+      var linhas = a.slice().reverse().map(function (e) {
+        return '<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span><span>' + esc(M.textoAlteracao(e)) + '</span><span class="sub hist-quem">' + esc(e[1] || '') + '</span></div>';
+      }).join('');
+      return '<section class="det-alteracoes coluna gap8"><h3 class="det-titulo">Alterações</h3><div class="hist">' + linhas + '</div></section>';
+    }
+
     function rodape() {
       if (!o.ctx.admin) return '';
       if (meta.encerrada) return '<div class="det-rodape"><button type="button" class="btn-link" id="reabrir">Reabrir meta</button></div>';
@@ -274,7 +284,7 @@
       var membros = (o.card.members || []).map(function (x) { return x.id; });
       var avisoDono = meta.dono && membros.indexOf(meta.dono.id) < 0 ? '<p class="aviso">' + esc(meta.dono.fullName) + ' é o responsável por esta meta, mas não está como membro do cartão.</p>' : '';
       var msg = st.msg ? '<p class="' + (st.msg.erro ? 'erro' : 'sucesso') + '" role="status">' + esc(st.msg.texto) + '</p>' + (st.msg.erro ? '<button type="button" class="btn" id="atualizarDados">Atualizar dados</button>' : '') : '';
-      el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + rodape() + '</div>';
+      el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + alteracoes() + rodape() + '</div>';
       ligar();
       M.dimensionarTags(el);
       if(st.msg && !st.msg.erro){var foco=el.querySelector('#valor');if(foco)foco.focus();}
@@ -358,11 +368,13 @@
       if ($('reabrir')) $('reabrir').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
         novoMeta.encerrada = false; delete novoMeta.encerradaEm;
+        M.registrarEncerramento(novoMeta, o.ctx.eu, false);
         salvar(novoMeta, 'Meta reaberta. Mova o cartão para ' + M.CFG.listaMetas + '.');
       };
       if ($('encerrarSim')) $('encerrarSim').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
         novoMeta.encerrada = true; novoMeta.encerradaEm = M.hoje();
+        M.registrarEncerramento(novoMeta, o.ctx.eu, true);
         st.ocupado = true; render();
         M.salvarMeta(o.t, o.escopo, novoMeta).then(function () {
           meta = novoMeta;

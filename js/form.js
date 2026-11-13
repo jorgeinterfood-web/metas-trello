@@ -2,14 +2,7 @@
 (function () {
   var M = window.Metas, esc = M.esc;
 
-  var TIPOS = [['r', 'Dinheiro'], ['n', 'Quantidade'], ['p', 'Percentual'], ['e', 'Etapas']];
-  var AJUDA = {
-    r: 'Valor em reais que acumula no período, como faturamento.',
-    n: 'Contagem que acumula no período, como clientes novos ou pedidos.',
-    p: 'Taxa que precisa chegar a um nível, como entrega no prazo.',
-    e: 'Entregas marcadas numa checklist no cartão.',
-    a: 'Sem número. Um administrador avalia o resultado no fim do período.'
-  };
+  var TIPOS = [['r', 'Financeiro'], ['n', 'Quantidade'], ['p', 'Percentual'], ['e', 'Etapas']];
 
   function nomeMes(y, m) { return M.MESES[m].charAt(0).toUpperCase() + M.MESES[m].slice(1) + ' de ' + y; }
   function limites(tipo, ref) {
@@ -53,12 +46,11 @@
       '<div id="blocoSemChave" class="aviso oculto">Criação indisponível. Crie um cartão em Metas e use Transformar em meta.</div>' +
 
       '<div class="coluna gap8"><span class="rotulo" id="tipoL">Tipo de meta</span>' +
-      '<div class="seg seg-largo" role="group" aria-labelledby="tipoL">' + TIPOS.concat(original && original.tipo === 'a' ? [['a', 'Avaliação']] : []).map(function (k) { return '<button type="button" data-kind="' + k[0] + '" aria-pressed="false">' + k[1] + '</button>'; }).join('') + '</div>' +
-      '<span class="ajuda" id="tipoAjuda"></span></div>' +
+      '<div class="seg seg-largo" role="group" aria-labelledby="tipoL">' + TIPOS.concat(original && original.tipo === 'a' ? [['a', 'Avaliação']] : []).map(function (k) { return '<button type="button" data-kind="' + k[0] + '" aria-pressed="false">' + k[1] + '</button>'; }).join('') + '</div></div>' +
 
       '<div class="grade">' +
       '<label class="campo">Responsável<select id="dono"></select>' + erroCampo('dono') + '</label>' +
-      (modo === 'criar' ? '<label class="campo">Título<input id="titulo" type="text" placeholder="Ex.: Faturamento do mês" maxlength="120">' + erroCampo('titulo') + '</label>' :
+      (modo === 'criar' ? '<label class="campo">Título<input id="titulo" type="text" maxlength="120">' + erroCampo('titulo') + '</label>' :
         '<div class="campo"><span class="rotulo">Cartão</span><span class="campo-texto">' + esc(o.nomeCartao || '') + '</span></div>') +
       '<label class="campo">Período<select id="periodo">' + ops.map(function (x) { return '<option value="' + x.valor + '">' + esc(x.rot) + '</option>'; }).join('') + '<option value="livre">Outras datas</option></select></label>' +
       '</div>' +
@@ -70,21 +62,18 @@
       '<div class="grade" id="blocoQ">' +
       '<label class="campo"><span id="rotVIni">Valor inicial</span><span class="campo-prefixo"><span class="pre"></span><input id="vIni" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('vIni') + '</label>' +
       '<label class="campo">Objetivo<span class="campo-prefixo"><span class="pre"></span><input id="alvo" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('alvo') + '</label>' +
-      '<label class="campo" id="campoUnidade">Unidade no plural<input id="unit" type="text" placeholder="Ex.: clientes" maxlength="30">' + erroCampo('unit') + '</label></div>' +
-      '<label class="campo oculto" id="campoSingular">Unidade no singular<input id="unitSingular" maxlength="30" placeholder="Ex.: cliente"><span class="ajuda">Confira o singular, especialmente em unidades personalizadas.</span></label>' +
+      '<label class="campo" id="campoUnidade">Unidade no plural<input id="unit" type="text" maxlength="30">' + erroCampo('unit') + '</label></div>' +
+      '<label class="campo oculto" id="campoSingular">Unidade no singular<input id="unitSingular" maxlength="30"></label>' +
 
       '<div class="coluna gap8 oculto" id="blocoE"><span class="rotulo">Etapas</span><div id="etapas" class="coluna gap8"></div>' + erroCampo('etapas') +
-      '<div class="linha gap12"><button type="button" class="btn" id="maisEtapa">Adicionar etapa</button><span class="ajuda" id="etapasAjuda">As etapas viram a checklist do cartão.</span></div></div>' +
+      '<div class="linha gap12"><button type="button" class="btn" id="maisEtapa">Adicionar etapa</button></div></div>' +
 
-      '<label class="campo oculto" id="blocoA">Como a meta será avaliada<textarea id="crit" maxlength="400" placeholder="Ex.: responder orçamentos em até 4 horas úteis na maior parte dos pedidos do mês"></textarea>' + erroCampo('crit') + '</label>' +
+      '<label class="campo oculto" id="blocoA">Como a meta será avaliada<textarea id="crit" maxlength="400"></textarea>' + erroCampo('crit') + '</label>' +
 
       '<div class="grade"><div class="campo"><span class="rotulo" id="impL">Importância</span><div class="seg" role="group" aria-labelledby="impL">' +
-      [1, 2, 3].map(function (n) { return '<button type="button" data-imp="' + n + '" aria-pressed="false">' + M.iconeImp(n) + M.IMP[n] + '</button>'; }).join('') + '</div></div></div>' +
-
-      '<details class="mais"><summary>Mais opções</summary><div class="coluna gap16 mais-corpo">' +
-      '<div class="grade">' +
-      '<label class="campo" id="campoQuem">Quem atualiza<select id="quem"><option value="resp">Responsável e administradores</option><option value="admin">Só administradores</option></select></label>' +
-      '<label class="campo" id="campoRitmo">Contagem de dias<select id="ritmo"><option value="uteis">Dias úteis</option><option value="corridos">Dias corridos</option></select></label></div></div></details>' +
+      [1, 2, 3].map(function (n) { return '<button type="button" data-imp="' + n + '" aria-pressed="false">' + M.iconeImp(n) + M.IMP[n] + '</button>'; }).join('') + '</div></div>' +
+      '<label class="campo" id="campoQuem">Permissão para editar<select id="quem"><option value="resp">Responsável e administradores</option><option value="admin">Só administradores</option></select></label>' +
+      '<label class="campo" id="campoRitmo">Contagem de dias<select id="ritmo"><option value="uteis">Úteis</option><option value="corridos">Corridos</option></select></label></div>' +
 
       '<div class="form-rodape"><span class="peq" id="rodapeInfo" role="status"></span>' +
       '<div class="linha gap8" style="flex:none"><button type="button" class="btn btn-texto" id="cancelar">Cancelar</button><button type="submit" class="btn btn-primario" id="salvar">' + rotuloBotao + '</button></div></div>' +
@@ -134,15 +123,14 @@
     function aplicarImp() { el.querySelectorAll('[data-imp]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.getAttribute('data-imp') === S.imp)); }); }
     function aplicarKind() {
       el.querySelectorAll('[data-kind]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-kind') === S.kind)); });
-      if ($('ajudaDinheiro')) $('ajudaDinheiro').classList.toggle('oculto',S.kind!=='r');
-      $('tipoAjuda').textContent = AJUDA[S.kind];
       $('blocoQ').classList.toggle('oculto', !ehValor());
-      $('blocoE').classList.toggle('oculto', S.kind !== 'e');
+      $('blocoE').classList.toggle('oculto', S.kind !== 'e' || $('blocoE').hasAttribute('data-sem-edicao'));
       $('blocoA').classList.toggle('oculto', S.kind !== 'a');
       $('campoSingular').classList.toggle('oculto', S.kind !== 'n');
       $('campoUnidade').classList.toggle('invisivel', S.kind !== 'n');
-      $('campoQuem').classList.toggle('oculto', !ehValor());
-      $('campoRitmo').classList.toggle('oculto', S.kind === 'a' || S.kind === 'p');
+      // Escondidos sem sair do lugar, para a linha de Importância manter o alinhamento
+      $('campoQuem').classList.toggle('invisivel', !ehValor());
+      $('campoRitmo').classList.toggle('invisivel', S.kind === 'a' || S.kind === 'p');
       el.querySelectorAll('.pre').forEach(function (s) { s.textContent = S.kind === 'r' ? 'R$' : ''; });
       el.querySelectorAll('.suf').forEach(function (s) { s.textContent = S.kind === 'p' ? '%' : ''; });
       $('rotVIni').textContent = S.kind === 'p' ? 'Percentual inicial' : 'Valor inicial';
@@ -167,6 +155,10 @@
     }
     function montarMembros(membros, selecionado) {
       var sel = $('dono');
+      // Sem responsável escolhido por padrão
+      var vazio = document.createElement('option');
+      vazio.value = ''; vazio.textContent = 'Selecione'; vazio.disabled = true; vazio.selected = !selecionado;
+      sel.appendChild(vazio);
       membros.slice().sort(function (a, b) { return a.fullName.localeCompare(b.fullName, 'pt-BR'); }).forEach(function (m) {
         var op = document.createElement('option');
         op.value = m.id; op.textContent = m.fullName;
@@ -188,7 +180,6 @@
       }
       if (meta.tipo === 'e') $('ritmo').value = meta.ritmo || 'uteis';
       $('crit').value = meta.crit || ''; $('quem').value = meta.quem || 'resp';
-      if (meta.quem === 'admin' || meta.ritmo === 'corridos') el.querySelector('details.mais').open = true;
     }
 
     // ---------- leitura e validação ----------
@@ -231,6 +222,7 @@
         if (!meta.crit) throw new Falha('crit', 'Explique como a meta será avaliada, para a pessoa saber o que se espera.');
       }
       if (original && (original.hist || []).length && (original.tipo !== meta.tipo || original.fmt !== meta.fmt || M.pluralUnidade(original.unit) !== M.pluralUnidade(meta.unit) || original.vIni !== meta.vIni || M.casasDe(original) !== meta.casas)) throw new Falha('alvo', 'Esta meta já tem registros. Crie outra para mudar o tipo, a unidade ou o valor inicial.');
+      if (original) M.registrarAlteracoes(original, meta, o.ctx.eu);
       if (original && (original.ini !== meta.ini || original.fim !== meta.fim || original.alvo !== meta.alvo || original.vIni !== meta.vIni || original.tipo !== meta.tipo || original.fmt !== meta.fmt || original.ritmo !== meta.ritmo)) delete meta.diaria;
       return meta;
     }
@@ -329,7 +321,7 @@
     // ---------- início ----------
     if (original) preencher(original);
     if (modo === 'criar') { addEtapa(''); addEtapa(''); }
-    else { $('maisEtapa').classList.add('oculto'); $('etapasAjuda').textContent = 'As etapas desta meta ficam na checklist do cartão. Edite direto nela.'; }
+    else $('blocoE').setAttribute('data-sem-edicao', '');
     if (!original) { $('vIni').value = '0,00'; }
     montarMembros(o.ctx.membros, original && original.dono ? original.dono.id : null);
     mascara($('vIni')); mascara($('alvo'));
@@ -350,9 +342,6 @@
         if (s) { s.classList.add('oculto'); s.textContent = ''; }
       });
     });
-    el.querySelectorAll('#blocoQ .ajuda').forEach(function () {});
-    var ajudaDinheiro = document.createElement('p'); ajudaDinheiro.id='ajudaDinheiro'; ajudaDinheiro.className = 'ajuda'; ajudaDinheiro.textContent = 'Em dinheiro, os dígitos entram pelos centavos: 500 resulta em R$ 5,00'; $('blocoQ').appendChild(ajudaDinheiro);
-    ajudaDinheiro.classList.toggle('oculto',S.kind!=='r');
     $('f').onsubmit = salvar;
     var primeiro = $('titulo') || $('dono');
     if (primeiro) primeiro.focus();

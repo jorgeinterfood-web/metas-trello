@@ -223,7 +223,7 @@
   };
   var IMP = { 1: 'Normal', 2: 'Alta', 3: 'Muito alta' };
   var TIPO = { q: 'Valor', e: 'Etapas', a: 'Avaliação' };
-  var FORMATO = { r: 'Dinheiro', n: 'Quantidade', p: 'Percentual', e: 'Etapas', a: 'Avaliação' };
+  var FORMATO = { r: 'Financeiro', n: 'Quantidade', p: 'Percentual', e: 'Etapas', a: 'Avaliação' };
 
   function valorAtual(meta) {
     var h = meta.hist || [];
@@ -513,6 +513,45 @@
     }
     throw falha('Esta meta atingiu o limite de armazenamento. Crie outra meta para continuar sem apagar os registros existentes.', 'HISTORY');
   }
+  // ---------- Alterações ----------
+  // Mudanças de configuração da meta: [data, quem (primeiro nome), campo, antes, depois].
+  // Ficam só as 10 mais recentes, para não disputar espaço com o histórico de valores.
+  var ALT_MAX = 10;
+  var CAMPO_ALT = { tipo: 'Tipo', alvo: 'Objetivo', vIni: 'Valor inicial', unit: 'Unidade', periodo: 'Período', dono: 'Responsável', imp: 'Importância', quem: 'Permissão para editar', ritmo: 'Contagem de dias' };
+  function textoAlt(campo, m) {
+    if (!m) return '';
+    switch (campo) {
+      case 'tipo': return m.tipo === 'q' ? FORMATO[m.fmt || 'r'] : (FORMATO[m.tipo] || '');
+      case 'alvo': return m.tipo === 'q' && Number.isFinite(m.alvo) ? fmtValor(m, m.alvo) : '';
+      case 'vIni': return m.tipo === 'q' && Number.isFinite(m.vIni) ? fmtValor(m, m.vIni) : '';
+      case 'unit': return m.tipo === 'q' && m.fmt === 'n' ? pluralUnidade(m.unit) : '';
+      case 'periodo': return m.ini && m.fim ? dataBR(m.ini) + ' a ' + dataBR(m.fim) : '';
+      case 'dono': return m.dono ? m.dono.fullName : '';
+      case 'imp': return IMP[m.imp || 1];
+      case 'quem': return m.quem === 'admin' ? 'Só administradores' : 'Responsável e administradores';
+      case 'ritmo': return m.ritmo === 'corridos' ? 'Corridos' : 'Úteis';
+    }
+    return '';
+  }
+  function primeiroNome(eu) { return String(eu && eu.fullName || '').split(' ')[0]; }
+  function addAlt(meta, novas) { if (novas.length) meta.alt = (meta.alt || []).concat(novas).slice(-ALT_MAX); }
+  // Compara a configuração antes e depois de uma edição e registra o que mudou
+  function registrarAlteracoes(antes, depois, eu) {
+    var novas = [];
+    Object.keys(CAMPO_ALT).forEach(function (c) {
+      var a = textoAlt(c, antes), b = textoAlt(c, depois);
+      // Campo que deixa de existir com a troca de tipo: a linha do tipo já conta a mudança
+      if (a && b && a !== b) novas.push([hoje(), primeiroNome(eu), c, a, b]);
+    });
+    addAlt(depois, novas);
+    return novas.length;
+  }
+  function registrarEncerramento(meta, eu, encerrada) { addAlt(meta, [[hoje(), primeiroNome(eu), 'enc', '', encerrada ? 'encerrada' : 'reaberta']]); }
+  function textoAlteracao(e) {
+    if (e[2] === 'enc') return 'Meta ' + e[4];
+    return (CAMPO_ALT[e[2]] || e[2]) + ' de ' + e[3] + ' para ' + e[4];
+  }
+
   // Lê a meta de um cartão já no formato completo
   function ler(t, escopo) { return t.get(escopo, 'shared', CHAVE).then(decodificar); }
 
@@ -667,7 +706,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    prepararCard: prepararCard, ler: ler, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, ler: ler, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

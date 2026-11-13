@@ -1,27 +1,47 @@
-# Power-Up Metas, restauração da versão 22
+# Power-Up Metas, versão 26
 
-Este pacote volta o Power-Up para a versão 22, antes dos clientes (versões 24
-e 25). Traz todos os arquivos da aplicação, menos o config.js, que continua o
-mesmo.
+## Atualizar a restauração da versão 22
 
-## Como publicar
+Substitua no GitHub os arquivos deste pacote: metas.css, core.js, detalhe.js,
+form.js, painel.js, index.html, meta.html e painel.html. O config.js, o
+connector.js, o meta.js e os ícones ficam como estão. As referências passaram
+a ?v=26.
 
-1. Substitua no GitHub todos os arquivos deste pacote, de uma vez.
-2. Mantenha o js/config.js.
-3. Pode apagar o js/tempo.js, se ainda estiver no repositório.
-4. Peça para quem estiver com o Trello aberto recarregar a página.
+## Alterações da meta
 
-As referências usam ?v=22-restauracao-2, diferente de todas as versões
-anteriores, para o navegador não reaproveitar arquivos guardados da 24 ou da 25.
+- O verso do cartão e o detalhe no painel ganharam a seção Alterações, abaixo
+  do histórico. Ela registra quem mudou o quê e quando: tipo, objetivo, valor
+  inicial, unidade, período, responsável, importância, permissão para editar,
+  contagem de dias, encerramento e reabertura. Exemplo:
+  13/11  Objetivo de R$ 300.000,00 para R$ 350.000,00  Jorge
+- Ficam as 10 alterações mais recentes. Metas repetidas para o período seguinte
+  começam sem alterações.
 
-## Se a versão 24 ou 25 chegou a ser usada
+## Janela de metas
 
-- Registros feitos com cliente continuam gravados. A versão 22 mostra um número
-  depois do nome de quem registrou no histórico e preserva o cliente ao gravar.
-- Metas criadas com o tipo Clientes passam a aparecer como metas de quantidade
-  comuns, com registro manual, e deixam de ser contadas sozinhas.
+- O tipo Dinheiro passou a se chamar Financeiro.
+- Responsável começa vazio em metas novas.
+- Mais opções deixou de existir. Permissão para editar (antes Quem atualiza) e
+  Contagem de dias ficam na mesma linha da Importância. As opções de contagem são
+  Úteis e Corridos. Nos tipos em que um dos dois não se aplica, o espaço fica
+  reservado para a linha não mudar de alinhamento.
+- Saíram todos os textos explicativos e os exemplos dentro dos campos. Ao editar
+  uma meta de Etapas, o bloco de etapas não aparece (elas são editadas na
+  checklist do cartão).
+
+## Painel
+
+- Progresso financeiro da equipe segue o desenho dos outros blocos: título fora
+  da caixa e a mesma tipografia, com "R$ 85.560,00 de R$ 300.000,00" acima da
+  barra.
+- Sem botão Atualizar. O painel continua se atualizando sozinho a cada
+  30 segundos e quando o quadro muda.
 
 ## Validação
 
-O código é idêntico, arquivo por arquivo, ao da versão 22. Só mudaram as
-referências de cache das três páginas e este arquivo.
+Sintaxe dos JavaScripts e testes com Trello simulado: formulário sem textos
+explicativos, responsável vazio com erro ao salvar sem escolher, alinhamento da
+linha de Importância por tipo, registro das alterações ao editar, encerrar e
+reabrir, exibição no detalhe, painel sem Atualizar e bloco financeiro;
+testes anteriores de compactação, migração, Etapas e projeção. A conferência
+visual no Trello continua pendente. Nenhuma alteração remota foi realizada.

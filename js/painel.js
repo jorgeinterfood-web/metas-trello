@@ -132,7 +132,7 @@
         (ehAtual() ? '' : '<button class="btn" id="agoraBtn">Hoje</button>') +
         '<div class="seg seg-peq" role="group" aria-label="Ver por">' +
         '<button type="button" data-escala="mes" aria-pressed="' + (S.escala === 'mes') + '">Mês</button><button type="button" data-escala="tri" aria-pressed="' + (S.escala === 'tri') + '">Trimestre</button></div></div>' +
-        '<button class="btn" id="atualizar">Atualizar</button>' + (CTX.admin ? '<button class="btn btn-primario linha gap4" id="nova">' + ICO.mais + 'Nova meta</button>' : '') + '</div></div>';
+        (CTX.admin ? '<button class="btn btn-primario linha gap4" id="nova">' + ICO.mais + 'Nova meta</button>' : '') + '</div></div>';
     }
     var titulo, direita = '';
     if (S.view === 'detalhe') {
@@ -157,9 +157,10 @@
     var rr={temBarra:true,pct:alvo ? M.percentualExibido(soma/alvo*100,atingiu) : 0,fill:alvo ? Math.max(0,Math.min(100,soma/alvo*100)):0,info:M.SIT[sit],rotulo:M.SIT[sit].label};
     if(sit==='ok' && M.arred({fmt:'r'},soma-esperado)>0)rr.rotulo='Adiantado';
     var dinheiro={fmt:'r'};
-    return '<section class="bloco resumo-financeiro tab"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
-      '<div class="financeiro-valores"><p>Realizado: <span class="forte num">' + esc(M.fmtValor(dinheiro,soma)) + '</span></p><p>Objetivo: <span class="forte num">' + esc(M.fmtValor(dinheiro,alvo)) + '</span></p></div>' +
-      '<div class="det-barra">' + M.barra(rr,{grossa:true,label:'Progresso financeiro da equipe'}) + '<span class="det-status selo sit-' + rr.info.cls + '">' + esc(M.textoBadge({tipo:'q',fmt:'r'},rr)) + '</span></div>' +
+    // Mesmo desenho dos outros blocos: título fora da caixa, conteúdo na caixa
+    return '<section class="bloco"><h3 class="subtitulo">Progresso financeiro da equipe</h3>' +
+      '<div class="tab financeiro-caixa"><p class="financeiro-linha"><span class="forte num">' + esc(M.fmtValor(dinheiro,soma)) + '</span> <span class="sub">de ' + esc(M.fmtValor(dinheiro,alvo)) + '</span></p>' +
+      '<div class="det-barra">' + M.barra(rr,{label:'Progresso financeiro da equipe'}) + '<span class="det-status selo sit-' + rr.info.cls + '">' + esc(M.textoBadge({tipo:'q',fmt:'r'},rr)) + '</span></div></div>' +
       (reais.some(function(it){return it.meta.vIni!==0;}) ? '<p class="ajuda">Os valores mostram o avanço a partir dos valores iniciais.</p>':'') + '</section>';
   }
 
@@ -262,7 +263,7 @@
           var jaFeita = ITENS.some(function (x) { return x.meta.origem === it.card.id && x.meta.ini === p.a && x.meta.fim === p.b; });
           if (jaFeita) { S.repetir.feitas++; render(); return null; }
           nova.ini = p.a; nova.fim = p.b; nova.hist = []; delete nova.diaria; nova.aval = null; nova.encerrada = false; delete nova.encerradaEm; nova.criadaEm = M.hoje();
-          delete nova.rev; delete nova.checklistId; delete nova.histBase; delete nova.histCortado;
+          delete nova.rev; delete nova.alt; delete nova.checklistId; delete nova.histBase; delete nova.histCortado;
           nova.origem = it.card.id;
           if (v.tipo === 'q' && v.fmt === 'p') nova.vIni = M.valorAtual(v); // taxa começa de onde parou
           var marcador='metas-repetir:'+it.card.id+':'+p.a+':'+p.b;
@@ -346,7 +347,6 @@
   function ligar() {
     var $ = function (id) { return document.getElementById(id); };
     var manter = function (fn) { return function () { var y = window.pageYOffset; fn.apply(this, arguments); render(); window.scrollTo(0, y); }; };
-    if ($('atualizar')) $('atualizar').onclick = function(){atualizar(true);};
     if ($('ant')) $('ant').onclick = function () { andar(-1); S.repetir = null; render(); };
     if ($('prox')) $('prox').onclick = function () { andar(1); S.repetir = null; render(); };
     if ($('agoraBtn')) $('agoraBtn').onclick = function () { S.y = agora.getFullYear(); S.m = agora.getMonth(); S.repetir = null; render(); };
