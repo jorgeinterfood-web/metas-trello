@@ -5,13 +5,16 @@
   var app = document.getElementById('app');
   var agora = M.parse(M.hoje());
   var S = { view: 'home', cardId: null, form: null, origem: null, escala: 'mes', y: agora.getFullYear(), m: agora.getMonth(), pessoa: '', sit: '', scroll: 0, auth: false, repetir: null };
-  var CTX = null, ITENS = [], atualizando = false, aviso = '';
-  function atualizar(manual) {
+  // nota: aviso do painel inteiro (falha ao atualizar). msgDetalhe: aviso entregue à tela da meta.
+  var CTX = null, ITENS = [], atualizando = false, nota = null, msgDetalhe = null;
+  function atualizar() {
     if (atualizando || S.view === 'form') return Promise.resolve();
     var campo = document.getElementById('valor');
-    if ((campo && campo.value) || document.getElementById('obs') || document.getElementById('avObs')) { if (manual) { aviso = 'Conclua ou limpe o registro antes de atualizar.';var a=document.getElementById('avisoPainel');if(a)a.textContent=aviso; } return Promise.resolve(); }
+    if ((campo && campo.value) || document.getElementById('obs') || document.getElementById('avObs')) return Promise.resolve();
     atualizando = true;
-    return Promise.all([M.contexto(t),M.carregarMetas(t)]).then(function(r){CTX=r[0];ITENS=r[1].map(recalcular);aviso='';render();}).catch(function(e){aviso=M.erroUsuario(e);var a=document.getElementById('avisoPainel');if(a)a.textContent=aviso;}).then(function(){atualizando=false;});
+    return Promise.all([M.contexto(t),M.carregarMetas(t)]).then(function(r){CTX=r[0];ITENS=r[1].map(recalcular);nota=null;render();})
+      .catch(function(e){nota={tipo:'erro',texto:'Não foi possível atualizar as metas. '+M.erroUsuario(e)};render();})
+      .then(function(){atualizando=false;});
   }
 
   function icone(tracos) { return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + tracos + '</svg>'; }
@@ -34,7 +37,7 @@
       M.autorizado(t).then(function (ok) { S.auth = ok; if (ok && CTX.admin) limparMarcadoresAntigos(); });
       return abrirPorArgumento();
     }).then(render).catch(function (e) {
-      app.innerHTML = '<div class="painel-corpo"><p class="erro">Não foi possível carregar as metas. ' + esc(M.erroUsuario(e)) + '</p><div><button class="btn" id="tentar">Tentar de novo</button></div></div>';
+      app.innerHTML = '<div class="painel-corpo estreito">' + M.nota('erro', 'Não foi possível carregar as metas. ' + M.erroUsuario(e), { id: 'tentar', rotulo: 'Tentar de novo' }) + '</div>';
       document.getElementById('tentar').onclick = function () { carregar(); };
     });
   }
@@ -234,13 +237,13 @@
         '<div class="linha gap8" style="justify-content:center"><button class="btn btn-primario" id="repetirSim">Criar ' + rep.length + (rep.length === 1 ? ' meta' : ' metas') + '</button><button class="btn btn-texto" id="repetirNao">Cancelar</button></div>';
     } else if (rep.length) html += '<div class="linha gap8" style="justify-content:center"><button class="btn btn-primario" id="repetir">Repetir metas de ' + esc(nomeAnt) + '</button>' + '<span class="sub">ou crie pelo botão Nova meta.</span></div>';
     else html += '<p>' + (CTX.admin ? 'Crie a primeira pelo botão Nova meta.' : 'Quando um admin criar uma meta, ela aparece aqui.') + '</p>';
-    if (S.repetir && S.repetir.erro) html += '<p class="erro">' + esc(S.repetir.erro) + '</p>';
+    if (S.repetir && S.repetir.erro) html += M.nota('erro', S.repetir.erro);
     return html + '</div>';
   }
   function telaEquipe() {
     var itens = doPeriodo();
     if (!itens.length) return telaVazia();
-    var repetirBloco = CTX.admin && repetiveis().length ? '<section class="bloco"><button class="btn" id="repetirExistentes">Repetir metas anteriores</button><p class="ajuda">Metas já repetidas por esta versão não serão duplicadas.</p>' + (S.repetir && S.repetir.erro ? '<p class="erro">'+esc(S.repetir.erro)+'</p>' : '') + '</section>' : '';
+    var repetirBloco = CTX.admin && repetiveis().length ? '<section class="bloco"><button class="btn" id="repetirExistentes">Repetir metas anteriores</button><p class="ajuda">Metas já repetidas por esta versão não serão duplicadas.</p>' + (S.repetir && S.repetir.erro ? M.nota('erro', S.repetir.erro) : '') + '</section>' : '';
     return resumoReais(itens) + blocoAtencao(itens) + blocoPessoas(itens) + repetirBloco;
   }
 
@@ -308,11 +311,18 @@
     irPara('form', { form: { modo: modo, cardId: cardId, nome: it ? it.card.name : '', original: it ? it.meta : null, de: de } });
   }
 
+  // Aviso deixado pelo formulário para a tela da meta: aparece uma vez
+  function consumirMsg(cardId) {
+    if (!msgDetalhe || msgDetalhe.cardId !== cardId) return null;
+    var m = msgDetalhe; msgDetalhe = null; return m;
+  }
   function render() {
     if (!CTX) return;
     if (S.view === 'form' && !CTX.admin) S.view = 'home';
     if (S.view === 'detalhe' && !achar(S.cardId)) S.view = 'home';
-    app.innerHTML = topo() + '<p id="avisoPainel" role="status" class="aviso-painel">' + esc(aviso) + '</p>' + '<div class="painel-corpo' + (S.view === 'home' ? '' : ' estreito') + '" id="corpo"></div>';
+    // O aviso do painel fica dentro da coluna de conteúdo, acima dele
+    app.innerHTML = topo() + '<div class="painel-corpo' + (S.view === 'home' ? '' : ' estreito') + '">' +
+      (nota ? M.nota(nota.tipo, nota.texto, { id: 'notaTentar', rotulo: 'Tentar de novo' }) : '') + '<div class="painel-conteudo" id="corpo"></div></div>';
     var corpo = document.getElementById('corpo');
     if (S.view === 'home') corpo.innerHTML = telaEquipe();
     else if (S.view === 'detalhe') {
@@ -320,6 +330,8 @@
       M.detalhe(corpo, {
         t: t, escopo: S.cardId, meta: it.meta, card: it.card, ctx: CTX,
         aoSalvar: function (meta) { it.meta = meta; recalcular(it); },
+        aoCartao: function (card) { it.card = card; },
+        msg: consumirMsg(it.card.id),
         abrirCartao: function () { t.showCard(S.cardId); }
       });
     } else {
@@ -327,13 +339,14 @@
         t: t, ctx: CTX, modo: S.form.modo, cardId: S.form.cardId, original: S.form.original, nomeCartao: S.form.nome,
         aoCancelar: voltar,
         aoSalvo: function (res) {
-          if (S.origem === 'cartao' && !res.aviso) { t.closeModal(); return; }
-          aviso = res.aviso || '';
+          if (S.origem === 'cartao' && !res.cartaoPendente) { t.closeModal(); return; }
+          msgDetalhe = { cardId: res.cardId, texto: res.criado ? 'Meta criada' : 'Meta salva' };
+          if (res.cartaoPendente) { msgDetalhe.texto = 'Meta salva, mas o responsável e as datas do cartão não foram atualizados'; msgDetalhe.pendente = res.cartaoPendente; }
           var it2 = achar(res.cardId);
-          if (it2) { it2.meta = res.meta; if(res.meta.dono) {var antNome=it2.card.name.split(' · ')[0];it2.card.name=antNome+' · '+res.meta.dono.fullName;} recalcular(it2); }
+          if (it2) { it2.meta = res.meta; if (res.nomeCartao && !res.cartaoPendente) it2.card.name = res.nomeCartao; recalcular(it2); }
           else {
             var c = res.card || {};
-            ITENS.push(recalcular({ card: { id: res.cardId, name: c.name || '', idList: c.idList, members: c.members || [], badges: c.badges || {}, url: c.shortUrl || c.url }, meta: res.meta }));
+            ITENS.push(recalcular({ card: { id: res.cardId, name: c.name || res.nomeCartao || '', idList: c.idList, members: c.members || [], badges: c.badges || {}, url: c.shortUrl || c.url }, meta: res.meta }));
           }
           S.scroll = 0;
           irPara('detalhe', { cardId: res.cardId });
@@ -346,6 +359,7 @@
 
   function ligar() {
     var $ = function (id) { return document.getElementById(id); };
+    if ($('notaTentar')) $('notaTentar').onclick = function () { nota = null; atualizar(); };
     var manter = function (fn) { return function () { var y = window.pageYOffset; fn.apply(this, arguments); render(); window.scrollTo(0, y); }; };
     if ($('ant')) $('ant').onclick = function () { andar(-1); S.repetir = null; render(); };
     if ($('prox')) $('prox').onclick = function () { andar(1); S.repetir = null; render(); };
@@ -359,7 +373,7 @@
     app.querySelectorAll('[data-sit]').forEach(function (b) { b.onclick = manter(function () { S.sit = b.getAttribute('data-sit'); }); });
     var fp = $('fPessoa');
     if (fp) fp.onchange = manter(function () { S.pessoa = fp.value; });
-    if ($('repetirExistentes')) $('repetirExistentes').onclick = function(){if(S.repetir && S.repetir.andando)return;M.autorizar(t).then(function(){S.auth=true;return repetir();}).catch(function(e){aviso=M.erroUsuario(e);render();});};
+    if ($('repetirExistentes')) $('repetirExistentes').onclick = function(){if(S.repetir && S.repetir.andando)return;M.autorizar(t).then(function(){S.auth=true;return repetir();}).catch(function(e){S.repetir={erro:M.erroUsuario(e)};render();});};
     if ($('repetir')) $('repetir').onclick = function () { S.repetir = { confirmar: true }; render(); };
     if ($('repetirNao')) $('repetirNao').onclick = function () { S.repetir = null; render(); };
     if ($('repetirSim')) $('repetirSim').onclick = function () {

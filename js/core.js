@@ -74,11 +74,53 @@
       return /^[A-ZÁÉÍÓÚÇ]{2,}s?$/.test(p) ? p : baixo;
     }).join(' ');
   }
-  function pluralUnidade(txt) { var mapa={cliente:'clientes',pedido:'pedidos',venda:'vendas',visita:'visitas',unidade:'unidades',contato:'contatos',página:'páginas',hora:'horas',dia:'dias',mês:'meses',país:'países',novo:'novos',nova:'novas',ativo:'ativos',ativa:'ativas'};return unidade(txt).split(' ').map(function(p){return mapa[p] || p;}).join(' '); }
-  function singular(txt) {
-    var mapa = { clientes:'cliente', novos:'novo', novas:'nova', pedidos:'pedido', vendas:'venda', unidades:'unidade', visitas:'visita', contatos:'contato', páginas:'página', horas:'hora', dias:'dia', meses:'mês', países:'país', ações:'ação', propostas:'proposta', entregas:'entrega', projetos:'projeto', ativos:'ativo', ativas:'ativa', úteis:'útil', leads:'lead', bônus:'bônus', lápis:'lápis' };
-    return unidade(txt).split(' ').map(function (p) { return mapa[p] || (/^[A-Z]{2,}s$/.test(p) ? p.slice(0,-1) : p); }).join(' ');
+  // ---------- Singular e plural da unidade ----------
+  // A pessoa digita a unidade como quiser ("cliente" ou "clientes"); o sistema acerta
+  // singular e plural pelas regras do português. Palavras depois de "de", "do", "para"
+  // etc. ficam como estão ("pedidos de compra", "pedido de compra").
+  var INVARIAVEIS = ['lápis', 'ônibus', 'vírus', 'tênis', 'bônus', 'ônus', 'pires', 'atlas', 'óculos', 'cais', 'tórax', 'látex', 'clímax', 'ônix', 'fênix', 'mais', 'menos'];
+  var SING_ESP = { meses: 'mês', países: 'país', gases: 'gás', ingleses: 'inglês', portugueses: 'português', fregueses: 'freguês', pães: 'pão', mãos: 'mão', cães: 'cão', capitães: 'capitão', alemães: 'alemão', irmãos: 'irmão', cidadãos: 'cidadão', úteis: 'útil', fáceis: 'fácil', difíceis: 'difícil', fósseis: 'fóssil', heróis: 'herói', bois: 'boi', réis: 'real' };
+  var PLUR_ESP = {};
+  Object.keys(SING_ESP).forEach(function (k) { if (k !== 'réis') PLUR_ESP[SING_ESP[k]] = k; });
+  var CONECTORES = ['de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas', 'com', 'para', 'por', 'pelo', 'pela', 'sem', 'e', 'ou', 'a', 'o', 'à', 'ao'];
+  var ACENTO = /[áéíóúâêô]/;
+  function sigla(p) { return /^[A-ZÁÉÍÓÚÇ0-9]{2,}s?$/.test(p) && /[A-Z]/.test(p); }
+  function singularPalavra(p) {
+    if (sigla(p)) return p.replace(/s$/, '');
+    var b = p.toLocaleLowerCase('pt-BR');
+    if (INVARIAVEIS.indexOf(b) >= 0 || SING_ESP[b]) return SING_ESP[b] || p;
+    if (!/s$/.test(b)) return p;                       // já está no singular
+    if (/[áéíóúâêô]s$/.test(b)) return p;             // mês, país, gás
+    var r = [[/ões$/, 'ão'], [/ães$/, 'ão'], [/ãos$/, 'ão'], [/éis$/, 'el'], [/eis$/, 'el'], [/óis$/, 'ol'], [/ais$/, 'al'], [/uis$/, 'ul'], [/ns$/, 'm'], [/([aeiouáéíóú])res$/, '$1r'], [/([aeiouáéíóú])zes$/, '$1z']];
+    for (var i = 0; i < r.length; i++) if (r[i][0].test(b)) return b.replace(r[i][0], r[i][1]);
+    if (/is$/.test(b) && !ACENTO.test(b)) return b.replace(/is$/, 'il');   // barris, perfis
+    return b.replace(/s$/, '');
   }
+  function pluralPalavra(p) {
+    if (sigla(p)) return /s$/.test(p) ? p : p + 's';
+    var b = p.toLocaleLowerCase('pt-BR');
+    if (INVARIAVEIS.indexOf(b) >= 0) return p;
+    if (PLUR_ESP[b]) return PLUR_ESP[b];
+    if (/ão$/.test(b)) return b.replace(/ão$/, 'ões');
+    if (/al$/.test(b)) return b.replace(/al$/, 'ais');
+    if (/el$/.test(b)) return b.replace(/el$/, ACENTO.test(b) ? 'eis' : 'éis');
+    if (/ol$/.test(b)) return b.replace(/ol$/, 'óis');
+    if (/ul$/.test(b)) return b.replace(/ul$/, 'uis');
+    if (/il$/.test(b)) return b.replace(/il$/, ACENTO.test(b) ? 'eis' : 'is');
+    if (/m$/.test(b)) return b.replace(/m$/, 'ns');
+    if (/[rz]$/.test(b)) return b + 'es';
+    if (/[sx]$/.test(b)) return p;                    // lápis, tórax
+    return b + 's';
+  }
+  function porPalavra(txt, fn) {
+    var parado = false;
+    return unidade(txt).split(' ').map(function (p, i) {
+      if (i > 0 && CONECTORES.indexOf(p.toLocaleLowerCase('pt-BR')) >= 0) parado = true;
+      return parado || !p ? p : fn(p);
+    }).join(' ');
+  }
+  function singular(txt) { return porPalavra(txt, singularPalavra); }
+  function pluralUnidade(txt) { return porPalavra(singular(txt), pluralPalavra); }
   function erroUsuario(e) {
     if (e && e.usuario) return e.message;
     var msg = String(e && e.message || '');
@@ -660,6 +702,32 @@
   function limparMarcador(t, cardId) { return rest(t, 'PUT', '/cards/' + cardId, { desc: '' }).catch(function () {}); }
   // Cartões da lista, com descrição, para achar um marcador sem baixar o quadro inteiro
   function cartoesDaLista(t, listaId) { return rest(t, 'GET', '/lists/' + listaId + '/cards', { fields: 'id,name,desc' }); }
+  // ---------- Avisos ----------
+  // Um componente só para todos os avisos, sempre no topo do conteúdo a que se referem:
+  // sucesso (some sozinho), aviso (pede uma ação) e erro. acao: { id, rotulo }.
+  function nota(tipo, texto, acao, idFechar) {
+    texto = String(texto || '').replace(/\.\s*$/, '');
+    return '<div class="nota nota-' + tipo + '" role="' + (tipo === 'erro' ? 'alert' : 'status') + '"><p class="nota-texto">' + esc(texto) + '</p>' +
+      (acao ? '<button type="button" class="btn nota-acao" id="' + acao.id + '">' + esc(acao.rotulo) + '</button>' : '') +
+      (idFechar ? '<button type="button" class="btn btn-icone btn-texto nota-fechar" id="' + idFechar + '" aria-label="Fechar aviso">×</button>' : '') + '</div>';
+  }
+
+  // Responsável, nome e datas do cartão iguais aos da meta. Devolve o nome novo do cartão.
+  function sincronizarCartao(t, cardId, meta, nomeCartao, donoAnterior) {
+    var nome = nomeCartao || '';
+    if (donoAnterior && nome.slice(-(donoAnterior.length + 3)) === ' · ' + donoAnterior) nome = nome.slice(0, -(donoAnterior.length + 3));
+    else if (meta.dono && nome.slice(-(meta.dono.fullName.length + 3)) === ' · ' + meta.dono.fullName) nome = nome.slice(0, -(meta.dono.fullName.length + 3));
+    var novoNome = meta.dono ? nome + ' · ' + meta.dono.fullName : nome;
+    // Se a pessoa já é membro do cartão, o Trello recusa a inclusão: não é erro
+    return (meta.dono ? rest(t, 'POST', '/cards/' + cardId + '/idMembers', { value: meta.dono.id }).catch(function (e) { if (e && e.code === 'AUTH') throw e; }) : Promise.resolve())
+      .then(function () { return rest(t, 'PUT', '/cards/' + cardId, { name: novoNome, start: dataCartao(meta.ini, false), due: dataCartao(meta.fim, true) }); })
+      .then(function () { return novoNome; });
+  }
+  // Move o cartão para a lista indicada, criando a lista se preciso
+  function moverCartao(t, cardId, nomeLista) {
+    return garantirLista(t, nomeLista, 'top').then(function (l) { return rest(t, 'PUT', '/cards/' + cardId, { idList: l.id, pos: 'top' }); });
+  }
+
   function garantirLista(t, nome, pos) {
     return t.lists('id', 'name').then(function (ls) {
       var achou = ls.filter(function (l) { return l.name.trim() === nome; })[0];
@@ -706,7 +774,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    prepararCard: prepararCard, ler: ler, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, ler: ler, nota: nota, sincronizarCartao: sincronizarCartao, moverCartao: moverCartao, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

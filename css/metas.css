@@ -441,3 +441,15 @@ details.mais summary:hover { text-decoration: underline; }
 #app .financeiro-linha { margin: 0; font-size: 14px; line-height: 20px; }
 #app .financeiro-linha .forte { font-weight: 600; }
 .det-alteracoes { padding-top: 20px; border-top: 1px solid var(--borda); }
+
+/* v27: avisos num componente só, no topo do conteúdo a que se referem; campos sem margem herdada. */
+#app .campo, #app label.campo { margin: 0; }
+.painel-conteudo { display: contents; }
+.notas { display: flex; flex-direction: column; gap: 8px; }
+.nota { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; padding: 8px 8px 8px 12px; border-radius: 3px; font-size: 14px; line-height: 20px; }
+#app .nota-texto { margin: 0; flex: 1 1 240px; min-width: 0; }
+.nota-sucesso { background: var(--ok-fundo); color: var(--ok-texto); }
+.nota-aviso { background: var(--risk-fundo); color: var(--risk-texto); }
+.nota-erro { background: var(--late-fundo); color: var(--late-texto); }
+#app .nota .btn { height: 32px; flex: none; color: inherit; }
+#app .nota-fechar { font-size: 18px; }

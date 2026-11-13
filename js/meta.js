@@ -11,7 +11,8 @@
       if (!res[0]) { app.innerHTML = ''; ajustar(); return; }
       return M.prepararCard(t,res[1],res[0]).then(function () { M.detalhe(app, { t: t, escopo: 'card', meta: res[0], card: res[1], ctx: res[2], ajustar: ajustar }); });
     }).catch(function (e) {
-      app.innerHTML = '<p class="erro">Não foi possível carregar a meta. ' + esc(M.erroUsuario(e)) + '</p>';
+      app.innerHTML = M.nota('erro', 'Não foi possível carregar a meta. ' + M.erroUsuario(e), { id: 'tentar', rotulo: 'Tentar de novo' });
+      document.getElementById('tentar').onclick = carregar;
       ajustar();
     });
   }

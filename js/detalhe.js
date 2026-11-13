@@ -94,7 +94,7 @@
 
   // o: { t, escopo, meta, card, ctx, aoSalvar, ajustar, abrirCartao }
   M.detalhe = function (el, o) {
-    var st = { msg: null, ocupado: false, rascunho: '', todos: false, confirmar: false, alterarAval: false };
+    var st = { msg: o.msg ? deMsgInicial(o.msg) : null, ocupado: false, rascunho: '', todos: false, confirmar: false, alterarAval: false };
     var meta = o.meta;
     var D = {};
 
@@ -192,7 +192,7 @@
       var rot = M.situacaoDia(d);
       var rDia = { pct: d.pct, fill: d.fill, info: { cls: d.atingiu ? 'ok' : 'azul' } };
 
-      var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + (m.fmt === 'r' ? M.numBR(d.realizado-d.alvo,2,2) : f(d.realizado-d.alvo)) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
+      var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + f(d.realizado-d.alvo) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
       return '<section class="det-dia" aria-label="Objetivo do dia">' +
         '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">Objetivo do dia: <span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + '</span></h3></div>' +
         '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
@@ -215,7 +215,7 @@
 
     function etapas() {
       if (meta.tipo !== 'e' || meta.encerrada) return '';
-      if (o.card.etapasErro) return '<p class="aviso">' + esc(o.card.etapasErro) + '</p><button class="btn" id="authEtapas">Autorizar e atualizar</button>';
+      if (o.card.etapasErro) return M.nota('aviso', o.card.etapasErro, { id: 'authEtapas', rotulo: 'Autorizar e atualizar' });
       if (o.abrirCartao) return '<div><button type="button" class="btn" id="marcar">Marcar etapas no cartão</button></div>';
       return '';
     }
@@ -282,12 +282,16 @@
       D.r = M.avaliar(meta, o.card.badges);
       if(o.card.etapasErro){D.r.sit='andamento';D.r.info=M.SIT.andamento;D.r.rotulo='Etapas indisponíveis';}
       var membros = (o.card.members || []).map(function (x) { return x.id; });
-      var avisoDono = meta.dono && membros.indexOf(meta.dono.id) < 0 ? '<p class="aviso">' + esc(meta.dono.fullName) + ' é o responsável por esta meta, mas não está como membro do cartão.</p>' : '';
-      var msg = st.msg ? '<p class="' + (st.msg.erro ? 'erro' : 'sucesso') + '" role="status">' + esc(st.msg.texto) + '</p>' + (st.msg.erro ? '<button type="button" class="btn" id="atualizarDados">Atualizar dados</button>' : '') : '';
-      el.innerHTML = '<div class="detalhe">' + cabecalho() + avisoDono + msg + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + alteracoes() + rodape() + '</div>';
+      // Avisos sempre no topo do conteúdo da meta, no mesmo componente
+      var notas = '';
+      if (st.msg) notas += M.nota(st.msg.tipo, st.msg.texto, st.msg.acao ? { id: 'notaAcao', rotulo: st.msg.acao.rotulo } : null, 'notaFechar');
+      // A pendência de atualizar o cartão já inclui o responsável: não repete o aviso
+      if (meta.dono && membros.indexOf(meta.dono.id) < 0 && !(st.msg && st.msg.cobreDono)) notas += M.nota('aviso', meta.dono.fullName + ' é responsável pela meta, mas não é membro do cartão', o.ctx.admin ? { id: 'notaDono', rotulo: 'Adicionar ao cartão' } : null);
+      el.innerHTML = '<div class="detalhe">' + (notas ? '<div class="notas">' + notas + '</div>' : '') + cabecalho() + resumo() + objetivoHoje() + registro() + etapas() + avaliacao() + evolucao() + alteracoes() + rodape() + '</div>';
       ligar();
+      sumirSucesso();
       M.dimensionarTags(el);
-      if(st.msg && !st.msg.erro){var foco=el.querySelector('#valor');if(foco)foco.focus();}
+      if(st.msg && st.msg.tipo !== 'erro'){var foco=el.querySelector('#valor');if(foco)foco.focus();}
       desenhar();
       ajustar();
     }
@@ -303,16 +307,95 @@
       st.ocupado = true;
       el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
       return M.salvarMeta(o.t, o.escopo, novo).then(function () {
-        meta = novo; if(registroSilencioso) st.rascunho = ''; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
+        meta = novo; if(registroSilencioso) st.rascunho = ''; st.msg = aviso ? sucesso(aviso) : null; st.alterarAval = false;
         if (o.aoSalvar) o.aoSalvar(meta);
-        var rAtual=M.avaliar(meta,o.card.badges);
-        return M.autorizado(o.t).then(function(ok){if(!ok)return false;return M.rest(o.t,'PUT','/cards/'+o.card.id,{dueComplete:rAtual.sit==='hit'||rAtual.sit==='noalvo'}).then(function(){if(!reabrindo)return true;return M.garantirLista(o.t,M.CFG.listaMetas,'top').then(function(l){return M.rest(o.t,'PUT','/cards/'+o.card.id,{idList:l.id,pos:'top'});}).then(function(){st.msg={texto:'Meta reaberta e cartão movido.'};return true;});});}).catch(function(){return false;}).then(function(ok){if(!ok && !registroSilencioso)st.msg={texto:'Conclusão não sincronizada no cartão.'};st.ocupado=false;render();if(registroSilencioso){var campo=el.querySelector('#valor');if(campo)campo.focus();}});
-      }).catch(function (e) { st.ocupado = false; st.msg = { erro: true, texto: M.erroUsuario(e) }; render(); });
+        return M.autorizado(o.t).then(function (ok) {
+          if (!ok) return false;
+          return concluirCartao().then(function () {
+            if (!reabrindo) return true;
+            return M.moverCartao(o.t, o.card.id, M.CFG.listaMetas).then(function () { st.msg = sucesso('Meta reaberta e cartão movido para ' + M.CFG.listaMetas); return true; });
+          });
+        }).catch(function () { return false; }).then(function (ok) {
+          if (!ok && !registroSilencioso) {
+            st.msg = reabrindo ? pendencia('Meta reaberta. O cartão continua em ' + M.CFG.listaEncerradas, 'Mover cartão', function () { acaoCartao(M.CFG.listaMetas); })
+              : pendencia((aviso ? aviso + '. ' : '') + 'A conclusão do cartão não foi atualizada', 'Atualizar cartão', function () { acaoCartao(null); });
+          }
+          st.ocupado = false; render();
+          if (registroSilencioso) { var campo = el.querySelector('#valor'); if (campo) campo.focus(); }
+        });
+      }).catch(function (e) { st.ocupado = false; st.msg = falhaComAtualizar(e); render(); });
+    }
+
+    // ---------- avisos ----------
+    function sucesso(texto) { return { tipo: 'sucesso', texto: texto }; }
+    function pendencia(texto, rotulo, fn) { return { tipo: 'aviso', texto: texto, acao: rotulo ? { rotulo: rotulo, fn: fn } : null }; }
+    function falha(e) { return { tipo: 'erro', texto: M.erroUsuario(e) }; }
+    function falhaComAtualizar(e) { return { tipo: 'erro', texto: M.erroUsuario(e), acao: { rotulo: 'Atualizar dados', fn: atualizarDados } }; }
+    function deMsgInicial(m) {
+      if (!m.pendente) return sucesso(m.texto);
+      var p = pendencia(m.texto, 'Atualizar cartão', function () { sincronizarPendente(m.pendente); });
+      p.cobreDono = true;
+      return p;
+    }
+    // O aviso de sucesso some sozinho depois de alguns segundos
+    function sumirSucesso() {
+      if (!st.msg || st.msg.tipo !== 'sucesso' || st.msgTimer === st.msg) return;
+      var alvo = st.msgTimer = st.msg;
+      setTimeout(function () {
+        if (st.msg !== alvo) return;
+        st.msg = null;
+        var n = el.querySelector('.nota-sucesso'), lista = n && n.parentNode;
+        if (n) n.remove();
+        if (lista && !lista.children.length) lista.remove();
+        ajustar();
+      }, 5000);
+    }
+    function concluirCartao() {
+      var r = M.avaliar(meta, o.card.badges);
+      return M.rest(o.t, 'PUT', '/cards/' + o.card.id, { dueComplete: r.sit === 'hit' || r.sit === 'noalvo' });
+    }
+    // Autoriza (a janela do Trello precisa partir do clique) e acerta o cartão
+    function acaoCartao(lista) {
+      st.ocupado = true; render();
+      M.autorizar(o.t).then(concluirCartao).then(function () { return lista ? M.moverCartao(o.t, o.card.id, lista) : null; })
+        .then(function () { st.ocupado = false; st.msg = sucesso(lista ? 'Cartão movido para ' + lista : 'Cartão atualizado'); render(); })
+        .catch(function (e) { st.ocupado = false; st.msg = falha(e); render(); });
+    }
+    function sincronizarPendente(p) {
+      st.ocupado = true; render();
+      M.autorizar(o.t).then(function () { return M.sincronizarCartao(o.t, o.card.id, meta, p.nomeCartao, p.donoAnterior); })
+        .then(function (nome) {
+          o.card.name = nome;
+          if (meta.dono && !(o.card.members || []).some(function (x) { return x.id === meta.dono.id; })) (o.card.members = o.card.members || []).push({ id: meta.dono.id });
+          if (o.aoCartao) o.aoCartao(o.card);
+          st.ocupado = false; st.msg = sucesso('Cartão atualizado'); render();
+        }).catch(function (e) { st.ocupado = false; st.msg = falha(e); render(); });
+    }
+    function adicionarDono() {
+      st.ocupado = true; render();
+      M.autorizar(o.t).then(function () { return M.rest(o.t, 'POST', '/cards/' + o.card.id + '/idMembers', { value: meta.dono.id }); })
+        .then(function () {
+          (o.card.members = o.card.members || []).push({ id: meta.dono.id });
+          if (o.aoCartao) o.aoCartao(o.card);
+          st.ocupado = false; st.msg = sucesso(meta.dono.fullName + ' adicionado ao cartão'); render();
+        }).catch(function (e) { st.ocupado = false; st.msg = falha(e); render(); });
+    }
+    function atualizarDados() {
+      Promise.all([M.ler(o.t, o.escopo), M.contexto(o.t)]).then(function (v) {
+        if (!v[0]) throw new Error('A meta não está mais disponível.');
+        meta = v[0]; o.ctx = v[1];
+        return M.prepararCard(o.t, o.card, meta);
+      }).then(function () {
+        if (o.aoSalvar) o.aoSalvar(meta);
+        st.msg = pendencia('Dados atualizados. Confira o valor antes de registrar'); render();
+      }).catch(function (e) { st.msg = falha(e); render(); });
     }
 
     function ligar() {
       var $ = function (id) { return el.querySelector('#' + id); };
-      if ($('atualizarDados')) $('atualizarDados').onclick = function(){Promise.all([M.ler(o.t,o.escopo),M.contexto(o.t)]).then(function(v){if(!v[0])throw new Error('A meta não está mais disponível.');meta=v[0];o.ctx=v[1];return M.prepararCard(o.t,o.card,meta);}).then(function(){if(o.aoSalvar)o.aoSalvar(meta);st.msg={texto:'Dados atualizados. Confira o valor antes de registrar.'};render();}).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();});};
+      if ($('notaAcao')) $('notaAcao').onclick = function () { if (st.msg && st.msg.acao && !st.ocupado) st.msg.acao.fn(); };
+      if ($('notaFechar')) $('notaFechar').onclick = function () { st.msg = null; render(); };
+      if ($('notaDono')) $('notaDono').onclick = function () { if (!st.ocupado) adicionarDono(); };
       if ($('verHist')) $('verHist').onclick = function () { st.todos = !st.todos; render(); };
       var fr = $('fAtualizar');
       if (fr) {
@@ -353,14 +436,14 @@
           salvar(novoMeta, null, true);
         };
       }
-      if ($('authEtapas')) $('authEtapas').onclick = function () { M.autorizar(o.t).then(function () { return M.prepararCard(o.t,o.card,meta); }).then(function () { render(); }).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();}); };
+      if ($('authEtapas')) $('authEtapas').onclick = function () { M.autorizar(o.t).then(function () { return M.prepararCard(o.t,o.card,meta); }).then(function () { render(); }).catch(function(e){st.msg=falha(e);render();}); };
       if ($('marcar')) $('marcar').onclick = function () { o.abrirCartao(); };
       if ($('alterarAval')) $('alterarAval').onclick = function () { st.alterarAval = true; render(); };
       el.querySelectorAll('[data-nota]').forEach(function (b) {
         b.onclick = function () {
           var novoMeta = JSON.parse(JSON.stringify(meta));
           novoMeta.aval = { nota: b.getAttribute('data-nota'), obs: $('avObs') ? $('avObs').value.trim() : '', em: M.hoje(), por: o.ctx.eu.fullName };
-          salvar(novoMeta, 'Avaliação registrada.');
+          salvar(novoMeta, 'Avaliação registrada');
         };
       });
       if ($('encerrar')) $('encerrar').onclick = function () { st.confirmar = true; render(); };
@@ -369,7 +452,7 @@
         var novoMeta = JSON.parse(JSON.stringify(meta));
         novoMeta.encerrada = false; delete novoMeta.encerradaEm;
         M.registrarEncerramento(novoMeta, o.ctx.eu, false);
-        salvar(novoMeta, 'Meta reaberta. Mova o cartão para ' + M.CFG.listaMetas + '.');
+        salvar(novoMeta, 'Meta reaberta');
       };
       if ($('encerrarSim')) $('encerrarSim').onclick = function () {
         var novoMeta = JSON.parse(JSON.stringify(meta));
@@ -380,13 +463,11 @@
           meta = novoMeta;
           if (o.aoSalvar) o.aoSalvar(meta);
           return M.autorizado(o.t).then(function (ok) {
-            if (!ok) return 'Meta encerrada. Mova o cartão para ' + M.CFG.listaEncerradas + '.';
-            return M.garantirLista(o.t, M.CFG.listaEncerradas, 'top').then(function (l) {
-              return M.rest(o.t, 'PUT', '/cards/' + o.card.id, { idList: l.id, pos: 'top' });
-            }).then(function () { return 'Meta encerrada e cartão movido para ' + M.CFG.listaEncerradas + '.'; });
+            if (!ok) return pendencia('Meta encerrada. O cartão ainda não está em ' + M.CFG.listaEncerradas, 'Mover cartão', function () { acaoCartao(M.CFG.listaEncerradas); });
+            return M.moverCartao(o.t, o.card.id, M.CFG.listaEncerradas).then(function () { return sucesso('Meta encerrada e cartão movido para ' + M.CFG.listaEncerradas); });
           });
-        }).then(function (texto) { st.ocupado = false; st.confirmar = false; st.msg = { texto: texto }; render(); })
-          .catch(function (e) { st.ocupado = false; st.confirmar = false; st.msg = { erro: true, texto: M.erroUsuario(e) }; render(); });
+        }).then(function (msg) { st.ocupado = false; st.confirmar = false; st.msg = msg; render(); })
+          .catch(function (e) { st.ocupado = false; st.confirmar = false; st.msg = falhaComAtualizar(e); render(); });
       };
     }
 

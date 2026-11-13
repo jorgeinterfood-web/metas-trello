@@ -43,7 +43,7 @@
 
     el.innerHTML =
       '<form id="f" class="form" novalidate>' +
-      '<div id="blocoSemChave" class="aviso oculto">Criação indisponível. Crie um cartão em Metas e use Transformar em meta.</div>' +
+      '<div id="blocoSemChave" class="oculto">' + M.nota('aviso', 'Criação indisponível. Crie um cartão em Metas e use Transformar em meta') + '</div>' +
 
       '<div class="coluna gap8"><span class="rotulo" id="tipoL">Tipo de meta</span>' +
       '<div class="seg seg-largo" role="group" aria-labelledby="tipoL">' + TIPOS.concat(original && original.tipo === 'a' ? [['a', 'Avaliação']] : []).map(function (k) { return '<button type="button" data-kind="' + k[0] + '" aria-pressed="false">' + k[1] + '</button>'; }).join('') + '</div></div>' +
@@ -62,8 +62,7 @@
       '<div class="grade" id="blocoQ">' +
       '<label class="campo"><span id="rotVIni">Valor inicial</span><span class="campo-prefixo"><span class="pre"></span><input id="vIni" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('vIni') + '</label>' +
       '<label class="campo">Objetivo<span class="campo-prefixo"><span class="pre"></span><input id="alvo" type="text" inputmode="decimal" autocomplete="off"><span class="suf"></span></span>' + erroCampo('alvo') + '</label>' +
-      '<label class="campo" id="campoUnidade">Unidade no plural<input id="unit" type="text" maxlength="30">' + erroCampo('unit') + '</label></div>' +
-      '<label class="campo oculto" id="campoSingular">Unidade no singular<input id="unitSingular" maxlength="30"></label>' +
+      '<label class="campo" id="campoUnidade">Unidade<input id="unit" type="text" maxlength="30">' + erroCampo('unit') + '</label></div>' +
 
       '<div class="coluna gap8 oculto" id="blocoE"><span class="rotulo">Etapas</span><div id="etapas" class="coluna gap8"></div>' + erroCampo('etapas') +
       '<div class="linha gap12"><button type="button" class="btn" id="maisEtapa">Adicionar etapa</button></div></div>' +
@@ -126,7 +125,6 @@
       $('blocoQ').classList.toggle('oculto', !ehValor());
       $('blocoE').classList.toggle('oculto', S.kind !== 'e' || $('blocoE').hasAttribute('data-sem-edicao'));
       $('blocoA').classList.toggle('oculto', S.kind !== 'a');
-      $('campoSingular').classList.toggle('oculto', S.kind !== 'n');
       $('campoUnidade').classList.toggle('invisivel', S.kind !== 'n');
       // Escondidos sem sair do lugar, para a linha de Importância manter o alinhamento
       $('campoQuem').classList.toggle('invisivel', !ehValor());
@@ -176,7 +174,7 @@
         var c = M.casasDe(meta);
         $('vIni').value = meta.fmt === 'r' ? M.numBR(meta.vIni, 2, 2) : M.numBR(meta.vIni, c);
         $('alvo').value = meta.fmt === 'r' ? M.numBR(meta.alvo, 2, 2) : M.numBR(meta.alvo, c);
-        $('unit').value = M.unidade(meta.unit); $('unitSingular').value = M.unidade(meta.unitSingular || M.singular(meta.unit)); $('ritmo').value = meta.ritmo || 'uteis';
+        $('unit').value = M.pluralUnidade(meta.unit); $('ritmo').value = meta.ritmo || 'uteis';
       }
       if (meta.tipo === 'e') $('ritmo').value = meta.ritmo || 'uteis';
       $('crit').value = meta.crit || ''; $('quem').value = meta.quem || 'resp';
@@ -212,7 +210,7 @@
         meta.fmt = S.kind; meta.vIni = v0; meta.alvo = alvo;
         meta.dir = alvo < v0 ? 'down' : 'up'; // objetivo menor que o valor inicial: meta de redução
         meta.unit = S.kind === 'n' ? M.pluralUnidade($('unit').value) : '';
-        meta.unitSingular = S.kind === 'n' ? M.unidade($('unitSingular').value || M.singular(meta.unit)) : '';
+        meta.unitSingular = S.kind === 'n' ? M.singular($('unit').value) : '';
         meta.casas = S.kind === 'r' ? 2 : Math.max(M.decimaisDigitados(tIni), M.decimaisDigitados(tAlvo));
         meta.ritmo = S.kind === 'p' ? 'uteis' : $('ritmo').value;
       }
@@ -228,12 +226,6 @@
     }
 
     function datasMudaram(meta) { return !original || original.ini !== meta.ini || original.fim !== meta.fim; }
-    function sincronizarDatas(cardId, meta) {
-      if (!datasMudaram(meta) || !S.auth) return Promise.resolve();
-      var fimD = M.parse(meta.fim); fimD.setHours(23, 59, 59, 999);
-      var iniD = M.parse(meta.ini); iniD.setHours(12, 0, 0, 0);
-      return M.rest(t, 'PUT', '/cards/' + cardId, { start: M.dataCartao(meta.ini,false), due: M.dataCartao(meta.fim,true) });
-    }
 
     // A autorização abre uma janela do Trello: precisa partir do clique, antes de qualquer espera
     function garantirAuth(obrigatoria) {
@@ -299,14 +291,17 @@
           }
         });
       } else {
+        var donoAnterior = original && original.dono ? original.dono.fullName : '';
+        var precisaCartao = !original || donoAnterior !== meta.dono.fullName || datasMudaram(meta);
+        var pendente = null, nomeNovo = o.nomeCartao || '';
         p = auth.then(function () { return M.salvarMeta(t, o.cardId, meta); }).then(function () {
-          if (!S.auth) { meta.avisoSync = true; return; }
-          var ant = original && original.dono && original.dono.fullName;
-          var nome = o.nomeCartao || '';
-          if (ant && nome.endsWith(' · ' + ant)) nome = nome.slice(0, -(ant.length + 3));
-          return M.rest(t, 'POST', '/cards/' + o.cardId + '/idMembers', { value: meta.dono.id }).then(function () { return M.rest(t, 'PUT', '/cards/' + o.cardId, {name:nome + ' · ' + meta.dono.fullName}); }).then(function () { return sincronizarDatas(o.cardId, meta); }).catch(function () { meta.avisoSync = true; });
+          if (!precisaCartao) return;
+          if (!S.auth) { pendente = { nomeCartao: o.nomeCartao || '', donoAnterior: donoAnterior }; return; }
+          return M.sincronizarCartao(t, o.cardId, meta, o.nomeCartao, donoAnterior).then(function (n) { nomeNovo = n; }, function () {
+            pendente = { nomeCartao: o.nomeCartao || '', donoAnterior: donoAnterior };
+          });
         }).then(function () {
-          if (o.aoSalvo) o.aoSalvo({ cardId: o.cardId, meta: meta, criado: false, aviso: meta.avisoSync ? 'Meta salva. Responsável e datas não sincronizados no cartão.' : '' });
+          if (o.aoSalvo) o.aoSalvo({ cardId: o.cardId, meta: meta, criado: false, nomeCartao: nomeNovo, cartaoPendente: pendente });
         });
       }
       p.catch(function (e) {
@@ -331,7 +326,6 @@
 
     el.querySelectorAll('[data-kind]').forEach(function (b) { b.onclick = function () { S.kind = b.getAttribute('data-kind'); aplicarKind(); }; });
     el.querySelectorAll('[data-imp]').forEach(function (b) { b.onclick = function () { S.imp = +b.getAttribute('data-imp'); aplicarImp(); }; });
-    $('unit').addEventListener('input', function () { $('unitSingular').value = M.singular($('unit').value); });
     $('periodo').onchange = aplicarPeriodo;
     $('maisEtapa').onclick = function () { addEtapa(''); };
     $('cancelar').onclick = function () { if (o.aoCancelar) o.aoCancelar(); };
