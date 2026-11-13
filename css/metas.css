@@ -461,3 +461,14 @@ details.mais summary:hover { text-decoration: underline; }
 }
 #app .campo select, #app .campo > input { padding-top: 0; padding-bottom: 0; line-height: normal; }
 #app .campo .campo-prefixo input { min-height: 0; max-height: none; height: calc(var(--ctrl) - 2px); }
+
+/* v30: data do registro (admins), ao lado do valor. */
+#app .registro-linha.com-data {
+  grid-template-columns: minmax(0, 200px) 160px max-content;
+  grid-template-areas: "label dlabel ." "field dfield button";
+}
+#app label.registro-label.registro-label-data { grid-area: dlabel; }
+#app input.registro-data { grid-area: dfield; height: var(--ctrl); min-height: var(--ctrl); max-height: var(--ctrl); box-sizing: border-box; }
+@media (max-width: 480px) {
+  #app .registro-linha.com-data { grid-template-columns: minmax(0, 1fr) 140px; grid-template-areas: "label dlabel" "field dfield" "button button"; }
+}

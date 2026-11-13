@@ -507,9 +507,17 @@
   function decodificar(m) {
     if (!m || !m.h) return m;
     var c = clonar(m), pessoas = c.hp || [];
+    // Depois de [dias, valor, pessoa]: texto é observação; { l: dias } é a data em que um
+    // registro com data anterior foi lançado. Números soltos são de versões descartadas.
     var hist = c.h.map(function (r) {
-      var p = pessoas[r[2]] || ['', ''];
-      return [addDias(c.ini, r[0]), r[1], p[0], p[1], r[3] || ''];
+      var p = pessoas[r[2]] || ['', ''], obs = '', lancado = '';
+      r.slice(3).forEach(function (x) {
+        if (typeof x === 'string') obs = x;
+        else if (x && typeof x === 'object' && Number.isFinite(x.l)) lancado = addDias(c.ini, x.l);
+      });
+      var e = [addDias(c.ini, r[0]), r[1], p[0], p[1], obs];
+      if (lancado) e.push(lancado);
+      return e;
     });
     // Registros gravados por uma aba ainda na versão antiga entram depois dos compactos
     c.hist = hist.concat(Array.isArray(m.hist) ? m.hist : []);
@@ -522,7 +530,8 @@
       var chave = (e[2] || '') + '|' + (e[3] || '');
       if (!(chave in idx)) { idx[chave] = pessoas.length; pessoas.push([e[2] || '', e[3] || '']); }
       var r = [diasEntre(c.ini, e[0]), e[1], idx[chave]];
-      if (e[4]) r.push(e[4]);
+      if (e[4] || e[5]) r.push(e[4] || '');
+      if (e[5]) r.push({ l: diasEntre(c.ini, e[5]) });
       return r;
     });
     c.hp = pessoas; c.v = 2;
@@ -595,6 +604,33 @@
   function textoAlteracao(e) {
     if (e[2] === 'enc') return 'Meta ' + e[4];
     return (CAMPO_ALT[e[2]] || e[2]) + ' de ' + e[3] + ' para ' + e[4];
+  }
+
+  // ---------- Registro com data anterior (admins) ----------
+  // Insere o registro na posição da data. Em metas que acumulam, o valor informado soma
+  // (ou subtrai) a partir do total daquele dia, e os totais dos dias seguintes mudam junto.
+  // Devolve o histórico novo ou lança um erro de uso.
+  function inserirRegistro(meta, data, v, modo, quem) {
+    var h = (meta.hist || []).map(function (e) { return e.slice(); });
+    var pos = 0;
+    while (pos < h.length && h[pos][0] <= data) pos++;
+    var antes = pos > 0 ? h[pos - 1][1] : (meta.histCortado && Number.isFinite(meta.histBase) ? meta.histBase : meta.vIni);
+    var hj = hoje(), novo, delta = 0;
+    if (modo === 'abs') novo = v;
+    else { delta = modo === 'sub' ? -v : v; novo = Math.round((antes + delta) * 100) / 100; }
+    if (novo < 0) throw falha('A subtração não pode deixar o total negativo.');
+    validarValor(novo, meta);
+    var e = [data, Math.round(novo * 100) / 100, quem.id, String(quem.fullName || '').split(' ')[0], ''];
+    if (data < hj) e.push(hj);
+    if (delta) {
+      for (var i = pos; i < h.length; i++) {
+        h[i][1] = Math.round((h[i][1] + delta) * 100) / 100;
+        if (h[i][1] < 0) throw falha('A subtração deixaria o total negativo em ' + dataBR(h[i][0]) + '.');
+        validarValor(h[i][1], meta);
+      }
+    }
+    h.splice(pos, 0, e);
+    return h;
   }
 
   // Lê a meta de um cartão já no formato completo
@@ -777,7 +813,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    prepararCard: prepararCard, ler: ler, nota: nota, sincronizarCartao: sincronizarCartao, moverCartao: moverCartao, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, ler: ler, inserirRegistro: inserirRegistro, nota: nota, sincronizarCartao: sincronizarCartao, moverCartao: moverCartao, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

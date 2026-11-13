@@ -94,7 +94,7 @@
 
   // o: { t, escopo, meta, card, ctx, aoSalvar, ajustar, abrirCartao }
   M.detalhe = function (el, o) {
-    var st = { msg: o.msg ? deMsgInicial(o.msg) : null, ocupado: false, rascunho: '', todos: false, confirmar: false, alterarAval: false };
+    var st = { msg: o.msg ? deMsgInicial(o.msg) : null, ocupado: false, rascunho: '', data: '', todos: false, confirmar: false, alterarAval: false };
     var meta = o.meta;
     var D = {};
 
@@ -206,8 +206,12 @@
       if (!podeAtualizar()) return '<p class="det-frase sub">' + (m.quem === 'admin' ? 'Só administradores podem registrar valores.' : 'Só o responsável e administradores podem registrar valores.') + '</p>';
       var rot = podeSomar() ? 'Valor do registro' : (ehTaxa() ? 'Percentual atual' : 'Valor atual');
       var pre = m.fmt === 'r' ? 'R$' : '', suf = m.fmt === 'p' ? '%' : (m.fmt === 'n' ? M.pluralUnidade(m.unit) : '');
+      // Admins podem lançar com data anterior, dentro do período
+      var hj = M.hoje(), maxData = hj < m.fim ? hj : m.fim;
+      var campoData = o.ctx.admin ? '<label class="rotulo registro-label registro-label-data" for="dataReg">Data</label>' +
+        '<input id="dataReg" class="campo-solto registro-data" type="date" min="' + m.ini + '" max="' + maxData + '" value="' + esc(st.data || maxData) + '">' : '';
       return '<form class="registro" id="fAtualizar" novalidate>' +
-        '<div class="registro-linha"><label class="rotulo registro-label" for="valor">' + rot + '</label>' +
+        '<div class="registro-linha' + (campoData ? ' com-data' : '') + '"><label class="rotulo registro-label" for="valor">' + rot + '</label>' + campoData +
         '<span class="campo-prefixo registro-entrada">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" value="' + esc(st.rascunho) + '" type="text" inputmode="decimal" autocomplete="off" aria-describedby="previa" placeholder="' + (m.fmt === 'r' ? '0,00' : '0') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span>' +
         (podeSomar() ? '<div class="registro-acoes"><button type="submit" name="operacao" value="add" class="btn btn-primario"' + (st.ocupado ? ' disabled' : '') + '>Somar</button><button type="submit" name="operacao" value="sub" class="btn"' + (st.ocupado ? ' disabled' : '') + '>Subtrair</button></div>' : '<button type="submit" class="btn btn-primario registro-submit"' + (st.ocupado ? ' disabled' : '') + '>Registrar</button>') + '</div>' +
         '<div class="ajuda registro-previa" id="previa" aria-live="polite"></div>' + '</form>';
@@ -253,7 +257,7 @@
         var tdif = ehTaxa() ? M.pontos(meta, dif) : f(Math.abs(dif));
         linhas.push('<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
           '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (dif < 0 ? 'hist-negativo' : 'hist-positivo') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
-          '<span class="sub hist-quem">' + esc(e[3] || '') + (e[4] ? '. ' + esc(e[4]) : '') + '</span></div>');
+          '<span class="sub hist-quem">' + esc(e[3] || '') + (e[5] ? ' · lançado em ' + M.dataBR(e[5]) : '') + (e[4] ? '. ' + esc(e[4]) : '') + '</span></div>');
       }
       var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
       return '<div class="det-grade"><section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Evolução</h3>' + graf + '</section>' +
@@ -307,7 +311,7 @@
       st.ocupado = true;
       el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
       return M.salvarMeta(o.t, o.escopo, novo).then(function () {
-        meta = novo; if(registroSilencioso) st.rascunho = ''; st.msg = aviso ? sucesso(aviso) : null; st.alterarAval = false;
+        meta = novo; if(registroSilencioso) { st.rascunho = ''; st.data = ''; } st.msg = aviso ? sucesso(aviso) : null; st.alterarAval = false;
         if (o.aoSalvar) o.aoSalvar(meta);
         return M.autorizado(o.t).then(function (ok) {
           if (!ok) return false;
@@ -412,9 +416,16 @@
           var novo = reg() === 'add' ? atual + v : v;
           if (podeSomar()) {
             previa.innerHTML='<span>Após somar: '+esc(f(M.arred(meta,atual+v)))+'</span><span>'+(v>atual ? 'A subtração deixaria o total negativo.' : 'Após subtrair: '+esc(f(M.arred(meta,atual-v))))+'</span>';
-          } else previa.textContent = 'Após o registro: ' + f(M.arred(meta,novo));
+          } else {
+            // Valor com data anterior a registros existentes não muda o valor atual
+            var dSel = $('dataReg') && $('dataReg').value, depois = dSel && (meta.hist || []).some(function (e) { return e[0] > dSel; });
+            previa.textContent = depois ? 'O valor atual continua ' + f(atual) : 'Após o registro: ' + f(M.arred(meta,novo));
+          }
         }
         campo.addEventListener('input', previaValor); previaValor();
+        if ($('dataReg')) $('dataReg').addEventListener('input', function () {
+          st.data = $('dataReg').value; $('dataReg').removeAttribute('aria-invalid'); previaValor();
+        });
         fr.onsubmit = function (ev) {
           ev.preventDefault();
           if (st.ocupado) return;
@@ -425,13 +436,19 @@
           try { M.validarValor(v, meta); } catch (e) { falha(e.message); return; }
           var novoMeta = JSON.parse(JSON.stringify(meta));
           var subtrair=podeSomar() && ev.submitter && ev.submitter.value==='sub';
-          var novo = podeSomar() ? M.valorAtual(novoMeta) + (subtrair ? -v : v) : v;
-          if (novo<0) {falha('A subtração não pode deixar o total negativo.');return;}
-          try {M.validarValor(novo,meta);} catch(e){falha(e.message);return;}
+          var hj = M.hoje(), dataEl = $('dataReg'), data = dataEl && dataEl.value ? dataEl.value : hj;
+          var maxData = hj < meta.fim ? hj : meta.fim;
+          if (data < meta.ini || data > maxData) {
+            if (dataEl) { dataEl.setAttribute('aria-invalid', 'true'); dataEl.focus(); }
+            previa.className = 'ajuda erro-campo'; previa.textContent = 'Escolha uma data entre ' + M.dataBR(meta.ini) + ' e ' + M.dataBR(maxData);
+            return;
+          }
+          try { novoMeta.hist = M.inserirRegistro(meta, data, v, podeSomar() ? (subtrair ? 'sub' : 'add') : 'abs', o.ctx.eu); }
+          catch (e) { falha(e.message); return; }
+          // Registro de hoje mantém o objetivo do dia fixado; com data anterior, o dia é recalculado
           var diaFixo = M.diaria(meta);
-          if (diaFixo) novoMeta.diaria = { em: diaFixo.em, base: diaFixo.base, alvo: diaFixo.alvo };
-          novoMeta.hist = novoMeta.hist || [];
-          novoMeta.hist.push([M.hoje(), Math.round(novo * 100) / 100, o.ctx.eu.id, o.ctx.eu.fullName.split(' ')[0], '']);
+          if (diaFixo && data === hj) novoMeta.diaria = { em: diaFixo.em, base: diaFixo.base, alvo: diaFixo.alvo };
+          else delete novoMeta.diaria;
           st.rascunho = campo.value;
           salvar(novoMeta, null, true);
         };
