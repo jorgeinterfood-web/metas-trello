@@ -183,8 +183,8 @@ a { color: var(--azul-texto); }
 .ponto.sit-hit { background: var(--hit); } .ponto.sit-neutral { background: var(--sub); }
 
 /* Barra de progresso com traço do esperado */
-.barra { position: relative; height: 8px; border-radius: 4px; background: var(--trilho); }
-.barra-grossa { height: 10px; border-radius: 5px; }
+.barra { position: relative; height: 6px; border-radius: 3px; background: var(--trilho); }
+.barra-grossa { height: 6px; border-radius: 3px; }
 .barra-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit; }
 .sit-ok.barra-fill { background: var(--ok); } .sit-risk.barra-fill { background: var(--risk); }
 .sit-late.barra-fill { background: var(--late); } .sit-hit.barra-fill { background: var(--hit); }
@@ -551,3 +551,6 @@ html[data-color-mode="dark"] .avatar { color: #1F1F21; }
 
 /* v37: valores e variações do histórico na mesma escala das datas e dos autores. */
 #app .hist-linha > .num, #app .hist-linha .num > .forte { font: var(--ds-metas-font-meta); }
+
+/* v38: descrição da alteração na mesma escala de data e autor. */
+#app .det-alteracoes .hist-linha { font: var(--ds-metas-font-meta); }
