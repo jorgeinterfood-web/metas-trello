@@ -459,35 +459,51 @@
   // e as pessoas ficam uma vez só em hp ([id, primeiro nome]). Na tela, o histórico continua
   // no formato completo [data, valor, id, nome, observação].
   function clonar(x) { return JSON.parse(JSON.stringify(x)); }
+  // Clientes (desde a versão 24): cada registro pode trazer o cliente na posição 5
+  // do formato completo [data, valor, id, nome, observação, cliente]. No formato compacto,
+  // os nomes ficam uma vez só em hc e o registro guarda a posição (a partir de 1) como número; a observação,
+  // quando houver, continua como texto. Versões anteriores leem o índice como observação
+  // e o regravam sem perder nada.
   function decodificar(m) {
     if (!m || !m.h) return m;
-    var c = clonar(m), pessoas = c.hp || [];
+    var c = clonar(m), pessoas = c.hp || [], clientes = c.hc || [];
     var hist = c.h.map(function (r) {
-      var p = pessoas[r[2]] || ['', ''];
-      return [addDias(c.ini, r[0]), r[1], p[0], p[1], r[3] || ''];
+      var p = pessoas[r[2]] || ['', ''], obs = '', cli = '';
+      r.slice(3).forEach(function (x) { if (typeof x === 'number') cli = clientes[x - 1] || ''; else if (x) obs = x; });
+      var e = [addDias(c.ini, r[0]), r[1], p[0], p[1], obs];
+      if (cli) e.push(cli);
+      return e;
     });
     // Registros gravados por uma aba ainda na versão antiga entram depois dos compactos
     c.hist = hist.concat(Array.isArray(m.hist) ? m.hist : []);
-    delete c.h; delete c.hp;
+    delete c.h; delete c.hp; delete c.hc;
     return c;
   }
   function codificar(meta) {
-    var c = clonar(meta), pessoas = [], idx = {};
+    var c = clonar(meta), pessoas = [], idx = {}, clientes = [], idxC = {};
     c.h = (c.hist || []).map(function (e) {
       var chave = (e[2] || '') + '|' + (e[3] || '');
       if (!(chave in idx)) { idx[chave] = pessoas.length; pessoas.push([e[2] || '', e[3] || '']); }
       var r = [diasEntre(c.ini, e[0]), e[1], idx[chave]];
+      if (e[5]) {
+        if (!(e[5] in idxC)) { idxC[e[5]] = clientes.length; clientes.push(e[5]); }
+        r.push(idxC[e[5]] + 1);
+      }
       if (e[4]) r.push(e[4]);
       return r;
     });
     c.hp = pessoas; c.v = 2;
+    if (clientes.length) c.hc = clientes; else delete c.hc;
     delete c.hist;
     return c;
   }
   function tamanho(x) { return JSON.stringify(x).length; }
-  // Quando o histórico não cabe: primeiro junta os registros de um mesmo dia (dias anteriores
-  // a hoje, do mais antigo ao mais recente), mantendo o total do fim do dia. Se ainda não couber,
-  // retira os dias mais antigos e guarda o último valor retirado em histBase.
+  function centavos(v) { return Math.round(v * 100) / 100; }
+  function baseHist(meta) { return meta.histCortado && Number.isFinite(meta.histBase) ? meta.histBase : meta.vIni; }
+  // Quando o histórico não cabe: primeiro junta, em cada dia anterior a hoje (do mais antigo
+  // ao mais recente), os registros do mesmo cliente, mantendo o quanto cada cliente somou e o
+  // total do fim do dia. Se ainda não couber, retira os dias mais antigos e guarda o último
+  // valor retirado em histBase.
   // Altera meta.hist, meta.histBase e meta.histCortado. Devolve a versão compacta para gravar.
   function caber(meta) {
     var enc = codificar(meta);
@@ -495,15 +511,27 @@
     var h = meta.hist || [], d = hoje(), dias = [];
     h.forEach(function (e) { if (e[0] < d && dias.indexOf(e[0]) < 0) dias.push(e[0]); });
     for (var i = 0; i < dias.length; i++) {
-      var dia = dias[i], doDia = h.filter(function (e) { return e[0] === dia; });
-      if (doDia.length > 1) {
-        var ult = doDia[doDia.length - 1], juntou = false;
-        h = h.filter(function (e) { if (e[0] !== dia) return true; if (juntou) return false; juntou = true; return true; })
-          .map(function (e) { return e[0] === dia ? [dia, ult[1], ult[2], ult[3], ''] : e; });
-        meta.hist = h;
-        enc = codificar(meta);
-        if (tamanho(enc) <= LIMITE) return enc;
-      }
+      var dia = dias[i], pos = [];
+      h.forEach(function (e, k) { if (e[0] === dia) pos.push(k); });
+      if (pos.length < 2 || pos[pos.length - 1] - pos[0] !== pos.length - 1) continue;
+      var anterior = pos[0] > 0 ? h[pos[0] - 1][1] : baseHist(meta), grupos = [], porCli = {}, ant = anterior;
+      pos.forEach(function (k) {
+        var e = h[k], cli = e[5] || '', delta = e[1] - ant; ant = e[1];
+        if (!(cli in porCli)) { porCli[cli] = { cli: cli, delta: 0, id: e[2], nome: e[3] }; grupos.push(porCli[cli]); }
+        var g = porCli[cli]; g.delta += delta; g.id = e[2]; g.nome = e[3];
+      });
+      if (grupos.length === pos.length) continue;
+      var acc = anterior, fimDoDia = h[pos[pos.length - 1]][1];
+      var novos = grupos.map(function (g, n) {
+        acc = n === grupos.length - 1 ? fimDoDia : centavos(acc + g.delta);
+        var e = [dia, acc, g.id, g.nome, ''];
+        if (g.cli) e.push(g.cli);
+        return e;
+      });
+      h = h.slice(0, pos[0]).concat(novos, h.slice(pos[pos.length - 1] + 1));
+      meta.hist = h;
+      enc = codificar(meta);
+      if (tamanho(enc) <= LIMITE) return enc;
     }
     while (h.length > 1) {
       var tirado = h.shift();
@@ -512,6 +540,123 @@
       if (tamanho(enc) <= LIMITE) return enc;
     }
     throw falha('Esta meta atingiu o limite de armazenamento. Crie outra meta para continuar sem apagar os registros existentes.', 'HISTORY');
+  }
+
+  // ---------- Clientes ----------
+  // Cliente só entra em metas que acumulam (dinheiro ou quantidade, para cima)
+  // Metas de clientes atendidos (auto) contam os clientes das outras e não recebem cliente
+  function aceitaCliente(meta) { return !!meta && meta.tipo === 'q' && meta.fmt !== 'p' && meta.dir !== 'down' && !meta.auto; }
+  function limparNome(s) { return String(s || '').replace(/\s+/g, ' ').trim().slice(0, 60); }
+  // Chave de comparação: sem acentos, sem diferença de maiúsculas e de espaços
+  function normCliente(s) { return limparNome(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR'); }
+  // Quanto cada registro somou ou subtraiu, com o cliente informado
+  function registrosComDelta(meta) {
+    var ant = baseHist(meta);
+    return (meta.hist || []).map(function (e) {
+      var delta = centavos(e[1] - ant); ant = e[1];
+      return { data: e[0], delta: delta, cliente: e[5] || '', pessoaId: e[2], pessoa: e[3] };
+    });
+  }
+  // Nomes de clientes usados nas metas, um por cliente, na grafia mais usada
+  function nomesDeClientes(metas) {
+    var grupos = {};
+    metas.forEach(function (m) {
+      (m && m.hist || []).forEach(function (e) {
+        if (!e[5]) return;
+        var k = normCliente(e[5]), g = grupos[k] = grupos[k] || {};
+        g[e[5]] = (g[e[5]] || 0) + 1;
+      });
+    });
+    return Object.keys(grupos).map(function (k) {
+      var g = grupos[k];
+      return Object.keys(g).sort(function (a, b) { return g[b] - g[a]; })[0];
+    }).sort(function (a, b) { return a.localeCompare(b, 'pt-BR'); });
+  }
+  // Grafia já usada para o mesmo cliente, ou o nome digitado limpo
+  function canonico(nome, lista) {
+    var k = normCliente(nome);
+    if (!k) return '';
+    var achou = (lista || []).filter(function (n) { return normCliente(n) === k; })[0];
+    return achou || limparNome(nome);
+  }
+  // Todas as metas do quadro como [{ id, meta }], lidas uma vez por tela (fresco relê)
+  var cacheMetas = null;
+  function metasDoQuadro(t, fresco) {
+    if (cacheMetas && !fresco) return cacheMetas;
+    cacheMetas = t.cards('id').then(function (cs) {
+      return Promise.all(cs.map(function (c) {
+        return ler(t, c.id).then(function (m) { return m ? { id: c.id, meta: m } : null; }, function () { return null; });
+      }));
+    }).then(function (l) { return l.filter(Boolean); })
+      .catch(function () { cacheMetas = null; return []; });
+    return cacheMetas;
+  }
+  function clientesDoQuadro(t) {
+    return metasDoQuadro(t).then(function (l) { return nomesDeClientes(l.map(function (x) { return x.meta; })); });
+  }
+
+  // ---------- Clientes atendidos ----------
+  // Conta os clientes distintos com valor positivo, no período da meta, nas metas de
+  // dinheiro e quantidade do mesmo responsável. todas: [{ id, meta }].
+  function clientesAtendidos(meta, todas) {
+    if (!meta || meta.auto !== 'clientes' || !meta.dono) return [];
+    var porCli = {}, ordem = [];
+    todas.forEach(function (x) {
+      var m = x.meta;
+      if (!aceitaCliente(m) || !m.dono || m.dono.id !== meta.dono.id) return;
+      registrosComDelta(m).forEach(function (r) {
+        if (!r.cliente || r.data < meta.ini || r.data > meta.fim) return;
+        var k = normCliente(r.cliente), c = porCli[k];
+        if (!c) { c = porCli[k] = { chave: k, somas: {}, primeiro: r.data }; ordem.push(c); }
+        c.somas[x.id] = (c.somas[x.id] || 0) + r.delta;
+        if (r.data < c.primeiro) c.primeiro = r.data;
+      });
+    });
+    var oficial = {};
+    nomesDeClientes(todas.map(function (x) { return x.meta; })).forEach(function (n) { oficial[normCliente(n)] = n; });
+    return ordem.filter(function (c) {
+      return Object.keys(c.somas).some(function (id) { return c.somas[id] > 0.005; });
+    }).map(function (c) { return { nome: oficial[c.chave] || c.chave, primeiro: c.primeiro }; })
+      .sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); });
+  }
+  // Grava a contagem quando ela mudou. Devolve a meta nova, ou null se nada mudou ou não deu.
+  function sincronizarAtendidos(t, id, meta, todas, eu) {
+    if (!meta || meta.auto !== 'clientes' || meta.encerrada) return Promise.resolve(null);
+    var n = clientesAtendidos(meta, todas).length;
+    if (n === valorAtual(meta)) return Promise.resolve(null);
+    var novo = clonar(meta), d = diaria(meta);
+    if (d) novo.diaria = { em: d.em, base: d.base, alvo: d.alvo };
+    novo.hist = novo.hist || [];
+    novo.hist.push([hoje(), n, eu.id, String(eu.fullName || '').split(' ')[0], '']);
+    return salvarMeta(t, id, novo).then(function () { return novo; }, function () { return null; });
+  }
+  // Atualiza as metas de clientes atendidos de um responsável. Devolve [{ id, meta }] das gravadas.
+  function atualizarAtendidosDoDono(t, donoId, todas, eu) {
+    var alvos = todas.filter(function (x) { return x.meta.auto === 'clientes' && x.meta.dono && x.meta.dono.id === donoId; });
+    var feitas = [];
+    return alvos.reduce(function (pr, x) {
+      return pr.then(function () {
+        return sincronizarAtendidos(t, x.id, x.meta, todas, eu).then(function (novo) { if (novo) { x.meta = novo; feitas.push(x); } });
+      });
+    }, Promise.resolve()).then(function () { return feitas; });
+  }
+
+  // ---------- Concentração ----------
+  // Quanto os 3 maiores clientes representam do realizado da meta
+  function concentracao(meta) {
+    if (!aceitaCliente(meta)) return null;
+    var por = {}, lista = [];
+    registrosComDelta(meta).forEach(function (r) {
+      if (!r.cliente) return;
+      var k = normCliente(r.cliente);
+      if (!por[k]) { por[k] = { nome: r.cliente, v: 0 }; lista.push(por[k]); }
+      por[k].v += r.delta;
+    });
+    var real = valorAtual(meta) - meta.vIni;
+    lista = lista.filter(function (c) { return c.v > 0.005; }).sort(function (a, b) { return b.v - a.v; }).slice(0, 3);
+    if (!lista.length || real <= 0) return null;
+    var soma = lista.reduce(function (acc, c) { return acc + c.v; }, 0);
+    return { nomes: lista.map(function (c) { return c.nome; }), pct: Math.min(100, Math.round(soma / real * 100)) };
   }
   // Lê a meta de um cartão já no formato completo
   function ler(t, escopo) { return t.get(escopo, 'shared', CHAVE).then(decodificar); }
@@ -667,7 +812,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    prepararCard: prepararCard, ler: ler, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, ler: ler, aceitaCliente: aceitaCliente, limparNome: limparNome, normCliente: normCliente, registrosComDelta: registrosComDelta, nomesDeClientes: nomesDeClientes, canonico: canonico, clientesDoQuadro: clientesDoQuadro, metasDoQuadro: metasDoQuadro, clientesAtendidos: clientesAtendidos, sincronizarAtendidos: sincronizarAtendidos, atualizarAtendidosDoDono: atualizarAtendidosDoDono, concentracao: concentracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

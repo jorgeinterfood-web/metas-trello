@@ -94,7 +94,7 @@
 
   // o: { t, escopo, meta, card, ctx, aoSalvar, ajustar, abrirCartao }
   M.detalhe = function (el, o) {
-    var st = { msg: null, ocupado: false, rascunho: '', todos: false, confirmar: false, alterarAval: false };
+    var st = { msg: null, ocupado: false, rascunho: '', cliente: '', atendidos: null, carregandoAtendidos: false, todos: false, confirmar: false, alterarAval: false };
     var meta = o.meta;
     var D = {};
 
@@ -159,7 +159,8 @@
       var m = meta, r = D.r, principal, titulo;
       if (m.tipo === 'q') {
         titulo = ehTaxa() ? 'Percentual atual' : 'Progresso geral';
-        principal = '<span class="forte num">' + esc(f(r.atual)) + '</span>';
+        // Em quantidade, a unidade aparece só no objetivo: 4 de 10 clientes
+        principal = '<span class="forte num">' + esc(m.fmt === 'n' && !ehTaxa() && m.dir !== 'down' ? M.numBR(r.atual, M.casasDe(m)) : f(r.atual)) + '</span>';
         if (!ehTaxa()) principal += ' <span class="sub">' + (m.dir === 'down' ? '(objetivo: ' + esc(f(m.alvo)) + ')' : 'de ' + esc(f(m.alvo))) + '</span>';
 
       } else if (m.tipo === 'e') {
@@ -171,6 +172,11 @@
         principal = '<span class="forte">' + (m.aval ? 'registrada' : 'em ' + data(m.fim)) + '</span>';
       }
       var itens = frases().filter(Boolean);
+      var conc = M.concentracao(m);
+      if (conc) {
+        var nomes = conc.nomes.length === 1 ? conc.nomes[0] : conc.nomes.slice(0, -1).join(', ') + ' e ' + conc.nomes[conc.nomes.length - 1];
+        itens.push((conc.nomes.length === 1 ? 'Maior cliente: ' : 'Maiores clientes: ') + nomes + ' (' + conc.pct + '% do realizado)');
+      }
       if (m.tipo === 'q' && !ehTaxa() && m.vIni !== 0) itens.push('Valor inicial: ' + f(m.vIni));
       if (r.parada) itens.push('Sem atualização há ' + r.diasSemAtualizar + (r.diasSemAtualizar === 1 ? ' dia' : ' dias'));
       var linhas = feedback(itens);
@@ -194,21 +200,55 @@
 
       var falta = d.atingiu ? (d.superou ? 'Excedente do dia: ' + (m.fmt === 'r' ? M.numBR(d.realizado-d.alvo,2,2) : f(d.realizado-d.alvo)) : '') : M.faltam(m, d.falta) + ' ' + f(d.falta) + ' para concluir o objetivo do dia.';
       return '<section class="det-dia" aria-label="Objetivo do dia">' +
-        '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">Objetivo do dia: <span class="forte num">' + esc(f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + '</span></h3></div>' +
+        '<div class="det-topo"><h3 class="det-titulo det-valor det-linha">Objetivo do dia: <span class="forte num">' + esc(m.fmt === 'n' ? M.numBR(d.realizado, M.casasDe(m)) : f(d.realizado)) + '</span> <span class="sub">de ' + esc(f(d.alvo)) + '</span></h3></div>' +
         '<div class="det-barra">' + M.barra(rDia, { grossa: true, label: 'Progresso do dia', texto: f(d.realizado) + ' de ' + f(d.alvo) + ' no dia. ' + rot }) + '<span class="det-status selo sit-' + (d.atingiu ? 'ok' : 'neutral') + '">' + esc(M.textoProgressoDia(d)) + '</span></div>' +
         (falta ? '<p class="det-frase">' + esc(falta) + '</p>' : '') + '</section>';
     }
 
+    // Meta de clientes atendidos: sem registro manual, mostra os clientes contados
+    function atendidos() {
+      var m = meta, dono = m.dono ? m.dono.fullName : 'o responsável';
+      var lista = st.atendidos;
+      var corpo = lista === null ? '<p class="det-frase sub">Carregando clientes…</p>' :
+        (lista.length ? '<p class="det-frase">' + lista.map(function (c) { return esc(c.nome); }).join(', ') + '</p>' : '<p class="det-frase sub">Nenhum cliente contado ainda</p>');
+      return '<section class="registro coluna gap8 det-atendidos"><h3 class="det-titulo">Clientes contados</h3>' + corpo +
+        '<p class="ajuda">A contagem é automática: entra cada cliente com valor registrado no período nas metas de dinheiro e quantidade de ' + esc(dono) + '</p></section>';
+    }
+    function podeSincronizar() { return o.ctx.admin || (meta.dono && meta.dono.id === o.ctx.eu.id); }
+    function carregarAtendidos() {
+      if (meta.auto !== 'clientes' || !o.todas || st.carregandoAtendidos) return;
+      st.carregandoAtendidos = true;
+      o.todas(false).then(function (todas) {
+        st.atendidos = M.clientesAtendidos(meta, todas);
+        render();
+        if (!podeSincronizar()) return null;
+        return M.sincronizarAtendidos(o.t, o.escopo, meta, todas, o.ctx.eu).then(function (novo) {
+          if (!novo) return;
+          meta = novo; if (o.aoSalvar) o.aoSalvar(meta); render();
+        });
+      }).catch(function () { st.atendidos = st.atendidos || []; render(); });
+    }
+    // Depois de um registro, atualiza as metas de clientes atendidos do mesmo responsável
+    function sincronizarDono() {
+      if (!o.todas || !meta.dono || !M.aceitaCliente(meta)) return;
+      if (!o.ctx.admin && meta.dono.id !== o.ctx.eu.id) return;
+      o.todas(true).then(function (todas) { return M.atualizarAtendidosDoDono(o.t, meta.dono.id, todas, o.ctx.eu); })
+        .then(function (feitas) { if (feitas.length && o.aoAtendidos) o.aoAtendidos(feitas); }).catch(function () {});
+    }
+
     function registro() {
       var m = meta;
+      if (m.auto === 'clientes') return atendidos();
       if (m.tipo !== 'q' || m.encerrada) return '';
       if (!M.periodoAberto(m)) return '<p class="det-frase sub">Registros disponíveis apenas durante o período da meta.</p>';
       if (!podeAtualizar()) return '<p class="det-frase sub">' + (m.quem === 'admin' ? 'Só administradores podem registrar valores.' : 'Só o responsável e administradores podem registrar valores.') + '</p>';
       var rot = podeSomar() ? 'Valor do registro' : (ehTaxa() ? 'Percentual atual' : 'Valor atual');
       var pre = m.fmt === 'r' ? 'R$' : '', suf = m.fmt === 'p' ? '%' : (m.fmt === 'n' ? M.pluralUnidade(m.unit) : '');
       return '<form class="registro" id="fAtualizar" novalidate>' +
-        '<div class="registro-linha"><label class="rotulo registro-label" for="valor">' + rot + '</label>' +
+        '<div class="registro-linha' + (M.aceitaCliente(m) ? ' com-cliente' : '') + '"><label class="rotulo registro-label" for="valor">' + rot + '</label>' +
         '<span class="campo-prefixo registro-entrada">' + (pre ? '<span>' + pre + '</span>' : '') + '<input id="valor" value="' + esc(st.rascunho) + '" type="text" inputmode="decimal" autocomplete="off" aria-describedby="previa" placeholder="' + (m.fmt === 'r' ? '0,00' : '0') + '">' + (suf ? '<span>' + esc(suf) + '</span>' : '') + '</span>' +
+        (M.aceitaCliente(m) ? '<label class="rotulo registro-label registro-label-cliente" for="cliente">Cliente (opcional)</label>' +
+          '<input id="cliente" class="campo-solto registro-cliente" type="text" maxlength="60" autocomplete="off" list="listaClientes" value="' + esc(st.cliente) + '"><datalist id="listaClientes"></datalist>' : '') +
         (podeSomar() ? '<div class="registro-acoes"><button type="submit" name="operacao" value="add" class="btn btn-primario"' + (st.ocupado ? ' disabled' : '') + '>Somar</button><button type="submit" name="operacao" value="sub" class="btn"' + (st.ocupado ? ' disabled' : '') + '>Subtrair</button></div>' : '<button type="submit" class="btn btn-primario registro-submit"' + (st.ocupado ? ' disabled' : '') + '>Registrar</button>') + '</div>' +
         '<div class="ajuda registro-previa" id="previa" aria-live="polite"></div>' + '</form>';
     }
@@ -253,7 +293,7 @@
         var tdif = ehTaxa() ? M.pontos(meta, dif) : f(Math.abs(dif));
         linhas.push('<div class="hist-linha"><span class="sub num">' + M.dataBR(e[0]) + '</span>' +
           '<span class="num"><span class="forte">' + esc(f(e[1])) + '</span> <span class="' + (dif < 0 ? 'hist-negativo' : 'hist-positivo') + '">' + (dif >= 0 ? '+' : '−') + esc(tdif) + '</span></span>' +
-          '<span class="sub hist-quem">' + esc(e[3] || '') + (e[4] ? '. ' + esc(e[4]) : '') + '</span></div>');
+          '<span class="sub hist-quem">' + esc(e[3] || '') + (e[5] ? ' · ' + esc(e[5]) : '') + (e[4] ? '. ' + esc(e[4]) : '') + '</span></div>');
       }
       var hist = h.length ? '<div class="hist">' + linhas.join('') + '</div>' + (h.length > 8 ? '<button type="button" class="btn-link" id="verHist">' + (st.todos ? 'Ver últimos 8' : 'Ver histórico completo') + '</button>' : '') : '<p class="det-frase sub">Nenhum registro ainda.</p>';
       return '<div class="det-grade"><section class="coluna gap8" style="min-width:0"><h3 class="det-titulo">Evolução</h3>' + graf + '</section>' +
@@ -293,8 +333,9 @@
       st.ocupado = true;
       el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
       return M.salvarMeta(o.t, o.escopo, novo).then(function () {
-        meta = novo; if(registroSilencioso) st.rascunho = ''; st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
+        meta = novo; if(registroSilencioso) { st.rascunho = ''; st.cliente = ''; } st.msg = aviso ? { texto: aviso } : null; st.alterarAval = false;
         if (o.aoSalvar) o.aoSalvar(meta);
+        if (registroSilencioso) sincronizarDono();
         var rAtual=M.avaliar(meta,o.card.badges);
         return M.autorizado(o.t).then(function(ok){if(!ok)return false;return M.rest(o.t,'PUT','/cards/'+o.card.id,{dueComplete:rAtual.sit==='hit'||rAtual.sit==='noalvo'}).then(function(){if(!reabrindo)return true;return M.garantirLista(o.t,M.CFG.listaMetas,'top').then(function(l){return M.rest(o.t,'PUT','/cards/'+o.card.id,{idList:l.id,pos:'top'});}).then(function(){st.msg={texto:'Meta reaberta e cartão movido.'};return true;});});}).catch(function(){return false;}).then(function(ok){if(!ok && !registroSilencioso)st.msg={texto:'Conclusão não sincronizada no cartão.'};st.ocupado=false;render();if(registroSilencioso){var campo=el.querySelector('#valor');if(campo)campo.focus();}});
       }).catch(function (e) { st.ocupado = false; st.msg = { erro: true, texto: M.erroUsuario(e) }; render(); });
@@ -322,6 +363,23 @@
           } else previa.textContent = 'Após o registro: ' + f(M.arred(meta,novo));
         }
         campo.addEventListener('input', previaValor); previaValor();
+        // Sugestões de clientes: carregadas na primeira vez que o campo recebe foco
+        var campoCli = $('cliente'), listaCli = null;
+        function clientes() {
+          if (!listaCli) listaCli = (o.clientes ? o.clientes() : Promise.resolve([])).catch(function () { return []; }).then(function (l) {
+            return M.nomesDeClientes([meta]).concat(l).filter(function (n, i, a) { return a.indexOf(n) === i; });
+          });
+          return listaCli;
+        }
+        if (campoCli) {
+          campoCli.addEventListener('input', function () { st.cliente = campoCli.value; });
+          campoCli.addEventListener('focus', function () {
+            clientes().then(function (l) {
+              var dl = $('listaClientes');
+              if (dl && !dl.children.length) dl.innerHTML = l.map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('');
+            });
+          });
+        }
         fr.onsubmit = function (ev) {
           ev.preventDefault();
           if (st.ocupado) return;
@@ -338,9 +396,19 @@
           var diaFixo = M.diaria(meta);
           if (diaFixo) novoMeta.diaria = { em: diaFixo.em, base: diaFixo.base, alvo: diaFixo.alvo };
           novoMeta.hist = novoMeta.hist || [];
-          novoMeta.hist.push([M.hoje(), Math.round(novo * 100) / 100, o.ctx.eu.id, o.ctx.eu.fullName.split(' ')[0], '']);
+          var registro = [M.hoje(), Math.round(novo * 100) / 100, o.ctx.eu.id, o.ctx.eu.fullName.split(' ')[0], ''];
           st.rascunho = campo.value;
-          salvar(novoMeta, null, true);
+          var digitado = campoCli ? campoCli.value : '';
+          if (!M.normCliente(digitado)) { novoMeta.hist.push(registro); salvar(novoMeta, null, true); return; }
+          // Usa a grafia já existente do cliente, para não criar duplicados
+          st.ocupado = true;
+          el.querySelectorAll('button').forEach(function (b) { b.disabled = true; });
+          clientes().then(function (l) {
+            st.ocupado = false;
+            registro.push(M.canonico(digitado, l));
+            novoMeta.hist.push(registro);
+            salvar(novoMeta, null, true);
+          });
         };
       }
       if ($('authEtapas')) $('authEtapas').onclick = function () { M.autorizar(o.t).then(function () { return M.prepararCard(o.t,o.card,meta); }).then(function () { render(); }).catch(function(e){st.msg={erro:true,texto:M.erroUsuario(e)};render();}); };
@@ -384,5 +452,6 @@
     window.addEventListener('resize', M._resize);
 
     render();
+    carregarAtendidos();
   };
 })();

@@ -1,38 +1,45 @@
-# Restauração completa da v22
+# Power-Up Metas, versão 25
 
-Este pacote restaura a versão 22 do ZIP enviado. Não inclui a navegação pelo tempo.
-Não é a v23 e não adiciona funcionalidades.
+## Atualizar a versão 24
 
-## Como aplicar
+Substitua no GitHub os arquivos deste pacote: core.js, detalhe.js, form.js,
+meta.js, painel.js, index.html, meta.html e painel.html. O metas.css e os demais
+ficam como na versão 24. As referências passaram a ?v=25.
 
-1. Envie TODOS os arquivos deste pacote ao repositório, substituindo os arquivos
-   correspondentes. Preserve o seu js/config.js existente, que não foi incluído.
-2. Espere a publicação terminar e recarregue o Trello com Ctrl + Shift + R.
-3. Abra novamente o painel pelo botão Metas.
+## Concentração
 
-Não apague o repositório ou a pasta js antes de enviar. O pacote não inclui
-chaves, tokens ou credenciais. O arquivo js/tempo.js da v23, caso tenha ficado
-no repositório, não é carregado por esta restauração.
+- Em metas de dinheiro e quantidade com clientes informados, o resumo mostra os
+  3 maiores clientes e quanto eles representam do realizado:
+  Maiores clientes: Carrefour, Mambo e Pão de Açúcar (62% do realizado)
+  Com um cliente só, aparece Maior cliente.
 
-## Diagnóstico
+## Meta de clientes atendidos
 
-Foi reproduzida em teste a mesma mensagem genérica do anexo quando painel.js
-permanece na v23 e painel.html volta à v22: a página deixa de carregar tempo.js,
-mas o painel da v23 tenta usar esse módulo.
+- Novo tipo Clientes no formulário, entre Quantidade e Percentual. Pede só o
+  responsável, o período, o objetivo (número inteiro) e a contagem de dias.
+- A meta conta sozinha os clientes distintos com valor positivo no período, nas
+  metas de dinheiro e quantidade do mesmo responsável. Grafias equivalentes
+  contam uma vez; um cliente cuja soma volta a zero por devolução sai da contagem.
+- Não tem registro manual. No verso do cartão, no lugar do registro, aparece a
+  lista dos clientes contados.
+- A contagem é gravada: depois de cada registro nas metas do responsável; ao
+  abrir o cartão da meta; ao abrir ou atualizar o painel. Grava quem é o
+  responsável ou admin. O selo na frente do cartão mostra o último valor gravado.
+- Metas de clientes atendidos não entram na aba Clientes, para não contar o
+  mesmo cliente duas vezes.
 
-Pacotes de atualização antigos podem conter somente parte dos arquivos. Por
-isso, este pacote contém todos os arquivos da aplicação v22, exceto config.js,
-para evitar sobras de arquivos de aplicação da v23. A aplicação hospedada não
-foi inspecionada, então a causa exata da sua publicação ainda não foi confirmada.
+## Ajuste
 
-A única mudança técnica sobre o código da v22 do anexo são as referências de
-cache dos HTMLs, agora ?v=22-restauracao-1. Os JavaScripts e o CSS são os originais
-da v22 enviada. Não há necessidade demonstrada de apagar ou migrar os dados das
-metas: a v22 lê os campos adicionais da v23 sem usá-los.
+- Em metas de quantidade, a unidade aparece só no objetivo: "4 de 10 clientes",
+  em vez de "4 clientes de 10 clientes". O mesmo vale para o objetivo do dia.
 
 ## Validação
 
-Sintaxe dos JavaScripts; reprodução da mistura de versões; carregamento do
-painel v22 com histórico compacto e campos adicionais da v23; cálculos de
-metas quantitativas, etapas e avaliações. Não foi realizada edição remota ou
-exclusão de dados no Trello.
+Sintaxe dos JavaScripts e testes com Trello simulado: contagem de clientes
+distintos entre metas de dinheiro e quantidade do responsável, grafias
+equivalentes, saída de cliente zerado por devolução, gravação depois de
+registro, ao abrir o cartão e ao carregar o painel, exclusão da aba Clientes;
+formulário do tipo Clientes com objetivo inteiro, sem valor inicial e com
+atualização pelo responsável; concentração; testes anteriores de clientes,
+compactação, migração, Etapas e projeção. A conferência visual no Trello
+continua pendente. Nenhuma alteração remota foi realizada.

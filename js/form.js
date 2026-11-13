@@ -2,11 +2,12 @@
 (function () {
   var M = window.Metas, esc = M.esc;
 
-  var TIPOS = [['r', 'Dinheiro'], ['n', 'Quantidade'], ['p', 'Percentual'], ['e', 'Etapas']];
+  var TIPOS = [['r', 'Dinheiro'], ['n', 'Quantidade'], ['c', 'Clientes'], ['p', 'Percentual'], ['e', 'Etapas']];
   var AJUDA = {
     r: 'Valor em reais que acumula no período, como faturamento.',
     n: 'Contagem que acumula no período, como clientes novos ou pedidos.',
     p: 'Taxa que precisa chegar a um nível, como entrega no prazo.',
+    c: 'Clientes atendidos no período, contados sozinhos a partir dos clientes informados nas metas de dinheiro e quantidade do responsável.',
     e: 'Entregas marcadas numa checklist no cartão.',
     a: 'Sem número. Um administrador avalia o resultado no fim do período.'
   };
@@ -92,7 +93,7 @@
 
     var $ = function (id) { return el.querySelector('#' + id); };
     var ajustar = function () { if (o.ajustar) o.ajustar(); };
-    function ehValor() { return S.kind === 'r' || S.kind === 'n' || S.kind === 'p'; }
+    function ehValor() { return S.kind === 'r' || S.kind === 'n' || S.kind === 'p' || S.kind === 'c'; }
 
     // ---------- erros ----------
     function geral(txt) { var r = $('rodapeInfo'); r.textContent = txt || ''; r.className = 'peq' + (txt ? ' erro-texto' : ''); }
@@ -141,10 +142,11 @@
       $('blocoA').classList.toggle('oculto', S.kind !== 'a');
       $('campoSingular').classList.toggle('oculto', S.kind !== 'n');
       $('campoUnidade').classList.toggle('invisivel', S.kind !== 'n');
-      $('campoQuem').classList.toggle('oculto', !ehValor());
+      $('campoQuem').classList.toggle('oculto', !ehValor() || S.kind === 'c');
+      $('vIni').closest('.campo').classList.toggle('oculto', S.kind === 'c');
       $('campoRitmo').classList.toggle('oculto', S.kind === 'a' || S.kind === 'p');
       el.querySelectorAll('.pre').forEach(function (s) { s.textContent = S.kind === 'r' ? 'R$' : ''; });
-      el.querySelectorAll('.suf').forEach(function (s) { s.textContent = S.kind === 'p' ? '%' : ''; });
+      el.querySelectorAll('.suf').forEach(function (s) { s.textContent = S.kind === 'p' ? '%' : (S.kind === 'c' ? 'clientes' : ''); });
       $('rotVIni').textContent = S.kind === 'p' ? 'Percentual inicial' : 'Valor inicial';
       reformatar($('vIni')); reformatar($('alvo'));
       ajustar();
@@ -175,7 +177,7 @@
       });
     }
     function preencher(meta) {
-      S.kind = meta.tipo === 'q' ? (meta.fmt || 'r') : meta.tipo;
+      S.kind = meta.auto === 'clientes' ? 'c' : (meta.tipo === 'q' ? (meta.fmt || 'r') : meta.tipo);
       S.imp = meta.imp || 1;
       var v = meta.ini + '|' + meta.fim;
       $('periodo').value = Array.prototype.some.call($('periodo').options, function (op) { return op.value === v; }) ? v : 'livre';
@@ -210,7 +212,16 @@
       meta.hist = original ? (original.hist || []) : [];
       meta.aval = original ? original.aval || null : null;
       meta.encerrada = original ? !!original.encerrada : false;
-      if (ehValor()) {
+      delete meta.auto;
+      if (S.kind === 'c') {
+        // Clientes atendidos: começa do zero, conta inteiros e é atualizada pelo responsável e pelos admins
+        var nAlvo = M.lerNumero($('alvo').value);
+        if (isNaN(nAlvo)) throw new Falha('alvo', 'Digite quantos clientes a meta pede.');
+        if (nAlvo <= 0 || Math.round(nAlvo) !== nAlvo) throw new Falha('alvo', 'Use um número inteiro de clientes, maior que zero');
+        meta.fmt = 'n'; meta.auto = 'clientes'; meta.vIni = 0; meta.alvo = nAlvo; meta.dir = 'up';
+        meta.unit = 'clientes'; meta.unitSingular = 'cliente'; meta.casas = 0; meta.quem = 'resp';
+        meta.ritmo = $('ritmo').value;
+      } else if (ehValor()) {
         var tIni = $('vIni').value, tAlvo = $('alvo').value;
         var v0 = M.lerNumero(tIni), alvo = M.lerNumero(tAlvo);
         if (isNaN(v0)) throw new Falha('vIni', 'Digite o valor inicial. Use 0 se a meta começa do zero.');
@@ -230,7 +241,7 @@
         meta.crit = $('crit').value.trim();
         if (!meta.crit) throw new Falha('crit', 'Explique como a meta será avaliada, para a pessoa saber o que se espera.');
       }
-      if (original && (original.hist || []).length && (original.tipo !== meta.tipo || original.fmt !== meta.fmt || M.pluralUnidade(original.unit) !== M.pluralUnidade(meta.unit) || original.vIni !== meta.vIni || M.casasDe(original) !== meta.casas)) throw new Falha('alvo', 'Esta meta já tem registros. Crie outra para mudar o tipo, a unidade ou o valor inicial.');
+      if (original && (original.hist || []).length && (original.tipo !== meta.tipo || original.fmt !== meta.fmt || M.pluralUnidade(original.unit) !== M.pluralUnidade(meta.unit) || original.vIni !== meta.vIni || M.casasDe(original) !== meta.casas || (original.auto || '') !== (meta.auto || ''))) throw new Falha('alvo', 'Esta meta já tem registros. Crie outra para mudar o tipo, a unidade ou o valor inicial.');
       if (original && (original.ini !== meta.ini || original.fim !== meta.fim || original.alvo !== meta.alvo || original.vIni !== meta.vIni || original.tipo !== meta.tipo || original.fmt !== meta.fmt || original.ritmo !== meta.ritmo)) delete meta.diaria;
       return meta;
     }
