@@ -483,3 +483,6 @@ details.mais summary:hover { text-decoration: underline; }
 
 /* v32: evolução da equipe dentro do bloco de progresso financeiro. */
 #app .fin-graf { margin-top: 8px; min-width: 0; }
+
+/* v33: configurações do Power-Up (visual escolhido por pessoa). */
+.config { padding: 12px; display: flex; flex-direction: column; gap: 12px; }

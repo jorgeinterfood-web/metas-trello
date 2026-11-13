@@ -449,6 +449,37 @@
       var th = t.getContext().theme;
       if (th === 'dark' || th === 'light') document.documentElement.setAttribute('data-color-mode', th);
     } catch (e) {}
+    aplicarVisual(t);
+  }
+
+  // Visual escolhido por cada pessoa nas configurações do Power-Up: 'trello' (padrão) ou 'shadcn'.
+  // Fica no armazenamento privado do membro; a cópia no navegador evita a tela piscar no visual errado.
+  var VISUAIS = ['trello', 'shadcn'], CHAVE_VISUAL = 'visual', CACHE_VISUAL = 'metas-visual', visualLido = null;
+  function marcarVisual(v) {
+    v = VISUAIS.indexOf(v) >= 0 ? v : 'trello';
+    var html = document.documentElement, antes = html.getAttribute('data-visual');
+    html.setAttribute('data-visual', v);
+    try { localStorage.setItem(CACHE_VISUAL, v); } catch (e) {}
+    return antes !== v;
+  }
+  function aplicarVisual(t) {
+    if (!document.documentElement.getAttribute('data-visual')) {
+      var guardado = null;
+      try { guardado = localStorage.getItem(CACHE_VISUAL); } catch (e) {}
+      marcarVisual(guardado);
+    }
+    if (!visualLido) {
+      visualLido = Promise.resolve().then(function () { return t.get('member', 'private', CHAVE_VISUAL); }).then(function (v) {
+        if (marcarVisual(v) && document.getElementById('app')) t.sizeTo('#app').catch(function () {});
+        return document.documentElement.getAttribute('data-visual');
+      }).catch(function () { return document.documentElement.getAttribute('data-visual'); });
+    }
+    return visualLido;
+  }
+  function salvarVisual(t, v) {
+    v = VISUAIS.indexOf(v) >= 0 ? v : 'trello';
+    marcarVisual(v);
+    return t.set('member', 'private', CHAVE_VISUAL, v);
   }
   function contexto(t) {
     return Promise.all([t.member('id', 'fullName', 'initials'), t.board('id', 'name', 'members', 'memberships')])
@@ -813,7 +844,7 @@
     lerNumero: lerNumero, formatarDigitado: formatarDigitado, mascarar: mascarar, decimaisDigitados: decimaisDigitados,
     diaria: diaria, percentualExibido: percentualExibido, valorAtual: valorAtual, ultimaAtualizacao: ultimaAtualizacao, avaliar: avaliar,
     textoDiff: textoDiff, classeDiff: classeDiff, textoBadge: textoBadge, textoMetaDia: textoMetaDia, temMetaDia: temMetaDia,
-    prepararCard: prepararCard, ler: ler, inserirRegistro: inserirRegistro, nota: nota, sincronizarCartao: sincronizarCartao, moverCartao: moverCartao, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
+    prepararCard: prepararCard, ler: ler, inserirRegistro: inserirRegistro, nota: nota, sincronizarCartao: sincronizarCartao, moverCartao: moverCartao, registrarAlteracoes: registrarAlteracoes, registrarEncerramento: registrarEncerramento, textoAlteracao: textoAlteracao, decodificar: decodificar, codificar: codificar, caber: caber, ehMarcador: ehMarcador, limparMarcador: limparMarcador, cartoesDaLista: cartoesDaLista, aplicarTema: aplicarTema, aplicarVisual: aplicarVisual, salvarVisual: salvarVisual, marcarVisual: marcarVisual, contexto: contexto, ehAdmin: ehAdmin, listasDeMetas: listasDeMetas, carregarMetas: carregarMetas, salvarMeta: salvarMeta, salvarMetaNova: salvarMetaNova, noPeriodo: noPeriodo,
     chaveConfigurada: chaveConfigurada, autorizado: autorizado, autorizar: autorizar, rest: rest, garantirLista: garantirLista,
     esc: esc, barra: barra, selo: selo, avatar: avatar, iconeImp: iconeImp, CHAVE: CHAVE
   };

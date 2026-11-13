@@ -1,0 +1,228 @@
+/* Visual shadcn (preset b37aFvF5c): estilo Nova, base e tema Zinc, gráfico Indigo,
+   Inter, raio pequeno (0.45rem). Carrega depois de metas.css e só vale com
+   html[data-visual="shadcn"], que core.js marca conforme a escolha de cada pessoa.
+   Valores tirados do registro oficial do shadcn (style-nova.css, themes.ts, config.ts). */
+
+@font-face {
+  font-family: "Inter Variable"; font-style: normal; font-display: swap; font-weight: 100 900;
+  src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Inter Variable"; font-style: normal; font-display: swap; font-weight: 100 900;
+  src: url("../fonts/inter-latin-ext-wght-normal.woff2") format("woff2-variations");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Tokens do shadcn (Zinc + gráfico Indigo) */
+html[data-visual="shadcn"] {
+  --radius: 0.45rem;
+  --r-sm: calc(var(--radius) - 4px); --r-md: calc(var(--radius) - 2px);
+  --r-lg: var(--radius); --r-xl: calc(var(--radius) + 4px);
+  --background: oklch(1 0 0); --foreground: oklch(0.141 0.005 285.823);
+  --card: oklch(1 0 0);
+  --primary: oklch(0.21 0.006 285.885); --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.967 0.001 286.375);
+  --muted: oklch(0.967 0.001 286.375); --muted-foreground: oklch(0.552 0.016 285.938);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.92 0.004 286.32); --input: oklch(0.92 0.004 286.32);
+  --ring: oklch(0.705 0.015 286.067);
+  --campo-fundo: transparent; --campo-hover: transparent;
+  --aba-ativa: var(--background); --aba-borda: transparent; --aba-texto: color-mix(in oklch, var(--foreground) 60%, transparent);
+  --sombra-sm: 0 1px 3px 0 rgb(0 0 0 / .1), 0 1px 2px -1px rgb(0 0 0 / .1);
+  --btn-fundo: var(--background); --btn-borda: var(--border); --btn-hover: var(--muted);
+  --ghost-hover: var(--muted);
+  --perigo-fundo: color-mix(in oklch, var(--destructive) 10%, transparent); --perigo-hover: color-mix(in oklch, var(--destructive) 20%, transparent);
+  /* Situações: o shadcn não tem cores de sucesso e alerta; usei a paleta do Tailwind
+     no mesmo padrão do destructive (cor a 10% no fundo, cor cheia no texto). */
+  --c-ok: oklch(0.627 0.194 149.214); --c-ok-t: oklch(0.527 0.154 150.069);
+  --c-risk: oklch(0.769 0.188 70.08); --c-risk-t: oklch(0.555 0.163 48.998);
+  --c-late: var(--destructive); --c-late-t: var(--destructive);
+  --c-hit: oklch(0.585 0.233 277.117); --c-hit-t: oklch(0.457 0.24 277.023);
+  --c-imp: oklch(0.705 0.213 47.604);
+}
+html[data-visual="shadcn"][data-color-mode="dark"] {
+  --background: oklch(0.141 0.005 285.823); --foreground: oklch(0.985 0 0);
+  --card: oklch(0.21 0.006 285.885);
+  --primary: oklch(0.92 0.004 286.32); --primary-foreground: oklch(0.21 0.006 285.885);
+  --secondary: oklch(0.274 0.006 286.033);
+  --muted: oklch(0.274 0.006 286.033); --muted-foreground: oklch(0.705 0.015 286.067);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%); --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.552 0.016 285.938);
+  --campo-fundo: oklch(1 0 0 / 4.5%); --campo-hover: oklch(1 0 0 / 7.5%);
+  --aba-ativa: oklch(1 0 0 / 4.5%); --aba-borda: var(--input); --aba-texto: var(--muted-foreground);
+  --sombra-sm: none;
+  --btn-fundo: oklch(1 0 0 / 4.5%); --btn-borda: var(--input); --btn-hover: oklch(1 0 0 / 7.5%);
+  --ghost-hover: color-mix(in oklch, var(--muted) 50%, transparent);
+  --perigo-fundo: color-mix(in oklch, var(--destructive) 20%, transparent); --perigo-hover: color-mix(in oklch, var(--destructive) 30%, transparent);
+  --c-ok: oklch(0.723 0.219 149.579); --c-ok-t: oklch(0.792 0.209 151.711);
+  --c-risk: oklch(0.828 0.189 84.429); --c-risk-t: oklch(0.879 0.169 91.605);
+  --c-hit: oklch(0.673 0.182 276.935); --c-hit-t: oklch(0.785 0.115 274.713);
+  --c-imp: oklch(0.75 0.183 55.934);
+}
+
+/* As variáveis do Metas passam a apontar para os tokens acima */
+html[data-visual="shadcn"] {
+  --texto: var(--foreground); --sub: var(--muted-foreground); --fraco: var(--muted-foreground);
+  --borda: var(--border); --borda-campo: var(--input);
+  --fundo: var(--background); --fundo-baixo: var(--muted); --fundo-cinza: var(--muted);
+  --trilho: var(--muted); --zona: var(--ring);
+  --azul: var(--primary); --azul-texto: var(--foreground); --azul-fundo: var(--muted);
+  --botao: var(--secondary); --botao-hover: color-mix(in oklch, var(--secondary), var(--foreground) 5%);
+  --ok: var(--c-ok); --ok-texto: var(--c-ok-t); --ok-fundo: color-mix(in oklch, var(--c-ok) 10%, transparent);
+  --risk: var(--c-risk); --risk-texto: var(--c-risk-t); --risk-fundo: color-mix(in oklch, var(--c-risk) 12%, transparent);
+  --late: var(--c-late); --late-texto: var(--c-late-t); --late-fundo: color-mix(in oklch, var(--c-late) 10%, transparent);
+  --hit: var(--c-hit); --hit-texto: var(--c-hit-t); --hit-fundo: color-mix(in oklch, var(--c-hit) 10%, transparent);
+  --aviso-texto: var(--c-risk-t); --imp-alta: var(--c-imp);
+  --sombra-seg: var(--sombra-sm);
+  --ctrl: 32px;
+}
+
+html[data-visual="shadcn"] body { font-family: "Inter Variable", Inter, ui-sans-serif, system-ui, sans-serif; font-size: 14px; line-height: 20px; -webkit-font-smoothing: antialiased; }
+html[data-visual="shadcn"]:has(#app.painel) { background: var(--background); }
+html[data-visual="shadcn"] :focus-visible { outline: none; }
+html[data-visual="shadcn"] ::selection { background: var(--primary); color: var(--primary-foreground); }
+html[data-visual="shadcn"] .forte { font-weight: 600; }
+
+/* Botões (Button: h-8, px-2.5, rounded-lg, font-medium). O botão neutro vira o "outline". */
+html[data-visual="shadcn"] #app .btn { height: 32px; padding: 0 10px; gap: 6px; border: 1px solid var(--btn-borda); border-radius: var(--r-lg); background: var(--btn-fundo); background-clip: padding-box; color: var(--foreground); font-size: 14px; font-weight: 500; }
+html[data-visual="shadcn"] #app .btn:hover { background: var(--btn-hover); }
+html[data-visual="shadcn"] #app .btn:active:not([disabled]) { transform: translateY(1px); }
+html[data-visual="shadcn"] #app .btn:focus-visible { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent); }
+html[data-visual="shadcn"] #app .btn.btn-primario { border-color: transparent; background: var(--primary); color: var(--primary-foreground); font-weight: 500; }
+html[data-visual="shadcn"] #app .btn.btn-primario:hover { background: color-mix(in oklch, var(--primary) 80%, transparent); filter: none; }
+html[data-visual="shadcn"] #app .btn.btn-perigo { border-color: transparent; background: var(--perigo-fundo); color: var(--destructive); }
+html[data-visual="shadcn"] #app .btn.btn-perigo:hover { background: var(--perigo-hover); filter: none; }
+html[data-visual="shadcn"] #app .btn.btn-marcado { background: var(--muted); color: var(--foreground); }
+html[data-visual="shadcn"] #app .btn.btn-texto { border-color: transparent; background: transparent; }
+html[data-visual="shadcn"] #app .btn.btn-texto:hover { background: var(--ghost-hover); }
+html[data-visual="shadcn"] #app .btn-icone { width: 32px; padding: 0; }
+html[data-visual="shadcn"] #app .btn-link { color: var(--primary); font-weight: 500; text-underline-offset: 4px; }
+html[data-visual="shadcn"] #app .btn-link.sub { color: var(--muted-foreground); }
+
+/* Campos (Input e NativeSelect: h-8, px-2.5, rounded-lg, borda input, anel de 3px no foco) */
+html[data-visual="shadcn"] #app .campo { gap: 8px; }
+html[data-visual="shadcn"] .rotulo,
+html[data-visual="shadcn"] #app label.campo { font-size: 14px; line-height: 14px; font-weight: 500; color: var(--foreground); }
+html[data-visual="shadcn"] #app .campo input,
+html[data-visual="shadcn"] #app .campo select,
+html[data-visual="shadcn"] #app .campo textarea,
+html[data-visual="shadcn"] #app input.campo-solto,
+html[data-visual="shadcn"] #app .filtro-pessoa select,
+html[data-visual="shadcn"] #app input.registro-data {
+  border: 1px solid var(--input); border-radius: var(--r-lg); background: var(--campo-fundo);
+  padding: 0 10px; color: var(--foreground); font-size: 14px; font-weight: 400;
+}
+html[data-visual="shadcn"] #app .campo select,
+html[data-visual="shadcn"] #app .filtro-pessoa select {
+  appearance: none; -webkit-appearance: none; padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; background-size: 16px;
+}
+html[data-visual="shadcn"][data-color-mode="dark"] #app .campo select:hover,
+html[data-visual="shadcn"][data-color-mode="dark"] #app .filtro-pessoa select:hover { background-color: var(--campo-hover); }
+html[data-visual="shadcn"] #app .filtro-pessoa select { height: 32px; }
+html[data-visual="shadcn"] #app .campo textarea { padding: 8px 10px; }
+html[data-visual="shadcn"] #app .campo input::placeholder,
+html[data-visual="shadcn"] #app .campo textarea::placeholder,
+html[data-visual="shadcn"] #app input.campo-solto::placeholder { color: var(--muted-foreground); }
+html[data-visual="shadcn"] #app .campo input:focus-visible,
+html[data-visual="shadcn"] #app .campo select:focus-visible,
+html[data-visual="shadcn"] #app .campo textarea:focus-visible,
+html[data-visual="shadcn"] #app input.campo-solto:focus-visible,
+html[data-visual="shadcn"] #app .filtro-pessoa select:focus-visible,
+html[data-visual="shadcn"] #app input.registro-data:focus-visible {
+  border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent); outline: none;
+}
+html[data-visual="shadcn"] #app .campo [aria-invalid="true"],
+html[data-visual="shadcn"] #app input.campo-solto[aria-invalid="true"] { border-color: var(--destructive); box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 20%, transparent); }
+html[data-visual="shadcn"] #app .campo-prefixo { border: 1px solid var(--input); border-radius: var(--r-lg); background: var(--campo-fundo); }
+html[data-visual="shadcn"] #app .campo-prefixo:focus-within { border-color: var(--ring); box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent); }
+html[data-visual="shadcn"] #app .campo-prefixo > span { padding: 0 0 0 10px; margin-right: 4px; color: var(--muted-foreground); }
+html[data-visual="shadcn"] #app .campo-prefixo input,
+html[data-visual="shadcn"] #app .campo .campo-prefixo input { padding: 0 10px; background: transparent; }
+html[data-visual="shadcn"] #app .campo-prefixo:has([aria-invalid="true"]) { border-color: var(--destructive); box-shadow: 0 0 0 3px color-mix(in oklch, var(--destructive) 20%, transparent); }
+html[data-visual="shadcn"] .ajuda { font-size: 14px; line-height: 20px; color: var(--muted-foreground); }
+html[data-visual="shadcn"] .erro-campo { font-size: 14px; line-height: 20px; color: var(--destructive); }
+html[data-visual="shadcn"] .erro-texto { color: var(--destructive); font-weight: 500; }
+
+/* Segmentado (Tabs: fundo muted, 3px de respiro, aba ativa com fundo e sombra pequena) */
+html[data-visual="shadcn"] #app .seg { gap: 0; padding: 3px; border-radius: var(--r-lg); background: var(--muted); }
+html[data-visual="shadcn"] #app .seg button { border: 1px solid transparent; border-radius: var(--r-md); color: var(--aba-texto); font-size: 14px; font-weight: 500; padding: 0 6px; }
+html[data-visual="shadcn"] #app .seg button:hover { color: var(--foreground); }
+html[data-visual="shadcn"] #app .seg button[aria-pressed="true"],
+html[data-visual="shadcn"][data-color-mode] #app .seg button[aria-pressed="true"] { background: var(--aba-ativa); border-color: var(--aba-borda); color: var(--foreground); box-shadow: var(--sombra-sm); }
+html[data-visual="shadcn"] #app .seg-peq { height: 32px; }
+
+/* Chips de filtro (Toggle com contorno) */
+html[data-visual="shadcn"] #app .chip { height: 32px; padding: 0 10px; border: 1px solid var(--btn-borda); border-radius: var(--r-lg); background: var(--campo-fundo); color: var(--foreground); font-size: 14px; font-weight: 500; }
+html[data-visual="shadcn"] #app .chip:hover { background: var(--muted); }
+html[data-visual="shadcn"] #app .chip .num { color: var(--muted-foreground); }
+html[data-visual="shadcn"] #app .chip[aria-pressed="true"] { border-color: var(--border); background: var(--muted); color: var(--foreground); }
+html[data-visual="shadcn"] #app .chip[aria-pressed="true"] .num { color: var(--foreground); }
+
+/* Barra (Progress do Nova: trilho muted, 4px, cantos redondos) */
+html[data-visual="shadcn"] .barra { height: 4px; border-radius: 9999px; }
+html[data-visual="shadcn"] .barra-grossa { height: 8px; border-radius: 9999px; }
+
+/* Selos (Badge: h-5, pílula, texto 12px médio, cor a 10% no fundo) */
+html[data-visual="shadcn"] .selo { height: 20px; display: inline-flex; align-items: center; padding: 2px 8px; border: 1px solid transparent; border-radius: 26px; font-size: 12px; line-height: 16px; font-weight: 500; }
+html[data-visual="shadcn"] .selo.sit-neutral { background: var(--secondary); color: var(--foreground); }
+html[data-visual="shadcn"] #app .det-status,
+html[data-visual="shadcn"] #app .cel-selo .selo { height: 20px; }
+html[data-visual="shadcn"] #app .det-imp { height: 20px; }
+
+/* Avatar (fallback: fundo muted, texto muted-foreground) */
+html[data-visual="shadcn"] .avatar,
+html[data-visual="shadcn"][data-color-mode="dark"] .avatar { background: var(--muted); color: var(--muted-foreground); font-weight: 500; }
+
+/* Avisos (Alert: borda, rounded-lg, px-2.5 py-2, fundo card) */
+html[data-visual="shadcn"] .nota { padding: 8px 8px 8px 10px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--card); font-size: 14px; }
+html[data-visual="shadcn"] .nota-sucesso { color: var(--c-ok-t); }
+html[data-visual="shadcn"] .nota-aviso { color: var(--c-risk-t); }
+html[data-visual="shadcn"] .nota-erro { color: var(--destructive); }
+html[data-visual="shadcn"] #app .nota .btn { height: 28px; border-radius: var(--r-md); font-size: 13px; padding: 0 10px; }
+html[data-visual="shadcn"] .erro,
+html[data-visual="shadcn"] .aviso,
+html[data-visual="shadcn"] .sucesso { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--card); padding: 8px 10px; }
+
+/* Painel */
+html[data-visual="shadcn"] .painel-topo { padding: 10px 0; border-bottom-color: var(--border); }
+html[data-visual="shadcn"] .painel-titulo { font-weight: 500; }
+html[data-visual="shadcn"] .periodo-nome { font-weight: 500; }
+html[data-visual="shadcn"] .painel-corpo { gap: 24px; }
+html[data-visual="shadcn"] .subtitulo { font-size: 16px; line-height: 22px; font-weight: 500; }
+html[data-visual="shadcn"] #app .filtro-pessoa { font-size: 14px; font-weight: 500; color: var(--foreground); }
+
+/* Tabelas como Card (anel de 1px, rounded-xl) e linhas da Table (p-2, hover muted/50) */
+html[data-visual="shadcn"] .tab { border: none; box-shadow: 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent); border-radius: var(--r-xl); background: var(--card); }
+html[data-visual="shadcn"] #app .linha-tab { padding: 8px 12px; }
+html[data-visual="shadcn"] #app .linha-tab:hover { background: color-mix(in oklch, var(--muted) 50%, transparent); }
+html[data-visual="shadcn"] #app .linha-tab.meta { padding-left: 48px; }
+html[data-visual="shadcn"] .cel-titulo { font-weight: 500; }
+html[data-visual="shadcn"] .pessoa-cabeca { padding: 12px 12px 4px; }
+html[data-visual="shadcn"] .pessoa-cabeca .forte { font-weight: 500; }
+html[data-visual="shadcn"] #app .financeiro-caixa { padding: 16px; gap: 8px; }
+html[data-visual="shadcn"] .resumo-financeiro { padding: 16px; }
+html[data-visual="shadcn"] .resumo-financeiro .subtitulo { font-size: 16px; line-height: 22px; }
+
+/* Detalhe e formulário: espaçamento do Nova (FieldGroup gap-5, Field gap-2) */
+html[data-visual="shadcn"] .detalhe { gap: 16px; }
+html[data-visual="shadcn"] .det-titulo,
+html[data-visual="shadcn"] #app .det-periodo,
+html[data-visual="shadcn"] #app .det-periodo > span { font-weight: 500; }
+html[data-visual="shadcn"] .registro,
+html[data-visual="shadcn"] .det-dia,
+html[data-visual="shadcn"] .det-grade,
+html[data-visual="shadcn"] .det-alteracoes { padding-top: 16px; }
+html[data-visual="shadcn"] .det-grade { gap: 16px 24px; }
+html[data-visual="shadcn"] .det-grade > section + section { padding-left: 16px; }
+@container (max-width: 751px) { html[data-visual="shadcn"] .det-grade > section + section { padding-left: 0; padding-top: 16px; } }
+html[data-visual="shadcn"] #app label.registro-label { font-size: 14px; line-height: 14px; font-weight: 500; }
+html[data-visual="shadcn"] #app .registro-linha { gap: 8px 8px; }
+html[data-visual="shadcn"] .hist-linha { padding: 8px 0; }
+html[data-visual="shadcn"] .form { gap: 20px; }
+html[data-visual="shadcn"] .grade { gap: 16px; }
+html[data-visual="shadcn"] .form-rodape { padding-top: 16px; }
+html[data-visual="shadcn"] details.mais summary { color: var(--foreground); font-weight: 500; }

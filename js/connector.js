@@ -58,6 +58,11 @@
       });
     },
 
+    // Configurações do Power-Up: cada pessoa escolhe o visual que vê
+    'show-settings': function (t) {
+      return t.popup({ title: 'Configurações do Metas', url: './configuracoes.html', height: 120 });
+    },
+
     'card-buttons': function (t) {
       return Promise.all([M.ehAdmin(t), t.get('card', 'shared', M.CHAVE)]).then(function (res) {
         if (!res[0]) return [];
