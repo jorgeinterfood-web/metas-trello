@@ -23,6 +23,7 @@
   --ds-metas-tag-warning-bg: #F5E989; --ds-metas-tag-warning-text: #533F04;
   --ds-metas-tag-danger-bg: #FFD5D2; --ds-metas-tag-danger-text: #5D1F1A;
   --ds-metas-tag-info-bg: #CFE1FD; --ds-metas-tag-info-text: #123263;
+  --ds-metas-priority-bg: #DDDEE1;
   --ds-metas-tag-neutral-bg: #DDDEE1; --ds-metas-tag-neutral-text: #505258;
 }
 html[data-color-mode="dark"] {
@@ -33,7 +34,7 @@ html[data-color-mode="dark"] {
   --trilho: var(--ds-background-neutral, #3C3D40); --zona: #596773;
   --azul: var(--ds-background-brand-bold, #669DF1); --azul-texto: var(--ds-link, #669DF1); --azul-fundo: var(--ds-background-selected, #1C2B42); --azul-hover: var(--ds-background-brand-bold-hovered, #8FB8F6); --azul-sobre: var(--ds-text-inverse, #1F1F21);
   --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #303134);
-  --ds-metas-field-bg: #242528; --ds-metas-field-hover: #2B2C2F; --ds-metas-select-hover: #3C3D40; --ds-metas-date-border: #3C3D40;
+  --ds-metas-field-bg: #242528; --ds-metas-field-hover: #2B2C2F; --ds-metas-select-hover: #3C3D40; --ds-metas-date-border: #7E8188;
   --ds-metas-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23A9ABAF' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --botao-contorno-hover: #3C3D3F; --borda-botao-hover: #515254;
   --ok: #82B536; --ok-fundo: var(--ds-background-success, #164B35); --ok-texto: var(--ds-text-success, #7EE2B8);
@@ -46,6 +47,7 @@ html[data-color-mode="dark"] {
   --ds-metas-tag-warning-bg: #533F04; --ds-metas-tag-warning-text: #F5E989;
   --ds-metas-tag-danger-bg: #5D1F1A; --ds-metas-tag-danger-text: #FFD5D2;
   --ds-metas-tag-info-bg: #123263; --ds-metas-tag-info-text: #CFE1FD;
+  --ds-metas-priority-bg: #303134;
   --ds-metas-tag-neutral-bg: #4B4D51; --ds-metas-tag-neutral-text: #A9ABAF;
 }
 @media (prefers-color-scheme: dark) {
@@ -57,7 +59,7 @@ html[data-color-mode="dark"] {
     --trilho: var(--ds-background-neutral, #3C3D40); --zona: #596773;
     --azul: var(--ds-background-brand-bold, #669DF1); --azul-texto: var(--ds-link, #669DF1); --azul-fundo: var(--ds-background-selected, #1C2B42); --azul-hover: var(--ds-background-brand-bold-hovered, #8FB8F6); --azul-sobre: var(--ds-text-inverse, #1F1F21);
     --botao: transparent; --botao-hover: var(--ds-background-neutral-hovered, #303134);
-    --ds-metas-field-bg: #242528; --ds-metas-field-hover: #2B2C2F; --ds-metas-select-hover: #3C3D40; --ds-metas-date-border: #3C3D40;
+    --ds-metas-field-bg: #242528; --ds-metas-field-hover: #2B2C2F; --ds-metas-select-hover: #3C3D40; --ds-metas-date-border: #7E8188;
   --ds-metas-select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23A9ABAF' stroke-width='1.25' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   --botao-contorno-hover: #3C3D3F; --borda-botao-hover: #515254;
     --ok: #82B536; --ok-fundo: var(--ds-background-success, #164B35); --ok-texto: var(--ds-text-success, #7EE2B8);
@@ -70,7 +72,8 @@ html[data-color-mode="dark"] {
     --ds-metas-tag-warning-bg: #533F04; --ds-metas-tag-warning-text: #F5E989;
     --ds-metas-tag-danger-bg: #5D1F1A; --ds-metas-tag-danger-text: #FFD5D2;
     --ds-metas-tag-info-bg: #123263; --ds-metas-tag-info-text: #CFE1FD;
-    --ds-metas-tag-neutral-bg: #4B4D51; --ds-metas-tag-neutral-text: #A9ABAF;
+    --ds-metas-priority-bg: #303134;
+  --ds-metas-tag-neutral-bg: #4B4D51; --ds-metas-tag-neutral-text: #A9ABAF;
   }
 }
 
@@ -608,3 +611,10 @@ html[data-color-mode="dark"] .avatar { color: #1F1F21; }
 #app .campo > input[type="date"][aria-invalid="true"], #app input.campo-solto[type="date"][aria-invalid="true"] {
   border-color: var(--late); box-shadow: 0 0 0 1px var(--late);
 }
+
+/* v40: cursores de seleção e prioridade com fundo próprio. */
+#app select:enabled, #app input[type="date"]:enabled { cursor: pointer; }
+#app input[type="date"]:enabled::-webkit-calendar-picker-indicator,
+#app input[type="date"]:enabled::-webkit-datetime-edit { cursor: pointer; }
+#app select:disabled, #app input[type="date"]:disabled { cursor: not-allowed; }
+#app .det-imp { background-color: var(--ds-metas-priority-bg); }
